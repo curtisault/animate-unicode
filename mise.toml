@@ -73,15 +73,25 @@ description = "Format everything"
 run = ["cargo fmt --all", "elm-format site/src --yes", "npm --prefix web run fmt"]
 
 [tasks.lint]
-description = "clippy, elm-format --validate, tsc --noEmit (needs the wasm: the shell imports web/pkg's types)"
+description = "rustfmt --check, clippy, rustdoc, elm-format --validate, tsc --noEmit (needs the wasm: the shell imports web/pkg's types)"
 depends = ["build:wasm"]
 run = [
+  "cargo fmt --all --check",
   "cargo clippy --workspace --all-targets -- -D warnings",
+  "RUSTDOCFLAGS='-D warnings' cargo doc --no-deps -p animate-unicode",
   "cargo clippy -p animate-unicode-wasm --target wasm32-unknown-unknown -- -D warnings",
   "elm-format site/src --validate",
   "npm --prefix web run typecheck",
   "npm --prefix site run typecheck",
 ]
+
+[tasks.show]
+description = "Print a piece's frames at t = 0, 1, 2.5, 5 in a box: `mise run show donut` (no slug = every piece)"
+run = "cargo run --release -q -p animate-unicode --example show --"
+
+[tasks.bench]
+description = "Time 60 frames of each piece and print a table: `mise run bench [slug ...]`"
+run = "cargo run --release -q -p animate-unicode --example bench --"
 
 [tasks.size]
 description = "Raw and gzipped size of the built wasm module"
