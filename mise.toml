@@ -74,8 +74,22 @@ description = "npm install in web/ and site/ (the workspace root does both)"
 run = "npm install"
 
 [tasks.test]
+description = "Everything tested: the Rust crates, then the wasm boundary from Node"
+depends = ["test:rust", "test:wasm"]
+
+[tasks."test:rust"]
 description = "Rust unit tests and the piece contract (release: the timing budgets mean nothing in debug)"
 run = "cargo test --workspace --release"
+
+[tasks."test:wasm"]
+description = "web/test against the release build in web/pkg, then against a debug build (the panic test)"
+depends = ["build:wasm"]
+env = { CARGO_TARGET_DIR = "{{config_root}}/target/wasm-debug" }
+run = [
+  "node --test 'web/test/*.test.mjs'",
+  "wasm-pack --quiet build crates/wasm --target web --release --out-dir ../../target/wasm-debug-pkg --out-name animate_unicode -- --features debug",
+  "WASM_PKG=target/wasm-debug-pkg WASM_DEBUG=1 node --test 'web/test/*.test.mjs'",
+]
 
 [tasks.fmt]
 description = "Format everything"
@@ -103,10 +117,24 @@ run = "cargo run --release -q -p animate-unicode --example show --"
 description = "Time 60 frames of each piece and print a table: `mise run bench [slug ...]`"
 run = "cargo run --release -q -p animate-unicode --example bench --"
 
+# Fails past 500 KB gzipped, the point at which the plan says to split the pieces
+# into per-category bundles. WASM_GZ_LIMIT overrides it (in bytes).
 [tasks.size]
-description = "Raw and gzipped size of the built wasm module"
+description = "Raw and gzipped size of the release wasm; fails past 500 KB gzipped"
 depends = ["build:wasm"]
-run = "ls -l web/pkg/animate_unicode_bg.wasm && gzip -9c web/pkg/animate_unicode_bg.wasm | wc -c | xargs printf 'gzip: %s bytes\\n'"
+run = """
+f=web/pkg/animate_unicode_bg.wasm
+raw=$(wc -c < $f | tr -d ' ')
+gz=$(gzip -9c $f | wc -c | tr -d ' ')
+limit=${WASM_GZ_LIMIT:-512000}
+line="wasm: $raw bytes raw, $gz bytes gzipped (limit $limit)"
+echo "$line"
+if [ -n "$GITHUB_STEP_SUMMARY" ]; then echo "$line" >> "$GITHUB_STEP_SUMMARY"; fi
+if [ "$gz" -gt "$limit" ]; then
+  echo "the wasm is over its size limit: see 'One wasm module for all pieces' in docs/IMPLEMENTATION_PLAN.md" >&2
+  exit 1
+fi
+"""
 
 [tasks.check]
 description = "What CI runs: lint, test, build"
