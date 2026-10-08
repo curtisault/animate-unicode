@@ -50,8 +50,13 @@ export class UnicodeArt extends Base {
   #teardown() {
     this.#stop?.();
     this.#stop = null;
-    this.#player?.free();
+    const player = this.#player;
     this.#player = null;
+    try {
+      player?.free();
+    } catch {
+      // A player whose piece panicked stays borrowed and cannot be freed; its memory is lost either way.
+    }
   }
 
   async #start() {
@@ -80,7 +85,11 @@ export class UnicodeArt extends Base {
     this.#teardown();
     this.replaceChildren(el);
     this.#player = player;
-    this.#stop = mount(el, module, player, options);
+    try {
+      this.#stop = mount(el, module, player, options);
+    } catch (error) {
+      console.error(`<unicode-art> ${slug} stopped on its first frame:`, error);
+    }
   }
 }
 

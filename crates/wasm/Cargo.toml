@@ -13,6 +13,14 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 animate-unicode = { path = "../animate-unicode" }
 wasm-bindgen = "0.2"
+console_error_panic_hook = { version = "0.1.7", optional = true }
+
+[features]
+# Dev builds only (`mise run dev`, and the panic test in `mise run test`): a
+# panic prints its message and location with console.error before the call
+# traps, and Player accepts the unregistered slug "debug-panic" to show it.
+# Release builds leave both out; see "Panics" in src/lib.rs.
+debug = ["dep:console_error_panic_hook"]
 
 # wasm-pack runs wasm-opt on the output; these are its flags.
 [package.metadata.wasm-pack.profile.release]

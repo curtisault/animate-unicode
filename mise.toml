@@ -33,11 +33,19 @@ wasm-tools = "latest"
 # Reruns a task when files change: `watchexec -e rs -- mise run build:wasm`.
 watchexec = "latest"
 
+# The two wasm builds share web/pkg, so neither is cached by sources/outputs:
+# after `dev` writes the debug build, a cached `build:wasm` would skip and ship
+# it. A rebuild with nothing changed takes about a second.
 [tasks."build:wasm"]
 description = "Build crates/wasm into web/pkg (wasm-bindgen, --target web, release)"
 run = "wasm-pack build crates/wasm --target web --release --out-dir ../../web/pkg --out-name animate_unicode"
-sources = ["crates/**/*.rs", "crates/**/Cargo.toml", "Cargo.toml"]
-outputs = ["web/pkg/animate_unicode_bg.wasm"]
+
+# Its own cargo target dir: the feature set differs, and sharing one would make
+# each build overwrite the other's .wasm under target/wasm32-unknown-unknown.
+[tasks."build:wasm:debug"]
+description = "Build crates/wasm into web/pkg with the debug feature: panics print their message and location"
+env = { CARGO_TARGET_DIR = "{{config_root}}/target/wasm-debug" }
+run = "wasm-pack build crates/wasm --target web --release --out-dir ../../web/pkg --out-name animate_unicode -- --features debug"
 
 [tasks."build:web"]
 description = "Type-check and emit the TS shell (web/dist)"
@@ -56,8 +64,8 @@ description = "Everything: wasm, shell, site"
 depends = ["build:web", "build:site"]
 
 [tasks.dev]
-description = "The site with the dev server, after a wasm build"
-depends = ["build:wasm"]
+description = "The site with the dev server, after a debug wasm build (run build:wasm before shipping anything from web/pkg)"
+depends = ["build:wasm:debug"]
 dir = "site"
 run = "npm run dev"
 
@@ -81,6 +89,7 @@ run = [
   "cargo clippy --workspace --all-targets -- -D warnings",
   "RUSTDOCFLAGS='-D warnings' cargo doc --no-deps -p animate-unicode",
   "cargo clippy -p animate-unicode-wasm --target wasm32-unknown-unknown -- -D warnings",
+  "cargo clippy -p animate-unicode-wasm --target wasm32-unknown-unknown --features debug -- -D warnings",
   "elm-format site/src --validate",
   "npm --prefix web run typecheck",
   "npm --prefix site run typecheck",

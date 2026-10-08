@@ -175,23 +175,37 @@ export function mount(el: HTMLElement, wasm: InitOutput, player: Player, options
     });
     ro.observe(canvas);
   }
-  draw();
+  try {
+    draw();
+  } catch (error) {
+    ro?.disconnect();
+    throw error;
+  }
   if (!fps) return () => ro?.disconnect();
 
   const still = matchMedia("(prefers-reduced-motion: reduce)");
   let raf = 0;
   let lastNow = 0;
   let seen = false;
+  // Set when a frame throws: a piece that panicked leaves its player unusable
+  // (crates/wasm/src/lib.rs, "Panics"), so stop instead of throwing every frame.
+  let broken = false;
   const tick = (now: number) => {
     raf = requestAnimationFrame(tick);
     const dt = now - lastNow;
     if (dt < 1000 / fps - 2) return;
     lastNow = now;
     t += Math.min(dt, 100) / 1000;
-    draw();
+    try {
+      draw();
+    } catch (error) {
+      broken = true;
+      run();
+      throw error;
+    }
   };
   const run = () => {
-    const go = seen && !document.hidden && (motion || !still.matches);
+    const go = !broken && seen && !document.hidden && (motion || !still.matches);
     if (go && !raf) {
       lastNow = performance.now();
       raf = requestAnimationFrame(tick);
