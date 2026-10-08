@@ -1,0 +1,26 @@
+[workspace]
+resolver = "2"
+members = ["crates/animate-unicode", "crates/wasm", "crates/cli"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/curtisault/animate-unicode"
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# std is a deliberate choice (see docs/IMPLEMENTATION_PLAN.md, "Decisions"):
+# a 26 KB donut was judged fine. These settings keep that from growing needlessly.
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+# The contract test's timing budgets only mean something optimised.
+[profile.test]
+opt-level = 2

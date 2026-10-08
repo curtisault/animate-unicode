@@ -1,0 +1,32 @@
+{
+  "name": "animate-unicode",
+  "version": "0.1.0",
+  "description": "Animated unicode art for web pages: Rust pieces in wasm, drawn by one HTML tag.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": ["./dist/element.js"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./element": {
+      "types": "./dist/element.d.ts",
+      "default": "./dist/element.js"
+    },
+    "./wasm": {
+      "types": "./pkg/animate_unicode.d.ts",
+      "default": "./pkg/animate_unicode.js"
+    }
+  },
+  "files": ["dist", "pkg"],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "fmt": "prettier --write src"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.3"
+  }
+}

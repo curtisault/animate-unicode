@@ -1,0 +1,93 @@
+# Tooling for animate-unicode. `mise install` puts every tool below on the path;
+# `mise run <task>` is the one entry point for building, checking and serving.
+#
+#   mise install          the toolchain
+#   mise run install      npm install for web/ and site/
+#   mise run dev          the site, live, with the wasm built first
+#   mise run check        everything CI runs
+
+[tools]
+# The pieces, the wasm module and the CLI. `targets` adds the wasm32 target
+# alongside the host's; rust-toolchain.toml says the same for plain rustup.
+rust = { version = "1.97", targets = "wasm32-unknown-unknown" }
+# Runs wasm-bindgen's output in tests, the TS shell's build and the site's dev
+# server. Also what the npm-backed tools below run on.
+node = "26"
+# The site. Same form as the global config so the binary resolves the same way.
+elm = { version = "0.19.1", bin = "elm" }
+# cargo build + wasm-bindgen + wasm-opt in one step, for crates/wasm. Not in the
+# mise registry, so it is built from crates.io on first install (a few minutes).
+# It downloads its own binaryen, so wasm-opt needs no entry here.
+"cargo:wasm-pack" = "0.13"
+# Inspecting the built module: `wasm-tools print`, `wasm-tools objdump`, sizes.
+wasm-tools = "latest"
+# `elm-format --validate` and `elm-test` are part of `mise run check`.
+# elm-format comes from its GitHub releases, not npm: the npm package swaps its
+# JS launcher for a native binary at install, and mise's npm shim then runs that
+# binary with node ("SyntaxError: Invalid or unexpected token").
+"github:avh4/elm-format" = "0.8.8"
+# elm-test is pinned: npm's `latest` is a 0.19.3 prerelease, and mise's `latest`
+# picked 0.19.0, whose old fsevents trips mise's malware advisory check.
+"npm:elm-test" = "0.19.1-revision17"
+# Reruns a task when files change: `watchexec -e rs -- mise run build:wasm`.
+watchexec = "latest"
+
+[tasks."build:wasm"]
+description = "Build crates/wasm into web/pkg (wasm-bindgen, --target web, release)"
+run = "wasm-pack build crates/wasm --target web --release --out-dir ../../web/pkg --out-name animate_unicode"
+sources = ["crates/**/*.rs", "crates/**/Cargo.toml", "Cargo.toml"]
+outputs = ["web/pkg/animate_unicode_bg.wasm"]
+
+[tasks."build:web"]
+description = "Type-check and emit the TS shell (web/dist)"
+depends = ["build:wasm"]
+dir = "web"
+run = "npm run build"
+
+[tasks."build:site"]
+description = "Build the Elm site into site/dist (Vite imports the shell's TS source, so only the wasm is needed first)"
+depends = ["build:wasm"]
+dir = "site"
+run = "npm run build"
+
+[tasks.build]
+description = "Everything: wasm, shell, site"
+depends = ["build:web", "build:site"]
+
+[tasks.dev]
+description = "The site with the dev server, after a wasm build"
+depends = ["build:wasm"]
+dir = "site"
+run = "npm run dev"
+
+[tasks.install]
+description = "npm install in web/ and site/ (the workspace root does both)"
+run = "npm install"
+
+[tasks.test]
+description = "Rust unit tests and the piece contract (release: the timing budgets mean nothing in debug)"
+run = "cargo test --workspace --release"
+
+[tasks.fmt]
+description = "Format everything"
+run = ["cargo fmt --all", "elm-format site/src --yes", "npm --prefix web run fmt"]
+
+[tasks.lint]
+description = "clippy, elm-format --validate, tsc --noEmit (needs the wasm: the shell imports web/pkg's types)"
+depends = ["build:wasm"]
+run = [
+  "cargo clippy --workspace --all-targets -- -D warnings",
+  "cargo clippy -p animate-unicode-wasm --target wasm32-unknown-unknown -- -D warnings",
+  "elm-format site/src --validate",
+  "npm --prefix web run typecheck",
+  "npm --prefix site run typecheck",
+]
+
+[tasks.size]
+description = "Raw and gzipped size of the built wasm module"
+depends = ["build:wasm"]
+run = "ls -l web/pkg/animate_unicode_bg.wasm && gzip -9c web/pkg/animate_unicode_bg.wasm | wc -c | xargs printf 'gzip: %s bytes\\n'"
+
+[tasks.check]
+description = "What CI runs: lint, test, build"
+depends = ["lint", "test", "build"]

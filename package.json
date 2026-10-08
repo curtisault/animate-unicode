@@ -1,0 +1,5 @@
+{
+  "name": "animate-unicode-workspace",
+  "private": true,
+  "workspaces": ["web", "site"]
+}
