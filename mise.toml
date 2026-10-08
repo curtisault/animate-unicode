@@ -15,10 +15,11 @@ rust = { version = "1.97", targets = "wasm32-unknown-unknown" }
 node = "26"
 # The site. Same form as the global config so the binary resolves the same way.
 elm = { version = "0.19.1", bin = "elm" }
-# cargo build + wasm-bindgen + wasm-opt in one step, for crates/wasm. Not in the
-# mise registry, so it is built from crates.io on first install (a few minutes).
-# It downloads its own binaryen, so wasm-opt needs no entry here.
-"cargo:wasm-pack" = "0.13"
+# cargo build + wasm-bindgen + wasm-opt in one step, for crates/wasm. A prebuilt
+# binary from aqua (the project moved to drager/wasm-pack), so a fresh machine or
+# CI runner does not compile it from crates.io. It downloads its own binaryen,
+# so wasm-opt needs no entry here.
+"aqua:drager/wasm-pack" = "0.15.0"
 # Inspecting the built module: `wasm-tools print`, `wasm-tools objdump`, sizes.
 wasm-tools = "latest"
 # `elm-format --validate` and `elm-test` are part of `mise run check`.
