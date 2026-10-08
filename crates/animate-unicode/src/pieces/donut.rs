@@ -6,6 +6,7 @@
 
 use crate::{util::ramp, Category, Env, Grid, Meta, Options, Piece};
 
+/// The donut's meta.
 pub static META: Meta = Meta {
     name: "donut",
     slug: "donut",
@@ -19,10 +20,12 @@ pub static META: Meta = Meta {
 
 const RAMP: [char; 12] = ['.', ',', '-', '~', ':', ';', '=', '!', '*', '#', '$', '@'];
 
+/// The donut, with its z-buffer.
 pub struct Donut {
     depth: Vec<f32>,
 }
 
+/// A donut; it takes no options.
 pub fn make(_: &Options) -> Box<dyn Piece> {
     Box::new(Donut { depth: vec![0.0; META.cols * META.rows] })
 }

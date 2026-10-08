@@ -3,21 +3,35 @@
 
 use serde::Serialize;
 
+/// Where a piece sits in the site's sidebar and the README's table.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Category {
+    /// Large coloured pictures with a palette and a ground (up to 320 × 120).
     Scenes,
+    /// Geometry turning or morphing: the donut, a cube.
     Shapes,
+    /// Planets, stars, orbits.
     Space,
+    /// Simulations: pendulums, cradles, particles.
     Physics,
+    /// Weather, water, plants.
     Nature,
+    /// Animals and characters.
     Creatures,
+    /// Things: clocks, machines.
     Objects,
+    /// Patterns from a rule or a formula.
     Generative,
+    /// Screen effects: fire, rain, glitches.
     Effects,
+    /// Interface pieces: spinners, progress bars.
     Ui,
+    /// Charts and readouts.
     Data,
+    /// Lettering and text effects.
     Type,
+    /// Marks and wordmarks.
     Logos,
 }
 
@@ -39,6 +53,7 @@ impl Category {
         Category::Effects,
     ];
 
+    /// The lowercase name used in JSON and URLs.
     pub fn slug(self) -> &'static str {
         match self {
             Category::Scenes => "scenes",
@@ -76,26 +91,31 @@ pub enum Charset {
     Wide,
 }
 
+/// What a piece says about itself. Every piece has one, as `pub static META`.
 #[derive(Clone, Debug, Serialize)]
 pub struct Meta {
     /// Lowercase display name: "newton's cradle".
     pub name: &'static str,
     /// File and URL name: "newtons-cradle". Kebab-case, unique.
     pub slug: &'static str,
+    /// Its group on the site.
     pub category: Category,
     /// One lowercase line, at most 72 characters, saying what you see.
     pub note: &'static str,
     /// Frame size in cells: every frame is exactly `rows` lines of `cols` cells.
     pub cols: usize,
+    /// Frame height in cells.
     pub rows: usize,
     /// Frames a second; 0 for a still.
     pub fps: u32,
+    /// The glyphs it may draw. The contract test holds it to this.
     pub charset: Charset,
     /// Defaults for every option the piece takes, as a JSON object. `None` for a piece with no options.
     pub options: Option<&'static str>,
     /// True if the picture depends on the real time or date.
     pub clock: bool,
     /// Up to 64 colours as #rrggbb, indexed by each cell's colour. A piece with one draws on a canvas.
+    /// Shading runs go dimmest first, so `palette[0]` is the dimmest (see [`crate::palette`]).
     pub palette: Option<&'static [&'static str]>,
     /// The colour behind a coloured piece.
     pub ground: Option<&'static str>,
@@ -122,6 +142,7 @@ impl Meta {
         cell: 2,
     };
 
+    /// The meta as a JSON object, as the site and the shell read it.
     pub fn to_json(&self) -> String {
         serde_json::to_string(self).expect("Meta serialises")
     }

@@ -3,7 +3,9 @@
 
 use crate::{Meta, Options, Piece};
 
+/// One piece in the registry: its meta and how to make one.
 pub struct Entry {
+    /// What the piece says about itself.
     pub meta: &'static Meta,
     /// Builds a fresh instance from the option overrides (already layered on the defaults by `make`).
     pub make: fn(&Options) -> Box<dyn Piece>,
@@ -14,6 +16,7 @@ pub fn all() -> &'static [Entry] {
     crate::pieces::REGISTRY
 }
 
+/// The piece with this slug.
 pub fn find(slug: &str) -> Option<&'static Entry> {
     all().iter().find(|e| e.meta.slug == slug)
 }
@@ -32,9 +35,12 @@ pub fn make(slug: &str, options_json: &str) -> Result<(&'static Meta, Box<dyn Pi
     Ok((entry.meta, (entry.make)(&options)))
 }
 
+/// Why `make` failed.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MakeError {
+    /// No registered piece has this slug.
     NoSuchPiece(String),
+    /// The options were not valid JSON; the parser's message.
     BadOptions(String),
 }
 

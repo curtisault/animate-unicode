@@ -4,6 +4,15 @@
 //!
 //! Timing budgets only mean something optimised: `cargo test --release`
 //! (what `mise run test` does). In a debug build they are skipped.
+//!
+//! One test loops over every piece, so a failure reports every broken piece
+//! at once. To see the per-piece table, and to check one piece while working
+//! on it:
+//!
+//!     cargo test --release --test contract -- --nocapture
+//!     PIECE=braille-wave cargo test --release --test contract -- --nocapture
+//!
+//! `PIECE` takes a slug or a comma-separated list.
 
 use animate_unicode::{registry, Category, Charset, Env, Grid, Options, Piece, WIDE_TAIL};
 use std::time::Instant;
@@ -56,10 +65,21 @@ fn allowed(charset: Charset, cp: u32) -> bool {
     }
 }
 
+/// The pieces to check: all of them, or those `PIECE` names.
+fn selected() -> Vec<&'static registry::Entry> {
+    let Ok(want) = std::env::var("PIECE") else { return registry::all().iter().collect() };
+    let want: Vec<&str> = want.split(',').map(str::trim).filter(|s| !s.is_empty()).collect();
+    let unknown: Vec<&&str> = want.iter().filter(|w| registry::find(w).is_none()).collect();
+    assert!(unknown.is_empty(), "PIECE names no registered piece: {unknown:?} (slugs: {})", registry::slugs().join(", "));
+    registry::all().iter().filter(|e| want.contains(&e.meta.slug)).collect()
+}
+
 #[test]
 fn every_piece_keeps_the_contract() {
+    let pieces = selected();
     let mut failures = vec![];
-    for entry in registry::all() {
+    println!("\n     {:<24} {:<11} {:>7} {:>4} {:>8}", "piece", "category", "size", "fps", "ms/frame");
+    for entry in pieces.iter().copied() {
         let m = entry.meta;
         let mut errors: Vec<String> = vec![];
         let slug = m.slug;
@@ -103,7 +123,18 @@ fn every_piece_keeps_the_contract() {
                 errors.push("meta.options must be a non-empty JSON object, or None".into());
             }
         }
+        // Every option a piece reads needs a default in meta.options: the site
+        // builds its controls from them, and a misspelt key would otherwise
+        // silently read its fallback forever.
+        let opts = Options::default().with_defaults(m.options);
+        drop((entry.make)(&opts));
+        let declared = opts.keys();
+        let undeclared: Vec<String> = opts.read_keys().into_iter().filter(|k| !declared.contains(&k.as_str())).collect();
+        if !undeclared.is_empty() {
+            errors.push(format!("reads options with no default in meta.options: {}", undeclared.join(", ")));
+        }
         if !errors.is_empty() {
+            println!("FAIL {slug}");
             failures.push(format!("{slug}: {}", errors.join("; ")));
             continue;
         }
@@ -178,13 +209,15 @@ fn every_piece_keeps_the_contract() {
             }
         }
 
-        if errors.is_empty() {
-            let avg = if run.ms.is_empty() { 0.0 } else { run.ms.iter().sum::<f64>() / run.ms.len() as f64 };
-            println!("ok   {slug}  {}  {}x{}  {}fps  {avg:.2}ms", m.category.slug(), m.cols, m.rows, m.fps);
-        } else {
+        let avg = if run.ms.is_empty() { 0.0 } else { run.ms.iter().sum::<f64>() / run.ms.len() as f64 };
+        let size = format!("{}x{}", m.cols, m.rows);
+        let status = if errors.is_empty() { "ok  " } else { "FAIL" };
+        println!("{status} {slug:<24} {:<11} {size:>7} {:>4} {avg:>8.2}", m.category.slug(), m.fps);
+        if !errors.is_empty() {
             failures.push(format!("{slug}: {}", errors.join("; ")));
         }
     }
+    println!("\n{}/{} ok\n", pieces.len() - failures.len(), pieces.len());
     assert!(failures.is_empty(), "\n{}\n", failures.join("\n"));
 }
 

@@ -7,6 +7,9 @@ use crate::registry::Entry;
 pub mod braille_wave;
 pub mod donut;
 
+// One piece a line, so this stays the one place to see every piece.
+/// Every piece, in the order the site lists them within a category.
+#[rustfmt::skip]
 pub static REGISTRY: &[Entry] = &[
     Entry { meta: &donut::META, make: donut::make },
     Entry { meta: &braille_wave::META, make: braille_wave::make },

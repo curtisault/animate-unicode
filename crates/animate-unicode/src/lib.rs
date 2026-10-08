@@ -15,15 +15,21 @@
 //! assert_eq!(grid.text().lines().count(), entry.meta.rows);
 //! ```
 
+#![warn(missing_docs)]
+
 pub mod grid;
 pub mod meta;
 pub mod options;
+pub mod palette;
 pub mod piece;
 pub mod pieces;
 pub mod registry;
+pub mod subcell;
 pub mod util;
 
 pub use grid::{Grid, BLANK, WIDE_TAIL};
 pub use meta::{Category, Charset, Meta};
 pub use options::Options;
+pub use palette::Ramp;
 pub use piece::{Env, Piece};
+pub use subcell::{Dots, Quadrants, Sextants};
