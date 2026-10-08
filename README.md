@@ -48,3 +48,9 @@ A file in `crates/animate-unicode/src/pieces/`, a `pub mod` and one line in
 `cols × rows` grid every frame, deterministic in `t`, only the glyphs its
 `charset` allows, under its time budget. `donut.rs` is the reference for a
 shaded piece; `braille_wave.rs` for one that draws with dots.
+
+While working on one, `mise run show <slug>` prints its frames at a few times
+in a box, `PIECE=<slug> cargo test --release --test contract -- --nocapture`
+checks only that piece, and `mise run bench` times every piece. `Dots`,
+`Sextants` and `Quadrants` draw at sub-cell resolution; `Ramp` shades with
+palette colours.

@@ -253,6 +253,16 @@ Acceptance: `mise run check` exits 0 locally and in CI; both pieces animate in a
 <a id="phase-1"></a>
 ### Phase 1 · Core crate (1–2 days)
 
+**Done 2026-10-08** on branch `phase-1-core`. Where it landed, where it differs
+from the tasks below: the sub-cell canvases are in `src/subcell.rs` (one
+generic `Canvas<E>` with `Dots`, `Sextants`, `Quadrants` aliases), not `util`;
+`into_grid` is `Canvas::draw(grid, x, y, color)`, which leaves empty cells
+alone so canvases layer; `Ramp` is in `src/palette.rs`; reading an option with
+no default in `Meta.options` is a contract **error**, not a warning; `Grid::line`
+and `blit` take a colour, and `blit` treats spaces as transparent. Lint now
+also runs `cargo fmt --check` (style in `rustfmt.toml`) and rustdoc with
+`-D warnings`. `mise run show <slug>` and `mise run bench` wrap the examples.
+
 The scaffold has the shape; this phase makes it solid.
 
 Tasks:
@@ -333,7 +343,7 @@ Start with pieces that show what unicode buys. Each one: a file, a `REGISTRY` li
 
 | # | slug | charset | what | notes |
 |---|---|---|---|---|
-| 1 | `braille-wave` | Extended | done | refactor onto `Dots` |
+| 1 | `braille-wave` | Extended | done | on `Dots` since Phase 1 |
 | 2 | `braille-lissajous` | Extended | a Lissajous curve traced in dots with a fading tail | tests `Dots::line`, determinism from `t` |
 | 3 | `quadrant-fire` | Basic, palette | doom-fire at 2× vertical resolution using `▀▄█` with fg/bg colour | first coloured piece; needs palette convention; port `../ascii/src/pieces/doom-fire.ts` |
 | 4 | `sextant-plasma` | Extended, palette | a plasma field rendered in sextants (2×3 per cell) | proves astral glyphs end to end |
