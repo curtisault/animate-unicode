@@ -280,6 +280,33 @@ Acceptance: `cargo test --release` green; `cargo clippy --all-targets -D warning
 <a id="phase-2"></a>
 ### Phase 2 · Wasm boundary (1 day)
 
+**Done 2026-10-08** on branch `phase-2-wasm`. What changed from the tasks below:
+
+- **A panic does not kill the page.** Measured: with `panic = "abort"` the
+  panicking call traps (`RuntimeError: unreachable`) and the instance carries
+  on; other players keep drawing and new ones can be made. The player whose
+  piece panicked is left borrowed, so every later call on it, `free()`
+  included, throws. `mount.ts` now stops a tag whose frame throws, and
+  `element.ts` frees inside a `try`. Details under "Panics" in
+  `crates/wasm/src/lib.rs`. Decision unchanged: keep abort, the contract test
+  is the guard.
+- **The test piece** is the slug `debug-panic`, which `Player::new` accepts
+  only with the `debug` feature (never registered). It draws for a second,
+  then indexes past its grid. In the dev site, `debugPanic()` in the console
+  adds one.
+- **Builds:** `build:wasm` is release; `build:wasm:debug` (what `dev` serves)
+  adds the `debug` feature with `console_error_panic_hook`, in its own cargo
+  target dir. Both write `web/pkg`, so neither is cached by sources/outputs.
+- **Tests:** `web/test/*.test.mjs` by `node --test`, run by `mise run test`
+  (now `test:rust` + `test:wasm`) twice: on the release build, then on a debug
+  build in `target/wasm-debug-pkg`. They cover every piece's views against
+  `text()`, the donut fixture through wasm, errors, `free()` with a leak
+  check, and the panic behaviour above.
+- **Size gate:** `mise run size` fails past 500 KB gzipped (`WASM_GZ_LIMIT`
+  overrides) and writes the line to the GitHub step summary.
+- **wasm-pack 0.15.0** from aqua (`drager/wasm-pack`, prebuilt), not cargo.
+- `Player::set_options` was not needed: the element re-creates the player.
+
 Tasks:
 1. Keep the API as is (`Player`, `slugs_json`, `metas_json`, `wide_tail`). Add `Player::set_options(json)` only if hot-changing options without re-creating the player proves necessary for the site; otherwise re-create.
 2. **Panic safety**: with `panic = "abort"`, a piece that indexes out of bounds kills the whole wasm instance for every tag on the page. Add `console_error_panic_hook` behind a `debug` feature so dev builds say where; in release, document that the contract test is the guard. Consider `Player::frame` wrapping in `std::panic::catch_unwind` — **not possible with `panic=abort`**; the trade-off is size (unwinding adds ~10–20 KB (unverified)). Decision: keep abort, rely on the contract test.
@@ -398,7 +425,7 @@ Acceptance: a tagged release publishes to npm and deploys the site; a plain HTML
 | Layer | Tool | What |
 |---|---|---|
 | Core | `cargo test --release` | unit tests per module; `tests/contract.rs` for every piece; fixture tests for ports |
-| Wasm | `node --test web/test` | Player API, memory views equal `text()`, errors throw, `free()` |
+| Wasm | `node --test 'web/test/*.test.mjs'`, release and debug builds | Player API, memory views equal `text()`, errors throw, `free()`, panics |
 | Shell | manual checklist page + (later) Playwright screenshots in CI **(optional)** | atlas rendering, resize, DPR, reduced motion, teardown |
 | Site | `elm-test`, `elm-format --validate`, `tsc` | routing, decoders |
 | Size | `mise run size` + CI gate | wasm gz |
@@ -416,7 +443,7 @@ Debug builds skip the timing budgets (`cfg!(debug_assertions)`); always run `mis
 
 ## Risks and open questions
 
-1. **`panic = "abort"` kills every tag on the page** if one piece panics. Mitigated by the contract test and by pieces using clipping `put/set` instead of raw indexing. Keep raw `cells_mut()[k]` for hot loops only, with the bounds proven.
+1. **A panicking piece stops its own tag** (measured in Phase 2: the instance survives, the player is left unusable and leaks what it held). Mitigated by the contract test and by pieces using clipping `put/set` instead of raw indexing. Keep raw `cells_mut()[k]` for hot loops only, with the bounds proven.
 2. **Font coverage for `Extended` in `<pre>`** is the biggest visual risk; the canvas path does not have it. Phase 5 must be tested on real Android and Windows.
 3. **Wide glyphs in `<pre>`** depend on the font being exactly 2:1 for CJK; many "monospace" fonts are not. Treat `Wide` as canvas-first.
 4. **Elm and SSR** do not mix (Phase 4 #5). Decision pending: client-only, or prerender with Elm mounted on a child node.

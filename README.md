@@ -34,8 +34,8 @@ docs/                    the implementation plan
 ```sh
 mise install          # rust (+wasm32 target), node, elm, wasm-pack, elm-format, elm-test, wasm-tools, watchexec
 mise run install      # npm install for web/ and site/
-mise run test         # cargo test --release: unit tests and the piece contract
-mise run dev          # builds the wasm, then the site at http://localhost:5173
+mise run test         # Rust tests and the piece contract, then the wasm from Node
+mise run dev          # a debug wasm build, then the site at http://localhost:5173
 mise run check        # what CI runs: lint, test, build
 ```
 
