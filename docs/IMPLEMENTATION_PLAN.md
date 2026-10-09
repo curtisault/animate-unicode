@@ -419,6 +419,38 @@ Acceptance: `mise run build:site` output served statically works for `/`, `/donu
 <a id="phase-5"></a>
 ### Phase 5 · Fonts (1 day, plus testing on devices)
 
+**Built 2026-10-08** on branch `phase-5-fonts`; the device pass (macOS,
+Windows, Android) is the owner's, on test.html's new "every range" section.
+
+- **Font: Iosevka Fixed Extended 34.9.0** (OFL 1.1, no reserved name).
+  Coverage measured with fonttools: every Basic and Extended range, octants
+  too, every glyph 600/1000 em. Rejected: JetBrains Mono (no braille or legacy
+  computing), Cascadia Mono 2407.24 (arrows 10 of 112, and the static TTF's
+  name table carries a "Microsoft supplied font" licence string, not the OFL),
+  Iosevka Fixed regular width (0.5 em: pieces would draw 20% too tall).
+- **The font leads the stack, ASCII included** (a change from the
+  `unicode-range`-fallback design above). As a fallback after the system
+  monospace, alignment would depend on each platform's ASCII width (Consolas
+  is 0.55 em, the font 0.6), so braille rows would drift on Windows. First in
+  the stack, a piece's every glyph has one width everywhere; wide glyphs fall
+  through to the system. Canvas uses the same stack, asks for the font, and
+  rebuilds its glyph atlas when fonts finish loading.
+- **Build:** `scripts/font.py`, run by `mise run build:font` through `uvx` with
+  fonttools 4.60.1 pinned (uv is in mise): downloads the unhinted release once
+  into target/font, checks its SHA-256, subsets, renames to "animate-unicode
+  mono", checks widths, coverage and that element.ts declares the same
+  unicode-range. Output checked in: `web/fonts/animate-unicode-mono.woff2`,
+  17.9 KB (target was < 20 KB), with `web/fonts/OFL.txt`.
+- **Location:** next to the shell, found with
+  `new URL("../fonts/…", import.meta.url)`, so it ships in the npm package
+  (`files` and the tarball test include it) and bundlers copy it; Vite emits
+  it as a hashed asset. The site needs no `site.css` declaration: the
+  element's style is document-wide and the site has no `<pre>` stills.
+- **Caching:** `site/public/_headers` gives `/assets/*` a year, immutable
+  (hashed names). Vite preview ignores the file; it takes effect on the host.
+- **test.html:** every range as 32-glyph rows, in the font and in system
+  fonts only, each with a row-width readout and whether the font loaded.
+
 Tasks:
 1. Pick an OFL monospace with the `Extended` ranges. Candidates **(coverage unverified, check with `pyftsubset --unicodes=… --verbose` or `fc-query`)**: Cascadia Mono (added Symbols for Legacy Computing in the 2404 release), Iosevka (has U+1FB00 block), JetBrains Mono (braille yes, legacy computing no), GNU Unifont (everything, bitmap look). Recommend Cascadia Mono or Iosevka Fixed.
 2. Subset with fonttools: `pyftsubset Font.ttf --unicodes="U+00B0,U+00B7,U+2022,U+2190-21FF,U+2500-25FF,U+2800-28FF,U+1FB00-1FBFF" --flavor=woff2 --output-file=site/public/fonts/animate-unicode-mono.woff2`. Target < 20 KB. Add `python` + `pip:fonttools[woff]` to mise if the subsetting is to be reproducible (or vendor the output and a script).
