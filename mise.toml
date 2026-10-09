@@ -8,8 +8,9 @@
 
 [tools]
 # The pieces, the wasm module and the CLI. `targets` adds the wasm32 target
-# alongside the host's; rust-toolchain.toml says the same for plain rustup.
-rust = { version = "1.97", targets = "wasm32-unknown-unknown" }
+# alongside the host's, and `components` the lint tools, which a fresh install
+# (CI's) leaves out; rust-toolchain.toml says the same for plain rustup.
+rust = { version = "1.97", targets = "wasm32-unknown-unknown", components = "rustfmt,clippy" }
 # Runs wasm-bindgen's output in tests, the TS shell's build and the site's dev
 # server. Also what the npm-backed tools below run on.
 node = "26"
