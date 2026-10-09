@@ -67,25 +67,62 @@ for (const spot of document.querySelectorAll<HTMLElement>(".debug-tag")) {
   }
 }
 
-// Braille row widths in the <pre>: equal if the font keeps braille one cell wide.
-const braille = $("braille");
-const measureRows = () => {
-  const text = braille.querySelector("pre")?.firstChild;
-  if (!text || text.nodeType !== Node.TEXT_NODE) return;
-  const lines = text.textContent!.split("\n");
+/** Each line's rendered width in a <pre> whose only child is its text. */
+const rowWidths = (pre: Element | null | undefined) => {
+  const text = pre?.firstChild;
+  if (!text || text.nodeType !== Node.TEXT_NODE) return [];
   const range = document.createRange();
   const widths: number[] = [];
   let at = 0;
-  for (const line of lines) {
+  for (const line of text.textContent!.split("\n")) {
     range.setStart(text, at);
     range.setEnd(text, at + line.length);
     widths.push(range.getBoundingClientRect().width);
     at += line.length + 1;
   }
-  const min = Math.min(...widths), max = Math.max(...widths);
-  say($("braille-rows"), max - min < 0.5, `${lines.length} rows, ${min.toFixed(1)}–${max.toFixed(1)} px wide`);
+  return widths;
 };
-setInterval(measureRows, 500);
+const spread = (widths: number[]) => {
+  const min = Math.min(...widths), max = Math.max(...widths);
+  return { even: widths.length > 0 && max - min < 0.5, text: `${widths.length} rows, ${min.toFixed(1)}–${max.toFixed(1)} px wide` };
+};
+
+// Braille row widths in the <pre>: equal if the font keeps braille one cell wide.
+const braille = $("braille");
+setInterval(() => {
+  const s = spread(rowWidths(braille.querySelector("pre")));
+  say($("braille-rows"), s.even, s.text);
+}, 500);
+
+// Every range the bundled font covers, 32 glyphs a row, in it and in system fonts only.
+const run = (first: number, step = 1) => String.fromCodePoint(...Array.from({ length: 32 }, (_, i) => first + i * step));
+const RANGES: [string, string][] = [
+  ["ascii", run(0x30)],
+  ["latin", "°·•●".repeat(8)],
+  ["arrows", run(0x2190)],
+  ["box", run(0x2500)],
+  ["box", run(0x2550)],
+  ["blocks", run(0x2580)],
+  ["shapes", run(0x25a0)],
+  ["braille", run(0x2800, 8)],
+  ["sextants", run(0x1fb00)],
+  ["wedges", run(0x1fb3c)],
+  ["octants", run(0x1cd00)],
+];
+for (const suffix of ["", "-system"]) {
+  $(`ranges-labels${suffix}`).textContent = RANGES.map(([label]) => label).join("\n");
+}
+$("ranges-font").textContent = $("ranges-system").textContent = RANGES.map(([, glyphs]) => glyphs).join("\n");
+const FONT = '15px "animate-unicode mono"';
+const measureRanges = () => {
+  const loaded = document.fonts.check(FONT, "⠿🬀");
+  const ours = spread(rowWidths($("ranges-font")));
+  say($("ranges-font-readout"), loaded && ours.even, `bundled font ${loaded ? "loaded" : "not loaded"}; ${ours.text}`);
+  const system = spread(rowWidths($("ranges-system")));
+  say($("ranges-system-readout"), null, `system fonts only: ${system.text}${system.even ? "" : " (uneven, as expected without the font)"}`);
+};
+void document.fonts.load(FONT, "⠿🬀").then(measureRanges, measureRanges);
+setInterval(measureRanges, 1000);
 
 // Changing the piece, at a click and in bulk.
 const swap = $("swap");

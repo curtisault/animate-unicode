@@ -62,6 +62,27 @@
         margin: 12px 0;
         font-size: 14px;
       }
+      .ranges {
+        display: flex;
+        gap: 1.5ch;
+        overflow-x: auto;
+      }
+      .ranges pre {
+        margin: 0;
+        line-height: 1.2;
+        font-size: 15px;
+      }
+      #ranges-font {
+        font-family: "animate-unicode mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+      #ranges-system {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+      #ranges-labels,
+      #ranges-labels-system {
+        color: var(--muted);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
       .resizable {
         resize: horizontal;
         overflow: hidden;
@@ -135,10 +156,33 @@
       <h2>Braille in a &lt;pre&gt; <span>braille-wave</span></h2>
       <div class="stage"><unicode-art piece="braille-wave" id="braille"></unicode-art></div>
       <p class="readout" id="braille-rows"></p>
-      <p class="note">Until the bundled font (Phase 5), braille comes from whatever face the system falls back to; unequal rows here are that.</p>
+      <p class="note">Drawn in the bundled font (web/fonts), which leads the stack, so every row should measure the same.</p>
       <ul class="checks">
         <li><label><input type="checkbox" /> both waves move; dots are crisp</label></li>
         <li><label><input type="checkbox" /> the readout says every row is the same width</label></li>
+      </ul>
+    </section>
+
+    <section data-case="font">
+      <h2>Every range in a &lt;pre&gt; <span>the bundled font, then system fonts only</span></h2>
+      <p class="note">
+        Each row is 32 glyphs from one range. In the bundled font every row measures the same; in system fonts only, rows with glyphs the system lacks
+        or draws at another width come out longer or shorter. Check on macOS, Windows and Android.
+      </p>
+      <div class="stage ranges">
+        <pre id="ranges-labels" aria-hidden="true"></pre>
+        <pre id="ranges-font"></pre>
+      </div>
+      <p class="readout" id="ranges-font-readout"></p>
+      <div class="stage ranges">
+        <pre id="ranges-labels-system" aria-hidden="true"></pre>
+        <pre id="ranges-system"></pre>
+      </div>
+      <p class="readout" id="ranges-system-readout"></p>
+      <ul class="checks">
+        <li><label><input type="checkbox" /> the bundled font is loaded (readout) and every row in it is the same width</label></li>
+        <li><label><input type="checkbox" /> glyphs look right: box lines join, blocks fill their cells, braille dots and sextants are crisp</label></li>
+        <li><label><input type="checkbox" /> the system-only rows show what the font fixes (unequal rows, missing glyphs, or both)</label></li>
       </ul>
     </section>
 
