@@ -250,3 +250,13 @@ fn donut_matches_the_typescript_original() {
         assert_eq!(grid.text(), body.trim_end_matches('\n'), "donut at t={t}");
     }
 }
+
+/// box frames against ascii.rest's box-frames.ts: `fixtures/box-frames.txt` is
+/// its one frame, captured with `node -e` in ../ascii.
+#[test]
+fn box_frames_matches_the_typescript_original() {
+    let (meta, mut piece) = registry::make("box-frames", "").unwrap();
+    let mut grid = Grid::new(meta.cols, meta.rows);
+    piece.frame(0.0, &Env::default(), &mut grid);
+    assert_eq!(grid.text(), include_str!("fixtures/box-frames.txt").trim_end_matches('\n'));
+}
