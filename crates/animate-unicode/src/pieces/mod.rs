@@ -15,6 +15,8 @@
 use crate::registry::Entry;
 use crate::Category;
 
+#[cfg(feature = "cities")]
+pub mod cities;
 #[cfg(feature = "companies")]
 pub mod companies;
 #[cfg(feature = "creatures")]
@@ -31,6 +33,8 @@ pub mod generative;
 pub mod logos;
 #[cfg(feature = "nature")]
 pub mod nature;
+#[cfg(feature = "nights")]
+pub mod nights;
 #[cfg(feature = "objects")]
 pub mod objects;
 #[cfg(feature = "physics")]
@@ -43,9 +47,17 @@ pub mod space;
 pub mod r#type;
 #[cfg(feature = "ui")]
 pub mod ui;
+#[cfg(feature = "wilds")]
+pub mod wilds;
 
 /// Every category built in, with its pieces, in the site's order ([`Category::ALL`]).
 pub static CATEGORIES: &[(Category, &[Entry])] = &[
+    #[cfg(feature = "cities")]
+    (Category::Cities, cities::REGISTRY),
+    #[cfg(feature = "nights")]
+    (Category::Nights, nights::REGISTRY),
+    #[cfg(feature = "wilds")]
+    (Category::Wilds, wilds::REGISTRY),
     #[cfg(feature = "ui")]
     (Category::Ui, ui::REGISTRY),
     #[cfg(feature = "data")]

@@ -39,7 +39,8 @@ mise is the only entry point (`mise tasks` lists them all):
 - `mise run test`, `mise run lint`, `mise run fmt`
 - `mise run show <slug>`: a piece's frames as text. `mise run play <slug>`: in the terminal.
 - `mise run dev`: the site, on a debug wasm build.
-- `mise run size`: fails when a category's wasm module passes 150 KB gzipped.
+- `mise run size`: fails when a category's wasm module passes 150 KB gzipped
+  (225 KB for a scenes category: cities, nights, wilds).
 
 ## Conventions
 

@@ -161,3 +161,17 @@ test("set_mono swaps a logo to its one-ink drawing", () => {
   assert.ok([...mono].filter((c) => c === " ").length > [...colour].filter((c) => c === " ").length);
   p.free();
 });
+
+test("a scene's back colours come through backs_ptr, one a cell, in its palette", () => {
+  const { mod, wasm } = of("night-coast");
+  const p = new mod.Player("night-coast", "");
+  p.frame(0, false);
+  const n = p.cols() * p.rows();
+  const backs = new Uint8Array(wasm.memory.buffer, p.backs_ptr(), n);
+  const palette = JSON.parse(p.meta_json()).palette;
+  assert.ok(backs.every((b) => b < palette.length), "every cell has a back colour in the palette");
+  p.set_mono(true);
+  p.frame(0, false);
+  assert.ok(new Uint8Array(wasm.memory.buffer, p.backs_ptr(), n).every((b) => b === 255), "none in one ink");
+  p.free();
+});

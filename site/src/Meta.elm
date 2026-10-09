@@ -64,12 +64,12 @@ type alias Group =
     }
 
 
-{-| Sidebar order, after ascii.rest: the scenes first, then the pieces meant as
+{-| Sidebar order, after ascii.rest: the scenes (cities, nights, wilds) first, then the pieces meant as
 page furniture, then the rest. Every `Category` in meta.rs is in exactly one.
 -}
 groups : List Group
 groups =
-    [ { label = "art", categories = [ "scenes" ] }
+    [ { label = "art", categories = [ "cities", "nights", "wilds" ] }
     , { label = "components", categories = [ "ui", "data", "type", "logos", "companies", "distros" ] }
     , { label = "more", categories = [ "shapes", "space", "physics", "nature", "creatures", "objects", "generative", "effects" ] }
     ]

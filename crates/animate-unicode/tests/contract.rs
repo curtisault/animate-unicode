@@ -14,7 +14,7 @@
 //!
 //! `PIECE` takes a slug or a comma-separated list.
 
-use animate_unicode::{registry, Category, Charset, Env, Grid, Options, Piece, NO_BACK, WIDE_TAIL};
+use animate_unicode::{registry, Charset, Env, Grid, Options, Piece, NO_BACK, WIDE_TAIL};
 use std::time::Instant;
 use unicode_width::UnicodeWidthChar;
 
@@ -96,7 +96,7 @@ fn every_piece_keeps_the_contract() {
         if m.note.is_empty() || m.note.chars().count() > 72 {
             errors.push("meta.note must be 1-72 chars".into());
         }
-        let scene = m.category == Category::Scenes;
+        let scene = m.category.scene();
         let (max_cols, max_rows) = if scene { (320, 120) } else { (80, 32) };
         if m.cols < 1 || m.cols > max_cols {
             errors.push(format!("meta.cols must be 1-{max_cols}"));

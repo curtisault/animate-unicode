@@ -63,6 +63,7 @@ Do not relitigate these; the owner chose them with the trade-offs in view.
 | Site | Elm 0.19.1, Vite + `vite-plugin-elm` | Owner's choice. Elm renders `<unicode-art>` as an ordinary tag; it never touches wasm memory. |
 | Tooling | `mise.toml` with `[tasks]` as the single entry point | `mise run check` is what CI runs. |
 | One wasm module per category | Yes, since 2026-10-09 (it was one module for all pieces) | One module reached 249 KB gz with 79 pieces, on course for some 720 KB. Each category is a Cargo feature, and `build:wasm` builds a module for each into `web/pkg/<category>`, with `web/pkg/modules.js` listing every piece and importing each module on first use. A page loads only the categories it shows, and a tag loads nothing until it comes near the screen. Each module is 41–91 KB gz, gated at 150 KB. The cost: every module repeats the ~33 KB base, so a page showing every category loads 539 KB in all, not 249. A piece may use only its own category's code. The dev build stays one module, `all`. |
+| Scenes in three categories, gated higher | Yes, since 2026-10-09 | The 15 scenes made one 202 KB gz module (tokyo-rain alone is 51 KB of code). Scenes are now three categories, cities, nights and wilds, five scenes each, so three modules of 84–120 KB gz; the site groups them as art. `Category::scene()` is true for the three, which the contract holds to a scene's sizes and budgets. A scenes category is gated at 225 KB gz, the rest at 150. |
 | Licence | MIT | `Cargo.toml` says so; `LICENSE` file not yet written (owner's name). Code ported from ascii.rest keeps its MIT attribution comment. |
 
 ## What the scaffold contains
@@ -182,7 +183,7 @@ and one line in `pieces/mod.rs` `REGISTRY`. `tests/contract.rs` enforces, for ev
 |---|---|
 | slug | kebab-case, unique |
 | name, note | non-empty; note ≤ 72 chars, lowercase, says what you see |
-| size | 1–80 × 1–32, or 1–320 × 1–120 for `Category::Scenes` |
+| size | 1–80 × 1–32, or 1–320 × 1–120 for a scene (`Category::scene()`: cities, nights, wilds) |
 | fps | 0–60; 0 means a still |
 | palette | `None`, or 2–64 `#rrggbb`; scenes must have palette **and** ground |
 | cell | 1 (square) or 2 (character-shaped) |
@@ -409,7 +410,7 @@ Acceptance: a checklist page `site/public/test.html` (plain HTML, no Elm) with o
 `site/src/Main.elm` is a `Browser.application` with `/` and `/:slug`. It works but is bare.
 
 Tasks:
-1. **Layout** after ascii.rest: sidebar grouped (`art` = scenes; `components` = ui, data, type, logos; `more` = the rest), piece page with name, note, size, fps, charset, the live piece, and copy-able snippets (HTML tag; later React/Astro). Keep one monospace face and `prefers-color-scheme`. `site/src/site.css` has the tokens.
+1. **Layout** after ascii.rest: sidebar grouped (`art` = the scenes: cities, nights, wilds; `components` = ui, data, type, logos, companies, distros; `more` = the rest), piece page with name, note, size, fps, charset, the live piece, and copy-able snippets (HTML tag; later React/Astro). Keep one monospace face and `prefers-color-scheme`. `site/src/site.css` has the tokens.
 2. **Options UI**: for a piece with `Meta.options`, render inputs from the JSON defaults (number → range or number input, bool → checkbox, string → text) and pass the merged JSON as the `options` attribute. Elm owns the state; the element restarts the piece on attribute change. Use `Html.Keyed` around `<unicode-art>` keyed by slug so navigating between pieces replaces the node rather than mutating it (either works; keyed is cleaner for freeing).
 3. **Flags**: `main.ts` passes every `Meta` as JSON. Elm's decoder (`metaDecoder`) currently reads 9 fields; add `options`, `ground`, `cell`, `clock` as they become needed. Decoder failures currently fall back to an empty list silently: surface them (show the error) during development.
 4. **mono / paper toggles** on the piece page, like ascii.rest's "one ink" switch.
@@ -579,7 +580,7 @@ Debug builds skip the timing budgets (`cfg!(debug_assertions)`); always run `mis
 - Per frame (release, native): ≤ 4 ms avg / 30 ms worst; scenes ≤ 10 / 40. Wasm is typically 1.2–2× native **(unverified for this code)**; if a piece sits near the native budget, check it in the browser's profiler.
 - Draw: the atlas renderer redraws only changed cells; a full-screen scene at 320×120 = 38 400 cells is the worst case, which ascii.rest handles on phones. Unicode changes nothing here.
 - Memory: a `Grid` is 5 bytes/cell; a 320×120 scene is 192 KB plus the piece's own buffers. Fine.
-- Wasm size: a module per category, each the ~33 KB base plus 3–5 KB gz a piece (Appendix B). Gate at 150 KB gz a module (`mise run size`); a category that outgrows it is split in two.
+- Wasm size: a module per category, each the ~33 KB base plus 3–5 KB gz a piece (Appendix B). Gate at 150 KB gz a module, 225 KB for a scenes category (`mise run size`); a category that outgrows it is split in two, as the scenes were.
 - Load: each category's module is fetched and instantiated once per page, when its first tag comes within a screen of the viewport; the site's piece list comes from `pkg/modules.js`, with no wasm.
 
 ## Risks and open questions
@@ -666,6 +667,7 @@ Measured 2026-10-08 on this machine. TS minified with esbuild 0.25; Rust 1.97, `
 | One small piece alone (geometric-tiles): the base every module repeats | 74.2 KB | 33.4 KB |
 | **Split by category** (2026-10-09): effects (2 pieces) to physics (15) | 86.5–202.3 KB | **40.8–91.1 KB** a module, 539.0 KB in all |
 | After wave 3 (2026-10-09): 11 modules, 134 pieces | 137.9–216.4 KB | 62.4–95.8 KB a module, 886.0 KB in all |
+| After wave 5 (2026-10-09): 17 modules, 211 pieces; the scenes in three | 139.4–316.1 KB | 43.3 KB (companies) to 120.3 KB (cities); 1 350.6 KB in all |
 | After wave 4 (2026-10-09): 14 modules, 194 pieces; the 60 logos are data for one shared `logo` module | 138.8–315.8 KB | 43.2 KB (companies), 55.9 KB (distros), 61.8 KB (logos); 1 028.5 KB in all |
 
 Reading: the fixed cost of `std` + serde_json + bindgen is ~33 KB gz; each additional piece should add roughly what its TS does (1–3 KB gz) since the runtime is already paid for. Re-measured after eleven pieces: the eight Phase 6 pieces added 22.3 KB gz, about 2.8 KB each, the top of the projected range (octant-sphere carries its 256-glyph table). At that rate the 500 KB gate is some 150 pieces away. After wave 2 the one module was 249 KB with 79 pieces, the 30 of wave 2 costing about 3.4 KB each, so the 500 KB gate would have fallen in wave 3; the module was split by category instead.

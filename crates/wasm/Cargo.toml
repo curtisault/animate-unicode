@@ -21,7 +21,9 @@ console_error_panic_hook = { version = "0.1.7", optional = true }
 # --no-default-features, as `mise run build:wasm` builds each module.
 default = ["all"]
 all = ["animate-unicode/all"]
-scenes = ["animate-unicode/scenes"]
+cities = ["animate-unicode/cities"]
+nights = ["animate-unicode/nights"]
+wilds = ["animate-unicode/wilds"]
 ui = ["animate-unicode/ui"]
 data = ["animate-unicode/data"]
 type = ["animate-unicode/type"]
