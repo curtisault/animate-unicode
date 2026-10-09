@@ -15,6 +15,8 @@
 use crate::registry::Entry;
 use crate::Category;
 
+#[cfg(feature = "creatures")]
+pub mod creatures;
 #[cfg(feature = "data")]
 pub mod data;
 #[cfg(feature = "effects")]
@@ -50,6 +52,8 @@ pub static CATEGORIES: &[(Category, &[Entry])] = &[
     (Category::Physics, physics::REGISTRY),
     #[cfg(feature = "nature")]
     (Category::Nature, nature::REGISTRY),
+    #[cfg(feature = "creatures")]
+    (Category::Creatures, creatures::REGISTRY),
     #[cfg(feature = "generative")]
     (Category::Generative, generative::REGISTRY),
     #[cfg(feature = "effects")]

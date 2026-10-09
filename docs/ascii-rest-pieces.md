@@ -27,7 +27,7 @@ are not tracked here.
 | space | 11 | | | 11 | | |
 | physics | 14 | | | 14 | | |
 | nature | 16 | 2 | | 14 | | |
-| creatures | 10 | 10 | | | | |
+| creatures | 10 | | | 10 | | |
 | objects | 14 | 14 | | | | |
 | generative | 13 | | | 13 | | |
 | effects | 8 | 6 | | | | 2 |
@@ -37,7 +37,7 @@ are not tracked here.
 | logos | 28 | 28 | | | | |
 | companies | 14 | 14 | | | | |
 | distros | 23 | 23 | | | | |
-| **all** | **209** | **112** | | **94** | | **3** |
+| **all** | **209** | **102** | | **104** | | **3** |
 
 Recount after changing rows:
 
@@ -238,16 +238,16 @@ carry only the source.
 
 | piece | size, fps | Unicode | enhancement | status |
 |---|---|---|---|---|
-| aquarium | 60×20, 15 | octant fish sprites, braille bubbles | a colour per fish, swaying weed | todo |
-| butterfly | 64×24, 30 | octant wings | patterned, coloured wings | todo |
-| cat | 56×15, 15 | the sprite redrawn in octants | tabby stripes in colour | todo |
-| fox | 47×16, 10 | the sprite redrawn in octants | orange coat with a white tail tip | todo |
-| jellyfish | 44×26, 24 | octant bell, braille tentacles | a translucent glow palette | todo |
-| owl | 41×24, 12 | the sprite redrawn in octants | eyes that catch the light as it blinks | todo |
-| snake | 64×15, 20 | octant body | patterned scales in colour | todo |
-| spider | 28×24, 15 | braille silk, octant body | a web drawn behind it | todo |
-| starlings | 64×16, 30 | one bird a braille dot (boids) | eight times the birds in the same cells | todo |
-| whale | 72×18, 15 | octant body, braille spout | sea colour and a spray that drifts | todo |
+| aquarium | 60×20, 15 | octant fish shaped dot by dot (body, fanned tail, eye; a tall-finned angel), mirrored and face on as they turn; octant bubbles swelling as they rise | a colour per fish (tetra blue, orange-red, yellow, silver angel, goldfish), swaying green weed, mixed gravel | built |
+| butterfly | 64×24, 30 | the wings sampled per octant dot through the perspective, narrowing smoothly as they rise | orange wings darkening at the root, black margins with cream spots, a cream band, a blue eyespot ringed gold | built |
+| cat | 56×15, 15 | redrawn in octants from round shapes, its back swelling smoothly; a gap where parts meet keeps their outlines in one ink | a tabby: orange-brown with dark stripes, a pale belly, pink ears and nose, closed eyes | built |
+| fox | 47×16, 10 | redrawn in octants from round shapes, curled on its brush; parts outlined by gaps | an orange coat darker on the back, white cheeks, chest and tail tip, black ear tips and nose, an amber eye | built |
+| jellyfish | 44×26, 24 | an octant bell dithered by the jelly's thickness; braille threads and frilled arms fading to their tips | a translucent blue bell deepening to violet, pink horseshoes, pink frills, pale violet threads | built |
+| owl | 41×24, 12 | redrawn in octants: tufts, a facial disc, folded wings, talons; the head turns smoothly | brown plumage, scalloped wings, a barred pale breast, a tawny disc, amber eyes whose catchlights brighten after a blink | built |
+| snake | 64×15, 20 | an octant body as wide as it is at every point, sliding a dot at a time, a thread of tail | a diamondback: tan with cream-edged dark diamonds, paler flanks, a red forked tongue, a pale rattle | built |
+| spider | 28×24, 15 | braille web and silk; an octant spider, eight jointed legs stepping | a black widow with a red hourglass in a pale web | built |
+| starlings | 64×16, 30 | one bird a braille dot: 2560 boids, their distances scaled so the cloud keeps its size | pale birds on a dusk sky, whitest where they crowd, an amber falcon | built |
+| whale | 72×18, 15 | redrawn in octants from smooth outlines sinking through the surface; a braille spout | slate blue, darker on the back, a pale fluke, a white spout thinning to mist, a blue sea | built |
 
 ### objects (14)
 
