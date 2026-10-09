@@ -31,13 +31,13 @@ are not tracked here.
 | objects | 14 | 14 | | | | |
 | generative | 13 | | | 13 | | |
 | effects | 8 | 6 | | | | 2 |
-| ui | 12 | 11 | 1 | | | |
+| ui | 12 | | | 12 | | |
 | data | 10 | 10 | | | | |
 | type | 9 | 9 | | | | |
 | logos | 28 | 28 | | | | |
 | companies | 14 | 14 | | | | |
 | distros | 23 | 23 | | | | |
-| **all** | **209** | **167** | **1** | **38** | | **3** |
+| **all** | **209** | **156** | | **50** | | **3** |
 
 Recount after changing rows:
 
@@ -56,9 +56,6 @@ Statuses, as the last cell of a row:
 - **covered: X**: an existing piece is already this one's Unicode version.
   ascii.rest's `donut` is also kept here as a byte-exact ASCII port; that one
   is the fixture for the core crate, not the translation.
-
-`box-frames` counts as wip: it is ported and fixture-tested, but not yet
-enhanced.
 
 ## What a row needs
 
@@ -102,7 +99,7 @@ and particles (quadrant-fire now uses it too).
 | # | what | needed by | status |
 |---|---|---|---|
 | E1 | **Two colours a cell.** A background colour per cell beside the foreground: `Grid`, the wasm `Player`, the canvas renderer (fill the cell, then draw the glyph), and the CLI (`48;2;r;g;b`). Half blocks (`▀` over a different `▄`) then give two square pixels a cell, each in its own colour. The `<pre>` path has one ink, so a piece using this needs an octant-dither fallback there. | the 15 scenes, sunrise, landscape; a filled plasma | todo |
-| E2 | **Local time in `Env`.** `Env` has only `paper`. Clock pieces need the local wall time: from `Date` in the shell, the system clock in the CLI, and a fixed instant in the contract test so it stays deterministic. | analog-clock, calendar, digital-clock, landscape, sundial | todo |
+| E2 | **Local time in `Env`.** `Env` has only `paper`. Clock pieces need the local wall time: from `Date` in the shell, the system clock in the CLI, and a fixed instant in the contract test so it stays deterministic. | analog-clock, calendar, digital-clock, landscape, sundial | done: `clock::Wall` and `Ticker`, `Env::now`, `Player::set_clock` (mount.ts calls it), chrono in the CLI |
 | E3 | **Categories.** ascii.rest has `companies` and `distros`; `Category` stops at `Logos`. Add the two, or fold them into `logos`. The site's sidebar groups and the CLI's `list` follow. | the 37 company and distro logos | todo |
 | E4 | **Logos from SVG.** A build script (`scripts/logo.py`, run with uvx like `font.py`) that renders each SVG and reduces it to an octant mask, choosing a wedge glyph (U+1FB3C–1FB67) where an edge cuts a cell at a slant, with a colour per cell. Its output is committed. One shared `logo` module draws any logo from that data and runs the glint or the scan line, so 65 logos cost data rather than 65 copies of the code. | logos, companies, distros | todo |
 | E5 | **Size.** 64.6 KB gz with 11 pieces, about 2.8 KB more for each further piece. After wave 1 (2026-10-09): 148.0 KB gz with 49 pieces, about 2.2 KB a piece since. The 167 still to build would add some 370 KB at that rate, to about 520 KB: just past the 500 KB gate. E4 makes logos cheaper. Before wave 3, decide whether to raise the gate or to split pieces into several wasm modules ([risk 5](IMPLEMENTATION_PLAN.md#risks-and-open-questions)). | everything after wave 2 | todo |
@@ -305,18 +302,18 @@ carry only the source.
 
 | piece | size, fps | Unicode | enhancement | status |
 |---|---|---|---|---|
-| boot-log | 64×16, 15 | eighth blocks (already) | coloured status words, a braille spinner | todo |
-| box-frames | 78×20, still | box drawing (already) | frames from Symbols for Legacy Computing (U+1FB00) | wip: ported and fixture-tested, not yet enhanced |
-| calendar | 32×13, 8 · options, clock | box-drawn grid | today in colour | todo |
-| digital-clock | 70×11, 10 · options, clock | octant segments with sloped ends | a lit and an unlit segment colour | todo |
-| dividers | 63×25, still · options | box drawing, geometric shapes | ornaments from Symbols for Legacy Computing | todo |
-| file-tree | 36×23, 15 · options | box drawing, ▸ ▾ markers | coloured folders and files | todo |
-| form-controls | 54×16, 15 · options | ☐ ☑ ○ ◉ controls | the focused field in colour | todo |
-| not-found | 60×21, 15 · options | octant block letters | an octant ghost, colour | todo |
-| progress-bar | 48×11, 30 · options | eighth blocks | braille and gradient-coloured styles | todo |
-| skeleton | 52×23, 24 · options | rounded box drawing, shade blocks | the shimmer as a colour gradient | todo |
-| spinners | 66×13, 12 · options | braille spinners (⠋⠙⠹…) and the rest | twice the styles | todo |
-| terminal | 62×18, 20 · options | box drawing | a coloured prompt and output | todo |
+| boot-log | 64×16, 15 | eighth-block memory bar; braille spinners for devices being probed | a console's colours: green ok, amber warn, dim timestamps | built |
+| box-frames | 78×20, still | box drawing, ascii.rest's sheet to the cell (fixture-tested) | each frame its own hue round the wheel, labels dim | built |
+| calendar | 32×13, 8 · options, clock | cal's layout; today in a half-block pill `▐ 8▌` | today in amber, weekends dim, the clock in its own colour | built |
+| digital-clock | 70×11, 10 · options, clock | octant seven-segment digits with pointed segment ends | lit segments LED red, unlit a faint dithered trace | built |
+| dividers | 63×25, still · options | ascii.rest's sheet to the cell (fixture-tested) | each rule shades teal to violet to rose along its length | built |
+| file-tree | 36×23, 15 · options | tree lines, `▸` on closed folders | folders blue, files by kind, the cursor amber | built |
+| form-controls | 54×16, 15 · options | `○ ◉` radios, `□ ▣` checkboxes, a `●` slider knob, `▾` select | focus amber, choices cyan, saved green | built |
+| not-found | 60×21, 15 · options | ascii.rest's digits and shadow; a smooth octant ghost with a rippling hem | the code rose to amber, a pale ghost whose eyes look where it goes | built |
+| progress-bar | 48×11, 30 · options | eighth blocks, and a braille bar filling half a cell at a time | each fill shades teal to amber along its length | built |
+| skeleton | 52×23, 24 · options | rounded box drawing, shade blocks | the shimmer a band of colour lifting grey to blue-white | built |
+| spinners | 66×25, 12 · options | ascii.rest's twelve plus twelve in braille and geometric shapes (rows 13 → 25) | each spinner its colour | built |
+| terminal | 62×18, 20 · options | box drawing | a shell's colours: green path, blue sign, grey output, green ticks | built |
 
 ### data (10)
 

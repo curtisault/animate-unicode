@@ -260,3 +260,14 @@ fn box_frames_matches_the_typescript_original() {
     piece.frame(0.0, &Env::default(), &mut grid);
     assert_eq!(grid.text(), include_str!("fixtures/box-frames.txt").trim_end_matches('\n'));
 }
+
+/// dividers against ascii.rest's dividers.ts: `fixtures/dividers.txt` is its
+/// one frame, captured with `node --experimental-strip-types` in ../ascii.
+/// The gradient is colour only, so the text must match exactly.
+#[test]
+fn dividers_match_the_typescript_original() {
+    let (meta, mut piece) = registry::make("dividers", "").unwrap();
+    let mut grid = Grid::new(meta.cols, meta.rows);
+    piece.frame(0.0, &Env::default(), &mut grid);
+    assert_eq!(grid.text(), include_str!("fixtures/dividers.txt").trim_end_matches('\n'));
+}

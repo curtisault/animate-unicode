@@ -5,20 +5,26 @@
 use crate::registry::Entry;
 
 pub mod arrow_field;
+pub mod boot_log;
 pub mod bouncing_balls;
 pub mod box_frames;
 pub mod braille_donut;
 pub mod braille_lissajous;
 pub mod braille_wave;
+pub mod calendar;
 pub mod chladni;
 pub mod cube;
+pub mod digital_clock;
+pub mod dividers;
 pub mod dna_helix;
 pub mod donut;
 pub mod double_pendulum;
 pub mod epicycles;
 pub mod falling_sand;
+pub mod file_tree;
 pub mod flag;
 pub mod flow_field;
+pub mod form_controls;
 pub mod fountain;
 pub mod geometric_tiles;
 pub mod glider_gun;
@@ -36,18 +42,23 @@ pub mod mandelbrot;
 pub mod maze;
 pub mod mobius_strip;
 pub mod newtons_cradle;
+pub mod not_found;
 pub mod octant_sphere;
 pub mod pendulum_wave;
 pub mod plasma;
 pub mod plucked_string;
 pub mod pond_ripples;
+pub mod progress_bar;
 pub mod quadrant_fire;
 pub mod reaction_diffusion;
 pub mod rule_30;
 pub mod sextant_plasma;
 pub mod sierpinski;
+pub mod skeleton;
 pub mod smoke;
+pub mod spinners;
 pub mod spring;
+pub mod terminal;
 pub mod tesseract;
 pub mod torus_knot;
 pub mod twisted_ring;
@@ -107,4 +118,15 @@ pub static REGISTRY: &[Entry] = &[
     Entry { meta: &pond_ripples::META, make: pond_ripples::make },
     Entry { meta: &smoke::META, make: smoke::make },
     Entry { meta: &wave_interference::META, make: wave_interference::make },
+    Entry { meta: &boot_log::META, make: boot_log::make },
+    Entry { meta: &calendar::META, make: calendar::make },
+    Entry { meta: &digital_clock::META, make: digital_clock::make },
+    Entry { meta: &dividers::META, make: dividers::make },
+    Entry { meta: &spinners::META, make: spinners::make },
+    Entry { meta: &progress_bar::META, make: progress_bar::make },
+    Entry { meta: &skeleton::META, make: skeleton::make },
+    Entry { meta: &file_tree::META, make: file_tree::make },
+    Entry { meta: &form_controls::META, make: form_controls::make },
+    Entry { meta: &not_found::META, make: not_found::make },
+    Entry { meta: &terminal::META, make: terminal::make },
 ];

@@ -4,6 +4,10 @@
 //! A straight port of ascii.rest's box-frames.ts (MIT, @bas3line); the test
 //! `box_frames_matches_the_typescript_original` in tests/contract.rs holds it
 //! to the TS sheet cell for cell. It proves box-drawing joins in each renderer.
+//!
+//! The text is ascii.rest's to the cell; what it adds is colour: each frame
+//! in its own hue round the wheel, its label dim inside it, so the sheet
+//! reads as twelve swatches to pick from.
 
 use crate::{Category, Env, Grid, Meta, Options, Piece};
 
@@ -16,8 +20,15 @@ pub static META: Meta = Meta {
     cols: 78,
     rows: 20,
     fps: 0,
+    // Twelve hues round the wheel, one a frame; the labels.
+    palette: Some(&[
+        "#ff6a6a", "#ff9a52", "#f4c84a", "#c8e05a", "#7ad870", "#4ad8a8", "#4ac8e0", "#5aa0f4", "#7a7af4", "#a86af0", "#d86ad8", "#f06aa8", "#7a808c",
+    ]),
+    ground: Some("#0d0e12"),
     ..Meta::DEFAULT
 };
+
+const LABEL: u8 = 12;
 
 /// One frame, borders included.
 const W: i64 = 16;
@@ -68,10 +79,18 @@ pub fn make(_: &Options) -> Box<dyn Piece> {
             shadow(&mut g, y, x);
         }
         // The titled frame carries its name in the top edge; the rest inside.
+        // Everything the frame drew, its shadow too, in its own hue.
+        for row in y..=y + H {
+            for col in x..x + W + 2 {
+                if g.in_bounds(col, row) && g.get(col as usize, row as usize) != u32::from(' ') {
+                    g.set(col, row, char::from_u32(g.get(col as usize, row as usize)).unwrap_or(' '), i as u8);
+                }
+            }
+        }
         if *name == "titled" {
-            g.text_at(x + 2, y, &format!(" {name} "), 0);
+            g.text_at(x + 2, y, &format!(" {name} "), LABEL);
         } else {
-            g.text_at(x + (W - name.len() as i64) / 2, y + 2, name, 0);
+            g.text_at(x + (W - name.len() as i64) / 2, y + 2, name, LABEL);
         }
     }
     Box::new(BoxFrames { sheet: g })
