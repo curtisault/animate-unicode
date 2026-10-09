@@ -28,15 +28,21 @@ Already in the repository:
 
 Still open:
 
-1. **No git remote.** Nothing has been pushed and CI has never run; Phase 0's
-   "push and confirm CI passes" was left for this.
-2. **The name** (plan, risk 8). `animate-unicode` is a placeholder for the
-   crate, the npm package and the tag. On 2026-10-08 `animate-unicode`,
-   `unicode-art` and `unicode-art-element` were all free on npm.
-3. **First CI run on a clean runner** is unproven: the
-   `rust … targets = "wasm32-unknown-unknown"` mise setting (risk 7), the
-   aqua and GitHub backends for wasm-pack, uv and elm-format, and the npm
-   backend for elm-test (risk 6) have only run on this machine.
+1. **A green CI run.** The repository is
+   [curtisault/animate-unicode](https://github.com/curtisault/animate-unicode)
+   (public), and `main` was pushed on 2026-10-08. The first run
+   ([37878821812](https://github.com/curtisault/animate-unicode/actions/runs/37878821812))
+   installed every tool, wasm32 target included (risk 7 answered), and
+   built the wasm. It then failed at `cargo fmt`: mise's fresh rust install
+   had no rustfmt or clippy. `mise.toml` now asks for both components. The
+   test, build and size steps have not run on a runner yet.
+2. **The name** (plan, risk 8). `animate-unicode` is now the repository's
+   name. It is still a placeholder for the crate, the npm package and the tag.
+   On 2026-10-08 `animate-unicode`, `unicode-art` and `unicode-art-element`
+   were all free on npm.
+3. **The rest of the first CI run**: the npm backend for elm-test (risk 6),
+   uv for the font script (not run in CI), and Node's tests against both wasm
+   builds.
 4. **Timing budgets in CI** may flake on slow runners (risk 9): raise the
    worst-frame budget through an environment variable there rather than
    loosening it locally.
@@ -48,7 +54,7 @@ Still open:
 - **The host**: the plan assumed Cloudflare Workers static assets, as
   ascii.rest uses (`../ascii/site/wrangler.jsonc`). `_redirects` and `_headers`
   also suit Netlify.
-- **Visibility** of the GitHub repository.
+- ~~**Visibility** of the GitHub repository.~~ Public, decided 2026-10-08.
 
 ## Tasks
 
@@ -73,9 +79,8 @@ Still open:
    included (the tarball test holds this), and a `release.yml` on tags.
    `prepublishOnly` needs mise on the publishing machine or runner.
 4. **CI.** `ci.yml` exists and already runs the size gate, the Node tests and
-   elm-test through `mise run test`. Left: `npm ci` needs the committed
-   `package-lock.json` to be in step (it is now); push and watch the first
-   run. Caching: `jdx/mise-action` caches tools, `Swatinem/rust-cache` the
+   elm-test through `mise run test`. Left: a green run (see Still open, 1).
+   Caching: `jdx/mise-action` caches tools, `Swatinem/rust-cache` the
    target dir; `actions/setup-node` is unnecessary since mise provides node.
 5. **README.** Install, HTML usage, a pieces table generated from
    `metas_json()` by a script (as `../ascii/scripts/readme.ts` does), and
