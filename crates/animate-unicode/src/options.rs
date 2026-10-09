@@ -87,6 +87,12 @@ impl Options {
             .unwrap_or_else(|| default.iter().map(|s| (*s).to_owned()).collect())
     }
 
+    /// The raw JSON under `key`, for an option with structure the typed
+    /// getters do not cover (a list of datasets, say). The piece checks its shape.
+    pub fn json(&self, key: &str) -> Option<&Value> {
+        self.get(key)
+    }
+
     /// True if there are no options at all.
     pub fn is_empty(&self) -> bool {
         self.values.is_empty()

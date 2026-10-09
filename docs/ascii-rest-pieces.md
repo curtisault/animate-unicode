@@ -32,12 +32,12 @@ are not tracked here.
 | generative | 13 | | | 13 | | |
 | effects | 8 | 6 | | | | 2 |
 | ui | 12 | | | 12 | | |
-| data | 10 | 10 | | | | |
+| data | 10 | | | 10 | | |
 | type | 9 | 9 | | | | |
 | logos | 28 | 28 | | | | |
 | companies | 14 | 14 | | | | |
 | distros | 23 | 23 | | | | |
-| **all** | **209** | **156** | | **50** | | **3** |
+| **all** | **209** | **146** | | **60** | | **3** |
 
 Recount after changing rows:
 
@@ -102,7 +102,7 @@ and particles (quadrant-fire now uses it too).
 | E2 | **Local time in `Env`.** `Env` has only `paper`. Clock pieces need the local wall time: from `Date` in the shell, the system clock in the CLI, and a fixed instant in the contract test so it stays deterministic. | analog-clock, calendar, digital-clock, landscape, sundial | done: `clock::Wall` and `Ticker`, `Env::now`, `Player::set_clock` (mount.ts calls it), chrono in the CLI |
 | E3 | **Categories.** ascii.rest has `companies` and `distros`; `Category` stops at `Logos`. Add the two, or fold them into `logos`. The site's sidebar groups and the CLI's `list` follow. | the 37 company and distro logos | todo |
 | E4 | **Logos from SVG.** A build script (`scripts/logo.py`, run with uvx like `font.py`) that renders each SVG and reduces it to an octant mask, choosing a wedge glyph (U+1FB3C–1FB67) where an edge cuts a cell at a slant, with a colour per cell. Its output is committed. One shared `logo` module draws any logo from that data and runs the glint or the scan line, so 65 logos cost data rather than 65 copies of the code. | logos, companies, distros | todo |
-| E5 | **Size.** 64.6 KB gz with 11 pieces, about 2.8 KB more for each further piece. After wave 1 (2026-10-09): 148.0 KB gz with 49 pieces, about 2.2 KB a piece since. The 167 still to build would add some 370 KB at that rate, to about 520 KB: just past the 500 KB gate. E4 makes logos cheaper. Before wave 3, decide whether to raise the gate or to split pieces into several wasm modules ([risk 5](IMPLEMENTATION_PLAN.md#risks-and-open-questions)). | everything after wave 2 | todo |
+| E5 | **Size.** 64.6 KB gz with 11 pieces, about 2.8 KB more for each further piece. After wave 1 (2026-10-09): 148.0 KB gz with 49 pieces, about 2.2 KB a piece since. After ui and data (2026-10-09): 213.7 KB gz with 70 pieces; those 21 cost about 3.1 KB each, the text pieces carrying their strings. The 146 still to build would add some 400 KB at that rate, to about 615 KB: well past the gate. Decide before wave 3. E4 makes logos cheaper. Before wave 3, decide whether to raise the gate or to split pieces into several wasm modules ([risk 5](IMPLEMENTATION_PLAN.md#risks-and-open-questions)). | everything after wave 2 | todo |
 
 Logo licences: devicon's SVGs are MIT, and Simple Icons' are CC0 (omarchy's
 is MIT). Five companies' marks came from their own sites: command-code,
@@ -319,16 +319,16 @@ carry only the source.
 
 | piece | size, fps | Unicode | enhancement | status |
 |---|---|---|---|---|
-| bar-chart | 60×19, 24 · options | eighth blocks | a colour per series; horizontal bars as an option | todo |
-| candlesticks | 70×22, 15 · options | half-block bodies, braille wicks | green up, red down | todo |
-| cpu-meters | 66×16, 10 · options | eighth-block meters, a braille history graph | htop's colour segments | todo |
-| equalizer | 62×16, 30 · options | eighth blocks | a green-to-red gradient | todo |
-| gauge | 55×18, 30 · options | braille arc and needle | coloured zones | todo |
-| heartbeat | 72×15, 25 · options | braille trace at 4× vertical resolution | a green phosphor glow | todo |
-| heatmap | 66×12, 10 · options | ■ cells | GitHub's greens | todo |
-| radar | 53×25, 30 · options | braille sweep | a green afterglow | todo |
-| sparkline | 72×9, 12 · options | braille sparklines, two samples a cell | a colour per line | todo |
-| uptime-bar | 64×15, 8 · options | eighth blocks | green, amber and red days | todo |
+| bar-chart | 60×19, 24 · options | eighth blocks, dashed gridlines | each dataset its colour; the bars and tab take the live one's | built |
+| candlesticks | 70×22, 15 · options | ascii.rest's chart to the cell (fixture-tested) | green hollow up candles, red solid down, the live one brighter, the last price amber | built |
+| cpu-meters | 66×16, 10 · options | meters in block shades (`█ ▓ ▒ ░`) per part; the machine matches the TS | htop's colours: user green, kernel red, buffers blue, cache amber | built |
+| equalizer | 62×16, 30 · options | eighth blocks (fixture-tested) | lit by height, green to yellow to red, white caps | built |
+| gauge | 55×18, 30 · options | braille dial: rim, ticks and needle a dot wide | the band by zone, green, amber, red, solid to the reading | built |
+| heartbeat | 72×15, 25 · options | a smooth PQRST waveform per braille dot | green phosphor, brightest at the pen; a red heart | built |
+| heatmap | 66×12, 10 · options | days as squares that grow `· ▪ ◼ ■ █` | a code host's greens | built |
+| radar | 53×25, 30 · options | braille scope, dithered afterglow, dotted rings | fading greens, the coast flaring as the beam passes | built |
+| sparkline | 72×11, 12 · options | braille area charts two rows tall, two samples a cell (rows 9 → 11, three series) | a colour per series | built |
+| uptime-bar | 64×15, 8 · options | ascii.rest's bars to the cell (fixture-tested) | green, amber and red days; the headline coloured by today | built |
 
 ### type (9)
 

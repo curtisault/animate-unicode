@@ -271,3 +271,51 @@ fn dividers_match_the_typescript_original() {
     piece.frame(0.0, &Env::default(), &mut grid);
     assert_eq!(grid.text(), include_str!("fixtures/dividers.txt").trim_end_matches('\n'));
 }
+
+/// candlesticks against ascii.rest's candlesticks.ts: the same seeded prices,
+/// so the same chart, cell for cell, at t = 0, 1.3 and 7.7 (frames captured
+/// with node in ../ascii). The colours are this port's own.
+#[test]
+fn candlesticks_match_the_typescript_original() {
+    let fixture = include_str!("fixtures/candlesticks.txt");
+    let (meta, mut piece) = registry::make("candlesticks", "").unwrap();
+    let mut grid = Grid::new(meta.cols, meta.rows);
+    for block in fixture.split("\n\n") {
+        let (head, body) = block.split_once('\n').unwrap();
+        let t: f64 = head.strip_prefix("t=").unwrap().parse().unwrap();
+        piece.frame(t, &Env::default(), &mut grid);
+        assert_eq!(grid.text(), body.trim_end_matches('\n'), "candlesticks at t={t}");
+    }
+}
+
+/// equalizer against ascii.rest's equalizer.ts: the same loop and analyser,
+/// so the same bars and caps at t = 0, 1.3 and 7.7, played in that order
+/// (frames captured with node in ../ascii). The colours are this port's own.
+#[test]
+fn equalizer_matches_the_typescript_original() {
+    let fixture = include_str!("fixtures/equalizer.txt");
+    let (meta, mut piece) = registry::make("equalizer", "").unwrap();
+    let mut grid = Grid::new(meta.cols, meta.rows);
+    for block in fixture.split("\n\n") {
+        let (head, body) = block.split_once('\n').unwrap();
+        let t: f64 = head.strip_prefix("t=").unwrap().parse().unwrap();
+        piece.frame(t, &Env::default(), &mut grid);
+        assert_eq!(grid.text(), body.trim_end_matches('\n'), "equalizer at t={t}");
+    }
+}
+
+/// uptime bar against ascii.rest's uptime-bar.ts: the same seeded days and
+/// the same half-cell slide, at t = 0, 1.3 and 7.7 (frames captured with node
+/// in ../ascii). The colours are this port's own.
+#[test]
+fn uptime_bar_matches_the_typescript_original() {
+    let fixture = include_str!("fixtures/uptime-bar.txt");
+    let (meta, mut piece) = registry::make("uptime-bar", "").unwrap();
+    let mut grid = Grid::new(meta.cols, meta.rows);
+    for block in fixture.split("\n\n") {
+        let (head, body) = block.split_once('\n').unwrap();
+        let t: f64 = head.strip_prefix("t=").unwrap().parse().unwrap();
+        piece.frame(t, &Env::default(), &mut grid);
+        assert_eq!(grid.text(), body.trim_end_matches('\n'), "uptime bar at t={t}");
+    }
+}

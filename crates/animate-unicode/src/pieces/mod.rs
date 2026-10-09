@@ -5,6 +5,7 @@
 use crate::registry::Entry;
 
 pub mod arrow_field;
+pub mod bar_chart;
 pub mod boot_log;
 pub mod bouncing_balls;
 pub mod box_frames;
@@ -12,7 +13,9 @@ pub mod braille_donut;
 pub mod braille_lissajous;
 pub mod braille_wave;
 pub mod calendar;
+pub mod candlesticks;
 pub mod chladni;
+pub mod cpu_meters;
 pub mod cube;
 pub mod digital_clock;
 pub mod dividers;
@@ -20,18 +23,22 @@ pub mod dna_helix;
 pub mod donut;
 pub mod double_pendulum;
 pub mod epicycles;
+pub mod equalizer;
 pub mod falling_sand;
 pub mod file_tree;
 pub mod flag;
 pub mod flow_field;
 pub mod form_controls;
 pub mod fountain;
+pub mod gauge;
 pub mod geometric_tiles;
 pub mod glider_gun;
 pub mod glxgears;
 pub mod gyroscope;
 pub mod harmonograph;
 pub mod heart;
+pub mod heartbeat;
+pub mod heatmap;
 pub mod hilbert_curve;
 pub mod icosahedron;
 pub mod julia_set;
@@ -50,18 +57,21 @@ pub mod plucked_string;
 pub mod pond_ripples;
 pub mod progress_bar;
 pub mod quadrant_fire;
+pub mod radar;
 pub mod reaction_diffusion;
 pub mod rule_30;
 pub mod sextant_plasma;
 pub mod sierpinski;
 pub mod skeleton;
 pub mod smoke;
+pub mod sparkline;
 pub mod spinners;
 pub mod spring;
 pub mod terminal;
 pub mod tesseract;
 pub mod torus_knot;
 pub mod twisted_ring;
+pub mod uptime_bar;
 pub mod voronoi;
 pub mod wave_interference;
 
@@ -129,4 +139,14 @@ pub static REGISTRY: &[Entry] = &[
     Entry { meta: &form_controls::META, make: form_controls::make },
     Entry { meta: &not_found::META, make: not_found::make },
     Entry { meta: &terminal::META, make: terminal::make },
+    Entry { meta: &bar_chart::META, make: bar_chart::make },
+    Entry { meta: &candlesticks::META, make: candlesticks::make },
+    Entry { meta: &cpu_meters::META, make: cpu_meters::make },
+    Entry { meta: &equalizer::META, make: equalizer::make },
+    Entry { meta: &gauge::META, make: gauge::make },
+    Entry { meta: &heartbeat::META, make: heartbeat::make },
+    Entry { meta: &heatmap::META, make: heatmap::make },
+    Entry { meta: &radar::META, make: radar::make },
+    Entry { meta: &sparkline::META, make: sparkline::make },
+    Entry { meta: &uptime_bar::META, make: uptime_bar::make },
 ];
