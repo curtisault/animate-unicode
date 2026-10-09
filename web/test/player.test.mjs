@@ -148,3 +148,16 @@ test("a clock piece shows the wall clock set_clock gives it, in local time", () 
   assert.match(p.text(), /monday 1 +00:30:00/);
   p.free();
 });
+
+test("set_mono swaps a logo to its one-ink drawing", () => {
+  const p = new (of("c").mod.Player)("c", "");
+  p.frame(0, false);
+  const colour = p.text();
+  p.set_mono(true);
+  p.frame(0, false);
+  const mono = p.text();
+  // In colour the C is a white part of the solid hexagon; in one ink it is cut out of it.
+  assert.notEqual(mono, colour);
+  assert.ok([...mono].filter((c) => c === " ").length > [...colour].filter((c) => c === " ").length);
+  p.free();
+});
