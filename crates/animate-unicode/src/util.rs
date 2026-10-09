@@ -1,6 +1,6 @@
 //! Small things most pieces want: a seeded PRNG (never `rand` from a clock:
-//! frames must be deterministic in `t`), a ramp lookup, braille encoding,
-//! ordered dithering.
+//! frames must be deterministic in `t`), ascii.rest's own generator for exact
+//! ports, a ramp lookup, braille encoding, ordered dithering.
 
 /// xorshift64*, seeded. Cheap, good enough for art, the same on every platform.
 #[derive(Clone, Debug)]
@@ -35,6 +35,27 @@ impl Rng {
     /// Uniform in 0..n.
     pub fn below(&mut self, n: usize) -> usize {
         (self.next_u64() % n as u64) as usize
+    }
+}
+
+/// mulberry32, the seeded generator ascii.rest's pieces use, bit for bit: a
+/// port that draws the same numbers places the same seeds, mazes and sparks.
+#[derive(Clone, Debug)]
+pub struct Mulberry32(u32);
+
+impl Mulberry32 {
+    /// A generator from a seed, as `mulberry32(seed)` in JavaScript.
+    pub fn new(seed: u32) -> Self {
+        Self(seed)
+    }
+
+    /// Uniform in [0, 1), the same sequence as the JavaScript.
+    pub fn next_f64(&mut self) -> f64 {
+        self.0 = self.0.wrapping_add(0x6D2B_79F5);
+        let a = self.0;
+        let mut t = (a ^ (a >> 15)).wrapping_mul(1 | a);
+        t = t.wrapping_add((t ^ (t >> 7)).wrapping_mul(61 | t)) ^ t;
+        f64::from(t ^ (t >> 14)) / 4_294_967_296.0
     }
 }
 
@@ -103,6 +124,20 @@ mod tests {
         assert_eq!(braille([2, 0, 0, 0]), '\u{2808}'); // dot 4
         assert_eq!(braille([0, 0, 0, 3]), '\u{28C0}'); // dots 7 and 8
         assert_eq!(braille([3, 3, 3, 3]), '\u{28FF}');
+    }
+
+    #[test]
+    fn mulberry32_matches_the_javascript() {
+        // From node: mulberry32(seed) called three times.
+        let want: [(u32, [f64; 3]); 3] = [
+            (7, [0.011704753153026104, 0.06195825757458806, 0.97690763277933]),
+            (0x5eed, [0.7100320369936526, 0.286336648510769, 0.9519026265479624]),
+            (1009, [0.6929896192159504, 0.6296630043070763, 0.4125610855408013]),
+        ];
+        for (seed, w) in want {
+            let mut r = Mulberry32::new(seed);
+            assert_eq!([r.next_f64(), r.next_f64(), r.next_f64()], w, "seed {seed}");
+        }
     }
 
     #[test]

@@ -14,6 +14,7 @@
 //! the Doom fire palette, so the flame's edge has twice the resolution of the
 //! ASCII version and its body shades from deep red to white.
 
+use crate::util::Mulberry32;
 use crate::{Category, Env, Grid, Meta, Options, Piece, Quadrants, Ramp};
 
 /// The quadrant fire's meta.
@@ -76,19 +77,6 @@ pub fn make(_: &Options) -> Box<dyn Piece> {
     Box::new(QuadrantFire::new())
 }
 
-/// mulberry32, as doom-fire.ts has it, so the spread matches it step for step.
-struct Mulberry32(u32);
-
-impl Mulberry32 {
-    fn next(&mut self) -> f64 {
-        self.0 = self.0.wrapping_add(0x6d2b_79f5);
-        let s = self.0;
-        let mut t = (s ^ (s >> 15)).wrapping_mul(1 | s);
-        t = t.wrapping_add((t ^ (t >> 7)).wrapping_mul(61 | t)) ^ t;
-        f64::from(t ^ (t >> 14)) / 4_294_967_296.0
-    }
-}
-
 /// doom-fire.ts's integer hash of a lattice point, in [0, 1).
 fn hash(x: f64, y: f64) -> f64 {
     // Math.imul on JS numbers: both sides to 32 bits, the low 32 bits of the product.
@@ -131,7 +119,7 @@ impl QuadrantFire {
         let mut fire = Self {
             w,
             h,
-            rand: Mulberry32(9),
+            rand: Mulberry32::new(9),
             heat: vec![0.0; w * h],
             cool: vec![0.0; w],
             tall: vec![0.0; w],
@@ -184,7 +172,7 @@ impl QuadrantFire {
             let flip = (y as u32 + self.n) & 1 == 1;
             for i in 0..w {
                 let x = if flip { w - 1 - i } else { i };
-                let r = self.rand.next();
+                let r = self.rand.next_f64();
                 let to = x as i64
                     + if r < 0.3 {
                         -1
@@ -197,7 +185,7 @@ impl QuadrantFire {
                     continue;
                 }
                 let tear = 1.0 + 2.2 * up * up * (noise(x as f64 / 5.0, (y as f64 + n) / 6.0) - 0.45).max(0.0);
-                let v = f64::from(self.heat[row + x]) - self.rand.next() * 2.0 * f64::from(self.cool[x]) * tear;
+                let v = f64::from(self.heat[row + x]) - self.rand.next_f64() * 2.0 * f64::from(self.cool[x]) * tear;
                 self.heat[row - w + to as usize] = if v > 0.0 { v as f32 } else { 0.0 };
             }
         }
@@ -339,8 +327,8 @@ mod tests {
         // Expected values from doom-fire.ts's mulberry32 and hash run in node,
         // scaled by 2^32 back to the integers they came from.
         let scale = 4_294_967_296.0;
-        let mut r = Mulberry32(9);
-        assert_eq!([r.next(), r.next(), r.next()].map(|x| x * scale), [853_534_204.0, 3_655_922_532.0, 608_880_792.0]);
+        let mut r = Mulberry32::new(9);
+        assert_eq!([r.next_f64(), r.next_f64(), r.next_f64()].map(|x| x * scale), [853_534_204.0, 3_655_922_532.0, 608_880_792.0]);
         assert_eq!([hash(3.0, 7.0), hash(120.0, 73.0), hash(0.0, 0.0)].map(|x| x * scale), [2_420_582_120.0, 1_447_284_095.0, 0.0]);
     }
 }
