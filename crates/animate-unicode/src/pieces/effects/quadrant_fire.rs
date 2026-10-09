@@ -312,7 +312,7 @@ mod tests {
     /// 7.7 from one instance, captured with `node -e` in ../ascii.
     #[test]
     fn simulation_matches_the_typescript_original() {
-        let fixture = include_str!("../../tests/fixtures/doom-fire.txt");
+        let fixture = include_str!("../../../tests/fixtures/doom-fire.txt");
         let mut fire = QuadrantFire::new();
         for block in fixture.split("\n\n") {
             let (head, body) = block.split_once('\n').unwrap();

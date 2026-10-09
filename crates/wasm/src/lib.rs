@@ -3,8 +3,11 @@
 //! `cells_ptr()` and `colors_ptr()`. Nothing is copied or stringified per
 //! frame; `text()` exists for the server's first frame and for a `<pre>`.
 //!
-//! Built by `mise run build:wasm` into web/pkg with wasm-pack (`--target web`).
-//! The TS shell in web/src/mount.ts is the only consumer of this API.
+//! Built by `mise run build:wasm` into web/pkg with wasm-pack (`--target web`),
+//! once for each category of pieces (`--no-default-features --features
+//! <category>`), so a module holds only its category's pieces and a page loads
+//! only the categories it shows. The dev build holds every piece. The TS shell
+//! (web/src/wasm.ts and mount.ts) is the only consumer of this API.
 //!
 //! # Panics
 //!
@@ -118,17 +121,17 @@ impl Player {
     }
 }
 
-/// Every piece's slug, sorted, as a JSON array.
+/// Every slug this module plays, sorted, as a JSON array.
 #[wasm_bindgen]
 pub fn slugs_json() -> String {
     let s = registry::slugs();
     format!("[{}]", s.iter().map(|x| format!("\"{x}\"")).collect::<Vec<_>>().join(","))
 }
 
-/// Every piece's `Meta`, in registry order, as a JSON array. What the site's Elm app gets as flags.
+/// The `Meta` of every piece this module plays, in registry order, as a JSON array.
 #[wasm_bindgen]
 pub fn metas_json() -> String {
-    format!("[{}]", registry::all().iter().map(|e| e.meta.to_json()).collect::<Vec<_>>().join(","))
+    format!("[{}]", registry::all().map(|e| e.meta.to_json()).collect::<Vec<_>>().join(","))
 }
 
 /// The right half of a double-width glyph in `cells`; the shell skips these cells.

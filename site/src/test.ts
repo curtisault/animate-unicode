@@ -4,7 +4,7 @@
  * manual pass. Plain DOM, no Elm.
  */
 import "animate-unicode/element";
-import { Player, wasm } from "animate-unicode";
+import { moduleOf, wasm } from "animate-unicode";
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const frame = () => new Promise<void>((r) => requestAnimationFrame(() => r()));
@@ -27,15 +27,15 @@ new MutationObserver(() => {
   if (!first.contains(placeholder) && first.firstElementChild?.getAttribute("role") === "img") replacedByPiece = true;
 }).observe(first, { childList: true });
 
-const module = await wasm();
-const megabytes = () => `${(module.memory.buffer.byteLength / 2 ** 20).toFixed(2)} MB`;
+// The swap case's pieces, and the memory of the modules that play them (one in
+// the dev build, a category each in a release one).
+const PIECES = ["donut", "braille-wave", "quadrant-fire"];
+const modules = await Promise.all([...new Set(PIECES.map((s) => moduleOf(s)!))].map(wasm));
+const bytes = () => modules.reduce((n, m) => n + m.exports.memory.buffer.byteLength, 0);
+const megabytes = () => `${(bytes() / 2 ** 20).toFixed(2)} MB`;
 
-let debugBuild = true;
-try {
-  new Player("debug-wide", "").free();
-} catch {
-  debugBuild = false;
-}
+// Only the dev build has a module for slugs no category lists: the debug pieces.
+const debugBuild = moduleOf("debug-wide") !== null;
 
 // The environment, for the record.
 const reduced = matchMedia("(prefers-reduced-motion: reduce)");
@@ -135,7 +135,6 @@ for (const b of document.querySelectorAll<HTMLButtonElement>("button[data-piece]
     say(swapReadout, null, `showing ${b.dataset.piece} · wasm memory ${megabytes()}`);
   });
 }
-const PIECES = ["donut", "braille-wave", "quadrant-fire"];
 $("churn").addEventListener("click", async () => {
   const round = async () => {
     for (let i = 0; i < 120; i++) {
@@ -146,10 +145,10 @@ $("churn").addEventListener("click", async () => {
   say(swapReadout, null, "swapping…");
   const start = megabytes();
   await round();
-  const warm = module.memory.buffer.byteLength;
+  const warm = bytes();
   const mid = megabytes();
   await round();
-  const grew = module.memory.buffer.byteLength - warm;
+  const grew = bytes() - warm;
   say(swapReadout, grew === 0, `round 1: ${start} → ${mid}; round 2: ${mid} → ${megabytes()}${grew ? ` (grew ${grew} bytes)` : ""}`);
 });
 $("remove").addEventListener("click", async () => {

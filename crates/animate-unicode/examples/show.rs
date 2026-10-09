@@ -25,7 +25,7 @@ fn main() {
         }
     }
     if slugs.is_empty() {
-        slugs = registry::all().iter().map(|e| e.meta.slug.to_owned()).collect();
+        slugs = registry::all().map(|e| e.meta.slug.to_owned()).collect();
     }
     for slug in &slugs {
         let (meta, mut piece) = registry::make(slug, &options).unwrap_or_else(|e| fail(&e.to_string()));

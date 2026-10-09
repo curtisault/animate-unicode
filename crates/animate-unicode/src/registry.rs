@@ -1,7 +1,7 @@
-//! Every piece by slug. `pieces/mod.rs` lists them; nothing else needs editing
-//! when a piece is added.
+//! Every piece by slug. Each category's `pieces/<category>/mod.rs` lists its
+//! pieces; nothing else needs editing when a piece is added.
 
-use crate::{Meta, Options, Piece};
+use crate::{Category, Meta, Options, Piece};
 
 /// One piece in the registry: its meta and how to make one.
 pub struct Entry {
@@ -11,19 +11,24 @@ pub struct Entry {
     pub make: fn(&Options) -> Box<dyn Piece>,
 }
 
-/// Every piece, in the order `pieces/mod.rs` lists them.
-pub fn all() -> &'static [Entry] {
-    crate::pieces::REGISTRY
+/// Every piece built in, category by category in [`Category::ALL`]'s order.
+pub fn all() -> impl Iterator<Item = &'static Entry> + Clone {
+    crate::pieces::CATEGORIES.iter().flat_map(|&(_, entries)| entries)
+}
+
+/// Every category built in (each a Cargo feature), with its pieces.
+pub fn categories() -> &'static [(Category, &'static [Entry])] {
+    crate::pieces::CATEGORIES
 }
 
 /// The piece with this slug.
 pub fn find(slug: &str) -> Option<&'static Entry> {
-    all().iter().find(|e| e.meta.slug == slug)
+    all().find(|e| e.meta.slug == slug)
 }
 
 /// Every slug, sorted.
 pub fn slugs() -> Vec<&'static str> {
-    let mut v: Vec<_> = all().iter().map(|e| e.meta.slug).collect();
+    let mut v: Vec<_> = all().map(|e| e.meta.slug).collect();
     v.sort_unstable();
     v
 }

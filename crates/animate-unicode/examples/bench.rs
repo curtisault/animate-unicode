@@ -26,7 +26,7 @@ fn main() {
     }
     println!("{:<24} {:>7} {:>6} {:>8} {:>8} {:>10}", "piece", "size", "cells", "avg ms", "worst ms", "budget");
     let mut over = 0;
-    for entry in registry::all().iter().filter(|e| want.is_empty() || want.iter().any(|w| w == e.meta.slug)) {
+    for entry in registry::all().filter(|e| want.is_empty() || want.iter().any(|w| w == e.meta.slug)) {
         let m = entry.meta;
         let mut piece = (entry.make)(&Options::default().with_defaults(m.options));
         let mut grid = Grid::new(m.cols, m.rows);

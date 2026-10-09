@@ -68,11 +68,11 @@ fn allowed(charset: Charset, cp: u32) -> bool {
 
 /// The pieces to check: all of them, or those `PIECE` names.
 fn selected() -> Vec<&'static registry::Entry> {
-    let Ok(want) = std::env::var("PIECE") else { return registry::all().iter().collect() };
+    let Ok(want) = std::env::var("PIECE") else { return registry::all().collect() };
     let want: Vec<&str> = want.split(',').map(str::trim).filter(|s| !s.is_empty()).collect();
     let unknown: Vec<&&str> = want.iter().filter(|w| registry::find(w).is_none()).collect();
     assert!(unknown.is_empty(), "PIECE names no registered piece: {unknown:?} (slugs: {})", registry::slugs().join(", "));
-    registry::all().iter().filter(|e| want.contains(&e.meta.slug)).collect()
+    registry::all().filter(|e| want.contains(&e.meta.slug)).collect()
 }
 
 #[test]

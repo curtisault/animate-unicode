@@ -103,12 +103,11 @@ fn distance(a: &str, b: &str) -> usize {
 fn find(wanted: &str) -> Result<&'static Meta, Usage> {
     let word = wanted.trim().to_lowercase();
     let slug = word.split_whitespace().collect::<Vec<_>>().join("-");
-    if let Some(e) = registry::find(&slug).or_else(|| registry::all().iter().find(|e| e.meta.name == word)) {
+    if let Some(e) = registry::find(&slug).or_else(|| registry::all().find(|e| e.meta.name == word)) {
         return Ok(e.meta);
     }
     // The names it is part of first, then the nearest typos.
     let mut close: Vec<(bool, usize, &str)> = registry::all()
-        .iter()
         .map(|e| (slug.len() > 2 && e.meta.slug.contains(&slug), distance(&slug, e.meta.slug).min(distance(&word, e.meta.name)), e.meta.slug))
         .filter(|&(part, d, _)| part || d <= (slug.chars().count() / 3).max(1))
         .collect();
@@ -127,7 +126,7 @@ fn list(width: usize) -> String {
     const PAD: usize = 12;
     let mut s = String::new();
     for &category in Category::ALL {
-        let mut slugs: Vec<&str> = registry::all().iter().filter(|e| e.meta.category == category).map(|e| e.meta.slug).collect();
+        let mut slugs: Vec<&str> = registry::all().filter(|e| e.meta.category == category).map(|e| e.meta.slug).collect();
         if slugs.is_empty() {
             continue;
         }
@@ -147,7 +146,7 @@ fn list(width: usize) -> String {
         s += &line;
         s.push('\n');
     }
-    format!("{s}\n{} pieces. animate-unicode <piece> plays one.\n", registry::all().len())
+    format!("{s}\n{} pieces. animate-unicode <piece> plays one.\n", registry::all().count())
 }
 
 fn run() -> Result<ExitCode, Usage> {
@@ -243,7 +242,7 @@ mod tests {
             assert_eq!(words.iter().filter(|&&w| w == e.meta.slug).count(), 1, "{}", e.meta.slug);
         }
         assert!(out.lines().all(|l| l.chars().count() <= 60), "{out}");
-        assert!(out.contains(&format!("{} pieces.", registry::all().len())));
+        assert!(out.contains(&format!("{} pieces.", registry::all().count())));
         // Sidebar order: ui before shapes before effects.
         let at = |c: &str| out.find(&format!("\n{c} ")).or_else(|| out.starts_with(c).then_some(0)).unwrap();
         assert!(at("ui") < at("shapes") && at("shapes") < at("effects"));

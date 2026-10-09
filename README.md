@@ -51,11 +51,17 @@ one with CJK.
 
 ## Adding a piece
 
-A file in `crates/animate-unicode/src/pieces/`, a `pub mod` and one line in
-`REGISTRY` in `pieces/mod.rs`. `mise run test` holds it to the contract: a
-`cols × rows` grid every frame, deterministic in `t`, only the glyphs its
-`charset` allows, under its time budget. `donut.rs` is the reference for a
-shaded piece; `braille_wave.rs` for one that draws with dots.
+A file in its category's folder, `crates/animate-unicode/src/pieces/<category>/`,
+a `pub mod` and one line in `REGISTRY` in that folder's `mod.rs`. `mise run test`
+holds it to the contract: a `cols × rows` grid every frame, deterministic in
+`t`, only the glyphs its `charset` allows, under its time budget.
+`shapes/donut.rs` is the reference for a shaded piece; `generative/braille_wave.rs`
+for one that draws with dots.
+
+Each category is built into its own wasm module, so a page loads only the
+categories it shows. A piece may use the crate's shared code and its own
+folder's pieces, never another category's: its category's module would not
+have them.
 
 While working on one, `mise run show <slug>` prints its frames at a few times
 in a box, `PIECE=<slug> cargo test --release --test contract -- --nocapture`

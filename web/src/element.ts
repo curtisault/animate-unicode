@@ -18,9 +18,13 @@
  * coloured ones draw onto a <canvas> as wide as the element. Whatever the
  * element holds before it loads (a first frame rendered on the server, say)
  * stays until the piece is ready.
+ *
+ * A tag loads nothing until it first comes within a screen of the viewport,
+ * then loads its piece's category (one wasm module each), so a page of many
+ * pieces fetches each category only as its pieces come near.
  */
 import { mount, type Meta, type MountOptions } from "./mount.ts";
-import { Player, wasm } from "./wasm.ts";
+import { player as make, type InitOutput, type Player } from "./wasm.ts";
 
 // The bundled font (web/fonts, built by scripts/font.py from Iosevka Fixed Extended, SIL OFL 1.1): ASCII, box
 // drawing, blocks, geometric shapes, arrows, braille, sextants and octants, every glyph 0.6 em wide. It leads the
@@ -42,6 +46,7 @@ export class UnicodeArt extends Base {
   #stop: (() => void) | null = null;
   #player: Player | null = null;
   #run = 0;
+  #near: Promise<void> | null = null;
 
   connectedCallback() {
     void this.#start();
@@ -71,11 +76,12 @@ export class UnicodeArt extends Base {
   async #start() {
     const run = ++this.#run;
     const slug = this.getAttribute("piece") ?? "";
-    let module: Awaited<ReturnType<typeof wasm>>;
+    let exports: InitOutput;
     let player: Player;
     try {
-      module = await wasm();
-      player = new Player(slug, this.getAttribute("options") ?? "");
+      await (this.#near ??= near(this));
+      if (run !== this.#run) return;
+      ({ player, exports } = await make(slug, this.getAttribute("options") ?? ""));
     } catch (error) {
       console.warn(`<unicode-art> could not load ${slug}:`, error);
       // A piece that was playing is not the one asked for any more: stop it and
@@ -103,11 +109,27 @@ export class UnicodeArt extends Base {
     this.replaceChildren(el);
     this.#player = player;
     try {
-      this.#stop = mount(el, module, player, options);
+      this.#stop = mount(el, exports, player, options);
     } catch (error) {
       console.error(`<unicode-art> ${slug} stopped on its first frame:`, error);
     }
   }
+}
+
+/** Resolves once the element is within a screen of the viewport, at once where there is no IntersectionObserver. */
+function near(el: Element): Promise<void> {
+  if (typeof IntersectionObserver === "undefined") return Promise.resolve();
+  return new Promise((resolve) => {
+    const seen = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return;
+        seen.disconnect();
+        resolve();
+      },
+      { rootMargin: "100% 0px" },
+    );
+    seen.observe(el);
+  });
 }
 
 /** Defines the tag, once. Importing this module calls it for "unicode-art". */

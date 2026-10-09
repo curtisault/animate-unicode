@@ -16,7 +16,7 @@
  * and prefers-reduced-motion keeps the first frame unless `motion` is set.
  * Returns a stop function.
  */
-import type { InitOutput, Player } from "../pkg/animate_unicode.js";
+import type { InitOutput, Player } from "../pkg/modules.js";
 
 export interface Meta {
   name: string;

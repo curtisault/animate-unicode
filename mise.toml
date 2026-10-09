@@ -36,24 +36,46 @@ wasm-tools = "latest"
 # Reruns a task when files change: `watchexec -e rs -- mise run build:wasm`.
 watchexec = "latest"
 
-# The two wasm builds share web/pkg, so neither is cached by sources/outputs:
-# after `dev` writes the debug build, a cached `build:wasm` would skip and ship
-# it. A rebuild with nothing changed takes about a second.
+# The wasm is a module per category, so a page loads only the categories it
+# shows: web/pkg/<category>/animate_unicode{.js,_bg.wasm}, each built with that
+# category's feature alone, and web/pkg/modules.js, which lists every piece and
+# imports each module on first use (crates/animate-unicode/examples/manifest.rs).
+# The dev build is one module, web/pkg/all, with every piece and the debug ones:
+# one build rather than one per category keeps the edit loop quick.
+#
+# Both builds write web/pkg, so neither is cached by sources/outputs: after
+# `dev` writes the debug build, a cached `build:wasm` would skip and ship it.
+# Each starts by emptying web/pkg, so no module of the other build is left.
 #
 # web/pkg ships inside the npm package, so: --no-pack (no nested package.json),
-# and the `*` .gitignore wasm-pack writes there is deleted, since npm would
-# honour it and leave the wasm out of the tarball. The root .gitignore already
-# keeps web/pkg out of git.
+# and the `*` .gitignore wasm-pack writes beside each module is deleted, since
+# npm would honour it and leave the wasm out of the tarball. The root
+# .gitignore already keeps web/pkg out of git.
 [tasks."build:wasm"]
-description = "Build crates/wasm into web/pkg (wasm-bindgen, --target web, release)"
-run = "wasm-pack build crates/wasm --target web --release --no-pack --out-dir ../../web/pkg --out-name animate_unicode && rm -f web/pkg/.gitignore"
+description = "Build crates/wasm into web/pkg: a module per category (wasm-bindgen, --target web, release), and modules.js"
+run = """
+set -e
+rm -rf web/pkg
+for c in $(cargo run -q --release -p animate-unicode --example manifest -- categories); do
+  wasm-pack --quiet build crates/wasm --target web --release --no-pack --out-dir ../../web/pkg/$c --out-name animate_unicode -- --no-default-features --features $c
+  rm -f web/pkg/$c/.gitignore
+done
+cargo run -q --release -p animate-unicode --example manifest -- write web/pkg
+"""
 
 # Its own cargo target dir: the feature set differs, and sharing one would make
 # each build overwrite the other's .wasm under target/wasm32-unknown-unknown.
+# The manifest runs natively, in the usual target dir.
 [tasks."build:wasm:debug"]
-description = "Build crates/wasm into web/pkg with the debug feature: panics print their message and location"
+description = "Build crates/wasm into web/pkg as one module with every piece and the debug feature: panics print their message and location"
 env = { CARGO_TARGET_DIR = "{{config_root}}/target/wasm-debug" }
-run = "wasm-pack build crates/wasm --target web --release --no-pack --out-dir ../../web/pkg --out-name animate_unicode -- --features debug && rm -f web/pkg/.gitignore"
+run = """
+set -e
+rm -rf web/pkg
+wasm-pack build crates/wasm --target web --release --no-pack --out-dir ../../web/pkg/all --out-name animate_unicode -- --features debug
+rm -f web/pkg/all/.gitignore
+CARGO_TARGET_DIR={{config_root}}/target cargo run -q --release -p animate-unicode --example manifest -- write web/pkg --one all
+"""
 
 # The font's output is checked in (web/fonts); run this only to change its ranges
 # or the Iosevka version. Downloads the release once into target/font.
@@ -101,7 +123,9 @@ depends = ["build:web"]
 env = { CARGO_TARGET_DIR = "{{config_root}}/target/wasm-debug" }
 run = [
   "node --test 'web/test/*.test.mjs'",
-  "wasm-pack --quiet build crates/wasm --target web --release --no-pack --out-dir ../../target/wasm-debug-pkg --out-name animate_unicode -- --features debug",
+  "rm -rf target/wasm-debug-pkg",
+  "wasm-pack --quiet build crates/wasm --target web --release --no-pack --out-dir ../../target/wasm-debug-pkg/all --out-name animate_unicode -- --features debug",
+  "CARGO_TARGET_DIR={{config_root}}/target cargo run -q --release -p animate-unicode --example manifest -- write target/wasm-debug-pkg --one all",
   "WASM_PKG=target/wasm-debug-pkg WASM_DEBUG=1 node --test 'web/test/*.test.mjs'",
 ]
 
@@ -140,21 +164,32 @@ run = "cargo run --release -q -p animate-unicode --example show --"
 description = "Time 60 frames of each piece and print a table: `mise run bench [slug ...]`"
 run = "cargo run --release -q -p animate-unicode --example bench --"
 
-# Fails past 500 KB gzipped, the point at which the plan says to split the pieces
-# into per-category bundles. WASM_GZ_LIMIT overrides it (in bytes).
+# Fails when any module passes 150 KB gzipped: a page showing one piece loads
+# that piece's category, so that is the size a reader pays for. The total is
+# what a page showing every category loads. WASM_GZ_LIMIT overrides the limit
+# (in bytes).
 [tasks.size]
-description = "Raw and gzipped size of the release wasm; fails past 500 KB gzipped"
+description = "Raw and gzipped size of each release wasm module, and the total; fails when a module passes 150 KB gzipped"
 depends = ["build:wasm"]
 run = """
-f=web/pkg/animate_unicode_bg.wasm
-raw=$(wc -c < $f | tr -d ' ')
-gz=$(gzip -9c $f | wc -c | tr -d ' ')
-limit=${WASM_GZ_LIMIT:-512000}
-line="wasm: $raw bytes raw, $gz bytes gzipped (limit $limit)"
+limit=${WASM_GZ_LIMIT:-153600}
+total=0
+over=""
+for f in web/pkg/*/animate_unicode_bg.wasm; do
+  m=$(basename $(dirname $f))
+  raw=$(wc -c < $f | tr -d ' ')
+  gz=$(gzip -9c $f | wc -c | tr -d ' ')
+  total=$((total + gz))
+  line="wasm $m: $raw bytes raw, $gz bytes gzipped"
+  echo "$line"
+  if [ -n "$GITHUB_STEP_SUMMARY" ]; then echo "$line" >> "$GITHUB_STEP_SUMMARY"; fi
+  if [ "$gz" -gt "$limit" ]; then over="$over $m"; fi
+done
+line="wasm, every module: $total bytes gzipped (limit $limit a module)"
 echo "$line"
 if [ -n "$GITHUB_STEP_SUMMARY" ]; then echo "$line" >> "$GITHUB_STEP_SUMMARY"; fi
-if [ "$gz" -gt "$limit" ]; then
-  echo "the wasm is over its size limit: see 'One wasm module for all pieces' in docs/IMPLEMENTATION_PLAN.md" >&2
+if [ -n "$over" ]; then
+  echo "over the size limit:$over. See 'One wasm module per category' in docs/IMPLEMENTATION_PLAN.md" >&2
   exit 1
 fi
 """

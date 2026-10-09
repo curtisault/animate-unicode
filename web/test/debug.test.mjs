@@ -6,10 +6,11 @@
 // `mise run test` runs it against both builds (WASM_DEBUG=1 for the debug one).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { debugBuild, load } from "./load.mjs";
+import { debugBuild, fallback, imports, load, moduleOf } from "./load.mjs";
 import { WIDE_TAIL } from "../src/mount.ts";
 
-const { mod, wasm } = await load();
+// The debug build is one module that plays everything; a release one has none for the debug slugs.
+const { mod, wasm } = await load(fallback ?? Object.keys(imports)[0]);
 
 if (debugBuild) {
   test("a panicking piece reports itself, stops, and leaves the rest running", () => {
@@ -76,10 +77,14 @@ if (debugBuild) {
     assert.ok(!slugs.includes("debug-panic") && !slugs.includes("debug-wide"));
   });
 } else {
-  test("a release build has no debug pieces or start hook", () => {
-    for (const slug of ["debug-panic", "debug-wide"]) {
-      assert.throws(() => new mod.Player(slug, ""), { message: `there is no piece named "${slug}"` });
+  test("a release build has no debug pieces or start hook", async () => {
+    for (const slug of ["debug-panic", "debug-wide"]) assert.equal(moduleOf(slug), null, `the manifest has a module for ${slug}`);
+    for (const name of Object.keys(imports)) {
+      const { mod } = await load(name);
+      for (const slug of ["debug-panic", "debug-wide"]) {
+        assert.throws(() => new mod.Player(slug, ""), { message: `there is no piece named "${slug}"` }, `module ${name}`);
+      }
+      assert.equal(mod.start, undefined, `module ${name}`);
     }
-    assert.equal(mod.start, undefined);
   });
 }
