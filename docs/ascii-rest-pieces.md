@@ -26,7 +26,7 @@ are not tracked here.
 | shapes | 12 | | | 11 | | 1 |
 | space | 11 | | | 11 | | |
 | physics | 14 | | | 14 | | |
-| nature | 16 | 16 | | | | |
+| nature | 16 | 2 | | 14 | | |
 | creatures | 10 | 10 | | | | |
 | objects | 14 | 14 | | | | |
 | generative | 13 | | | 13 | | |
@@ -37,7 +37,7 @@ are not tracked here.
 | logos | 28 | 28 | | | | |
 | companies | 14 | 14 | | | | |
 | distros | 23 | 23 | | | | |
-| **all** | **209** | **126** | | **80** | | **3** |
+| **all** | **209** | **112** | | **94** | | **3** |
 
 Recount after changing rows:
 
@@ -120,7 +120,8 @@ Each wave is one branch per category, stacked.
    pieces. E2 must come first for calendar and digital-clock.
 3. **Space, nature, creatures, objects, effects** (57). Creatures and some
    objects are sprites that have to be redrawn at the higher resolution, not
-   converted. E5 is done: each category is its own wasm module.
+   converted. E5 is done: each category is its own wasm module. Landscape and
+   sunrise move to wave 5: their skies need E1.
 4. **Logos, companies, distros** (65), after E3 and E4.
 5. **Scenes** (15), after E1. These are the largest: tokyo-rain alone is
    1 123 lines of TS.
@@ -216,22 +217,22 @@ carry only the source.
 
 | piece | size, fps | Unicode | enhancement | status |
 |---|---|---|---|---|
-| aurora | 64×20, 20 | sextant curtains, vertical eighth blocks | green to magenta palette, twinkling stars | todo |
-| bonsai | 52×19, 10 | braille branches, octant leaves | leaves changing colour through the seasons before they fall | todo |
-| campfire | 52×22, 20 | quadrant fire (quadrant-fire's spread), wedge logs | fire palette, sparks as braille | todo |
-| cherry-blossom | 64×20, 15 | braille branch, petals as · • | pink petals tumbling on the wind | todo |
-| contour-map | 72×20, 8 | contours at sub-cell resolution (as sextant-plasma) | hypsometric colour bands, sea to snow | todo |
-| fern | 44×30, 20 | braille points, 8 a cell | greens by depth | todo |
-| fireflies | 60×18, 15 · options | braille glow halos | yellow-green flashes spreading | todo |
-| fractal-tree | 60×24, 15 · options | braille branches, octant trunk | leaf colour at the tips | todo |
-| landscape | 64×18, 8 · options, clock | octant ridges, half-block sky | a sky gradient set by the hour | todo |
-| lightning | 64×22, 20 | braille bolt and branches | the flash lighting the cloud in colour | todo |
-| rain | 64×20, 30 | braille streaks at three depths | depth colours, braille splash crowns | todo |
-| ruled-mountains | 64×20, 10 | braille lines at 4× vertical resolution | hidden lines removed per dot | todo |
-| sea-swell | 64×14, 20 | octant water, wedge-cut sails | sky and sea in colour | todo |
-| snowfall | 64×22, 20 | braille flakes, eighth-block drifts | flake size by depth | todo |
-| sunrise | 60×20, 15 | half-block sky gradient, braille glitter | the sky warming in colour | todo |
-| wind | 64×14, 15 | braille streamlines | leaves carried on the gusts | todo |
+| aurora | 64×20, 20 | sextant curtains, dithered, streaks as fine upright strokes; ascii.rest's quarter-block spruces | the hem green, shading up through teal and violet to a magenta crown; a green glow on the treetops; twinkling stars | built |
+| bonsai | 52×19, 10 | octants: every dot of a pad a leaf that turns and buds on its own; a trunk that tapers smoothly | leaves green to yellow, orange and red before they fall, pale buds deepening to summer green, lit bark, a blue glaze | built |
+| campfire | 52×22, 20 | ascii.rest's own tongues worked out per octant dot, only flame joined to the fire drawn; octant logs | fire deep red to white, charred bark with embers glowing in it, a ringed cut end, coals, sparks cooling gold to red | built |
+| cherry-blossom | 64×20, 15 | a braille branch that tapers and forks; blossoms as ● and • petals round a ◉ | somei-yoshino pinks, bark with a lit edge, petals tumbling • ° · | built |
+| contour-map | 72×20, 8 | contours traced at a braille dot's resolution, a dot thick at any angle | hypsometric: green coast through ochre and brown to grey and white summits, a blue dotted line offshore | built |
+| fern | 44×30, 20 | the chaos game's points plotted in braille, 8 a cell | depth: the front leaflets bright green, the back ones darker, the young tip paler, a woody rachis | built |
+| fireflies | 60×18, 15 · options | braille glow halos falling off dot by dot; a braille moon, treeline and grass | pale yellow hearts through yellow-green to a faint green edge behind the grass | built |
+| fractal-tree | 60×24, 15 · options | braille limbs thinning as they fork, an octant trunk flaring to its roots, a braille stipple of leaves | brown bark lit on the left, deep green leaves, yellow-green tips | built |
+| landscape | 64×18, 8 · options, clock | octant ridges, half-block sky | a sky gradient set by the hour | todo: waits for E1, with the scenes |
+| lightning | 64×22, 20 | a braille bolt jagged at a dot's scale, doubled at its brightest; braille rain and cloud | a slate cloud lit violet-white over the bolt, a white bolt with violet forks, rain and slopes catching the flash | built |
+| rain | 64×20, 30 | braille streaks at three depths; true elliptical rings in the puddles; braille splash crowns | rain paling with nearness, slate water, rings catching the light | built |
+| ruled-mountains | 64×20, 10 | braille lines at 4× vertical resolution, hidden lines removed per dot | a cold haze: back lines blue-violet, front ones nearly white | built |
+| sea-swell | 64×14, 20 | the swell's line at octant resolution; the boat drawn dot by dot, its sail cut on the diagonal, pitching to any angle | blue water darkening with depth, white foam on the steep face, a red hull, a white sail, a low pale sun | built |
+| snowfall | 64×22, 20 | braille flakes, one, two or four dots by depth; eighth-block drifts, ridges and caps | white snow over a blue-shadowed body, far flakes grey, a brown fence | built |
+| sunrise | 60×20, 15 | half-block sky gradient, braille glitter | the sky warming in colour | todo: waits for E1, with the scenes |
+| wind | 64×14, 15 | braille streamlines a dot thick, fading tail to head; heads curling in a spiral | pale cyan air, autumn leaves riding the gusts | built |
 
 ### creatures (10)
 
