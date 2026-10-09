@@ -20,5 +20,9 @@ export default defineConfig({
   },
   build: {
     target: "es2022",
+    // test.html is the shell's checklist page (Phase 3), plain HTML beside the Elm site.
+    rollupOptions: {
+      input: { main: fileURLToPath(new URL("index.html", import.meta.url)), test: fileURLToPath(new URL("test.html", import.meta.url)) },
+    },
   },
 });

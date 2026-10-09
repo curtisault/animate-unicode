@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Shell checks · animate-unicode</title>
+    <meta name="color-scheme" content="light dark" />
+    <style>
+      :root {
+        --bg: #fbfaf7;
+        --fg: #1d1d1b;
+        --muted: #6b6a66;
+        --line: #dcd9d2;
+        --ok: #2f7d32;
+        --bad: #b3261e;
+        font: 15px/1.5 system-ui, sans-serif;
+        color: var(--fg);
+        background: var(--bg);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #121315;
+          --fg: #e6e4df;
+          --muted: #9a9892;
+          --line: #2c2d30;
+          --ok: #7cc47f;
+          --bad: #f2867c;
+        }
+      }
+      body {
+        margin: 0 auto;
+        padding: 24px 16px 64px;
+        max-width: 760px;
+      }
+      h1 {
+        font-size: 1.4rem;
+        margin: 0 0 4px;
+      }
+      header p,
+      .note {
+        color: var(--muted);
+        margin: 4px 0;
+      }
+      code,
+      .env {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.85em;
+      }
+      section {
+        border-top: 1px solid var(--line);
+        padding: 20px 0 8px;
+      }
+      h2 {
+        font-size: 1.05rem;
+        margin: 0 0 8px;
+      }
+      h2 span {
+        color: var(--muted);
+        font-weight: normal;
+      }
+      .stage {
+        margin: 12px 0;
+        font-size: 14px;
+      }
+      .resizable {
+        resize: horizontal;
+        overflow: hidden;
+        width: 100%;
+        max-width: 100%;
+        min-width: 120px;
+        outline: 1px dashed var(--line);
+      }
+      .paper {
+        background: #f4efe2;
+        color: #2a2622;
+        padding: 8px;
+      }
+      ul.checks {
+        list-style: none;
+        padding: 0;
+        margin: 8px 0;
+      }
+      ul.checks li {
+        margin: 2px 0;
+      }
+      .readout {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.85em;
+        margin: 6px 0;
+      }
+      .readout .ok {
+        color: var(--ok);
+      }
+      .readout .bad {
+        color: var(--bad);
+      }
+      button {
+        font: inherit;
+        font-size: 0.9em;
+        margin: 0 6px 6px 0;
+        padding: 4px 10px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+      }
+      footer {
+        border-top: 1px solid var(--line);
+        padding-top: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Shell checks</h1>
+      <p>
+        Every case Phase 3 of <code>docs/IMPLEMENTATION_PLAN.md</code> asks to see in a browser, one
+        <code>&lt;unicode-art&gt;</code> each, with no Elm. Tick what looks right, then copy the record into the pull request.
+        Run it with <code>mise run dev</code> for the debug pieces.
+      </p>
+      <p class="env" id="env"></p>
+    </header>
+
+    <section data-case="pre">
+      <h2>Text in a &lt;pre&gt; <span>donut</span></h2>
+      <div class="stage"><unicode-art piece="donut"></unicode-art></div>
+      <ul class="checks">
+        <li><label><input type="checkbox" /> turns smoothly, in the page's text colour</label></li>
+        <li><label><input type="checkbox" /> rows line up; no glyph drifts a column</label></li>
+      </ul>
+    </section>
+
+    <section data-case="braille">
+      <h2>Braille in a &lt;pre&gt; <span>braille-wave</span></h2>
+      <div class="stage"><unicode-art piece="braille-wave" id="braille"></unicode-art></div>
+      <p class="readout" id="braille-rows"></p>
+      <p class="note">Until the bundled font (Phase 5), braille comes from whatever face the system falls back to; unequal rows here are that.</p>
+      <ul class="checks">
+        <li><label><input type="checkbox" /> both waves move; dots are crisp</label></li>
+        <li><label><input type="checkbox" /> the readout says every row is the same width</label></li>
+      </ul>
+    </section>
+
+    <section data-case="canvas">
+      <h2>Colour on a &lt;canvas&gt; <span>quadrant-fire</span></h2>
+      <p class="note">Drag the box's bottom-right corner to resize it. Zoom the page to 125% and 150% to check fractional device pixel ratios.</p>
+      <div class="stage resizable"><unicode-art piece="quadrant-fire"></unicode-art></div>
+      <ul class="checks">
+        <li><label><input type="checkbox" /> the near-black ground fills the whole canvas</label></li>
+        <li><label><input type="checkbox" /> no hairline seams between cells at 100%, 125% and 150% zoom</label></li>
+        <li><label><input type="checkbox" /> blocks are centred in their cells; quadrants meet without gaps</label></li>
+        <li><label><input type="checkbox" /> cells change colour as the fire moves (no stale colours)</label></li>
+        <li><label><input type="checkbox" /> resizing re-rasterises: sharp at every width, no stretched blur</label></li>
+      </ul>
+    </section>
+
+    <section data-case="mono">
+      <h2>The same piece with <code>mono</code> <span>quadrant-fire mono</span></h2>
+      <div class="stage"><unicode-art piece="quadrant-fire" mono></unicode-art></div>
+      <ul class="checks">
+        <li><label><input type="checkbox" /> drawn as text in a &lt;pre&gt;, in one ink, on the page's background</label></li>
+      </ul>
+    </section>
+
+    <section data-case="wide-canvas" data-debug="debug-wide">
+      <h2>Wide glyphs on a &lt;canvas&gt; <span>debug-wide, debug build only</span></h2>
+      <div class="stage"><span class="debug-tag" data-piece="debug-wide"></span></div>
+      <ul class="checks">
+        <li><label><input type="checkbox" /> 漢 字 中 and 🔥 each span two cells, centred across both</label></li>
+        <li><label><input type="checkbox" /> the moving 🔥 leaves no trail; the cells it leaves redraw as dots</label></li>
+        <li><label><input type="checkbox" /> 漢字 and 中 swap colours every second</label></li>
+        <li><label><input type="checkbox" /> the digit ruler on the last row lines up with the cells above</label></li>
+      </ul>
+    </section>
+
+    <section data-case="wide-pre" data-debug="debug-wide">
+      <h2>Wide glyphs in a &lt;pre&gt; <span>debug-wide mono, debug build only</span></h2>
+      <div class="stage"><span class="debug-tag" data-piece="debug-wide" data-mono></span></div>
+      <p class="note">
+        Text drops each wide glyph's tail and lets the font lay it over two columns. That only lines up when the font's CJK and emoji are exactly two
+        columns wide, which many monospace fonts are not: the plan treats wide pieces as canvas-first. Note what you see.
+      </p>
+      <ul class="checks">
+        <li><label><input type="checkbox" /> the ruler lines up under the wide glyphs (expected to fail with many fonts)</label></li>
+      </ul>
+    </section>
+
+    <section data-case="swap">
+      <h2>Changing <code>piece</code> at run time</h2>
+      <div class="stage"><unicode-art piece="donut" id="swap"></unicode-art></div>
+      <p>
+        <button data-piece="donut">donut</button><button data-piece="braille-wave">braille-wave</button
+        ><button data-piece="quadrant-fire">quadrant-fire</button><button data-piece="no-such-piece">no-such-piece</button>
+        <button id="churn">swap 120 times, twice</button><button id="remove">remove and re-add</button>
+      </p>
+      <p class="readout" id="swap-readout"></p>
+      <ul class="checks">
+        <li><label><input type="checkbox" /> each button shows that piece; no-such-piece leaves the box empty</label></li>
+        <li><label><input type="checkbox" /> after "swap 120 times, twice", the second round did not grow wasm memory (readout)</label></li>
+        <li><label><input type="checkbox" /> the console shows only the expected "could not load no-such-piece" warning</label></li>
+        <li><label><input type="checkbox" /> remove and re-add starts the piece again; no errors</label></li>
+      </ul>
+    </section>
+
+    <section data-case="motion">
+      <h2>Reduced motion</h2>
+      <p class="readout" id="motion-readout"></p>
+      <p class="note">
+        Turn on reduced motion (macOS: Settings, Accessibility, Display; or DevTools, Rendering, "Emulate prefers-reduced-motion"). The left one holds its
+        first frame; the right one has <code>motion</code> and keeps playing.
+      </p>
+      <div class="stage" style="display: flex; gap: 16px; flex-wrap: wrap">
+        <unicode-art piece="braille-wave"></unicode-art>
+        <unicode-art piece="braille-wave" motion></unicode-art>
+      </div>
+      <ul class="checks">
+        <li><label><input type="checkbox" /> with reduced motion on, the left one is still and the right one plays</label></li>
+        <li><label><input type="checkbox" /> switching the setting while the page is open takes effect without a reload</label></li>
+      </ul>
+    </section>
+
+    <section data-case="first-frame">
+      <h2>Server-rendered first frame</h2>
+      <div class="stage"><unicode-art piece="donut" id="first"><pre>a server-rendered still sits here until the piece is ready</pre></unicode-art></div>
+      <p class="readout" id="first-readout"></p>
+      <ul class="checks">
+        <li><label><input type="checkbox" /> the readout says the placeholder stayed until the player replaced it</label></li>
+      </ul>
+    </section>
+
+    <section data-case="fps-paper">
+      <h2>The <code>fps</code> attribute, and paper</h2>
+      <div class="stage paper"><unicode-art piece="donut" fps="6"></unicode-art></div>
+      <ul class="checks">
+        <li><label><input type="checkbox" /> this donut steps at about 6 frames a second</label></li>
+        <li><label><input type="checkbox" /> on the light box it is dark ink with its shading flipped (bright faces darkest)</label></li>
+      </ul>
+    </section>
+
+    <footer>
+      <p><button id="copy">copy the record as Markdown</button><span id="copied" class="note"></span></p>
+    </footer>
+
+    <script type="module" src="/src/test.ts"></script>
+  </body>
+</html>
