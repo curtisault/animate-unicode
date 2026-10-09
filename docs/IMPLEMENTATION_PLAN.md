@@ -18,7 +18,7 @@ or a named command verifies. Nothing in this document is a guess unless marked
   - [3 · Web shell](#phase-3)
   - [4 · Elm site](#phase-4)
   - [5 · Fonts](#phase-5)
-  - [6 · Pieces](#phase-6)
+  - [6 · Pieces](#phase-6); every ascii.rest piece in Unicode: [ascii-rest-pieces.md](ascii-rest-pieces.md)
   - [7 · CLI](#phase-7)
   - [8 · Packaging, deploy, CI](deploy-plan.md) (its own document)
 - [Testing strategy](#testing-strategy)
@@ -463,6 +463,10 @@ Acceptance: a test page with every `Extended` range drawn in a `<pre>` shows ali
 <a id="phase-6"></a>
 ### Phase 6 · Pieces (ongoing; the product)
 
+Every ascii.rest piece, translated to Unicode and enhanced, is tracked row by
+row in [ascii-rest-pieces.md](ascii-rest-pieces.md), with the engine work it
+needs first.
+
 Start with pieces that show what unicode buys. Each one: a file, a `REGISTRY` line, `mise run test`, a look in the browser. Suggested first ten, in order:
 
 | # | slug | charset | what | notes |
@@ -597,7 +601,7 @@ Debug builds skip the timing budgets (`cfg!(debug_assertions)`); always run `mis
 | Custom element | `src/ascii.ts` | Ported to `web/src/element.ts` |
 | Contract checker | `scripts/check.ts` | Ported to `tests/contract.rs`; the `--show` printer is not yet |
 | Piece style guide | `CONTRIBUTING.md` | Read it; the "what makes a piece good" guidance applies verbatim |
-| Pieces to port | `src/pieces/*.ts` (210) | `donut` done; `doom-fire`, `box-frames`, `dividers`, `cube`, `black-hole` are small and self-contained; scenes (`tokyo-rain`, 1 122 lines) last |
+| Pieces to port | `src/pieces/*.ts` (209 and `index.ts`) | Tracked in [ascii-rest-pieces.md](ascii-rest-pieces.md): each one translated to Unicode and enhanced, scenes last |
 | Site layout and CSS | `site/src/layouts/Layout.astro`, `site/src/styles/site.css`, `site/src/lib/library.ts` (GROUPS) | Sidebar grouping and visual tone |
 | README generator | `scripts/readme.ts` | Pieces table from meta |
 | Terminal player | `src/terminal.ts`, `src/cli.ts` | Behaviour to match in Phase 7 (alt screen, centre, crop, resize, restore) |
