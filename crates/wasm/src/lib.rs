@@ -117,6 +117,12 @@ impl Player {
         self.mono = mono;
     }
 
+    /// Start of the `cols × rows` palette indices behind the cells, 255 where
+    /// there is none. Re-read after every `frame`.
+    pub fn backs_ptr(&self) -> *const u8 {
+        self.grid.backs().as_ptr()
+    }
+
     /// Start of the `cols × rows` code points in wasm memory. Re-read after
     /// every `frame`: the buffer may move if memory grows.
     pub fn cells_ptr(&self) -> *const u32 {

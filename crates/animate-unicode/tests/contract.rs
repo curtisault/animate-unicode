@@ -14,7 +14,7 @@
 //!
 //! `PIECE` takes a slug or a comma-separated list.
 
-use animate_unicode::{registry, Category, Charset, Env, Grid, Options, Piece, WIDE_TAIL};
+use animate_unicode::{registry, Category, Charset, Env, Grid, Options, Piece, NO_BACK, WIDE_TAIL};
 use std::time::Instant;
 use unicode_width::UnicodeWidthChar;
 
@@ -184,6 +184,11 @@ fn every_piece_keeps_the_contract() {
                 if let Some(bad) = g.colors().iter().position(|&c| c as usize >= p.len()) {
                     errors.push(format!("{at}: color[{bad}] is past the {}-colour palette", p.len()));
                 }
+                if let Some(bad) = g.backs().iter().position(|&b| b != NO_BACK && b as usize >= p.len()) {
+                    errors.push(format!("{at}: back[{bad}] is past the {}-colour palette", p.len()));
+                }
+            } else if g.backs().iter().any(|&b| b != NO_BACK) {
+                errors.push(format!("{at}: a back colour with no palette"));
             }
         }
         let f0 = &run.frames[0];

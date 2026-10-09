@@ -23,16 +23,18 @@ pub mod grid;
 #[cfg(any(feature = "logos", feature = "companies", feature = "distros"))]
 pub mod logo;
 pub mod meta;
+pub mod noise;
 pub mod options;
 pub mod palette;
 pub mod piece;
 pub mod pieces;
+pub mod pixels;
 pub mod registry;
 pub mod subcell;
 pub mod util;
 
 pub use clock::Wall;
-pub use grid::{Grid, BLANK, WIDE_TAIL};
+pub use grid::{Grid, BLANK, NO_BACK, WIDE_TAIL};
 pub use meta::{Category, Charset, Meta};
 pub use options::Options;
 pub use palette::Ramp;

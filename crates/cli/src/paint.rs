@@ -6,7 +6,7 @@
 //! a wide glyph is one cell and a `WIDE_TAIL`, and the terminal is trusted to
 //! draw it two columns wide.
 
-use animate_unicode::{Grid, Meta, WIDE_TAIL};
+use animate_unicode::{Grid, Meta, NO_BACK, WIDE_TAIL};
 use std::fmt::Write;
 
 /// A colour as 0xrrggbb.
@@ -90,6 +90,15 @@ impl Painter {
         Some(p.get(usize::from(grid.color_at(x, y))).copied().unwrap_or(p[0]))
     }
 
+    /// The colour behind a cell: its back colour if it has one, else the ground.
+    fn back_of(&self, grid: &Grid, x: usize, y: usize) -> Option<Rgb> {
+        let p = self.palette.as_ref()?;
+        match grid.back_at(x, y) {
+            NO_BACK => self.ground,
+            b => Some(p.get(usize::from(b)).copied().unwrap_or(p[0])),
+        }
+    }
+
     /// Fills `cells` from a frame.
     pub fn paint(&mut self, grid: &Grid) {
         let glyph = |x: usize, y: usize| -> char {
@@ -109,7 +118,7 @@ impl Painter {
                 self.cells[k] = if !self.square {
                     let ch = glyph(x, y);
                     let fg = if ch == ' ' || ch == TAIL { None } else { self.ink_of(grid, x, y) };
-                    Cell { ch, fg, bg: self.ground }
+                    Cell { ch, fg, bg: self.back_of(grid, if ch == TAIL { x - 1 } else { x }, y) }
                 } else if self.palette.is_some() {
                     // Two square rows in one terminal row: an upper half block,
                     // its ink the top row's colour and its ground the bottom's,
@@ -295,6 +304,18 @@ mod tests {
         let mut p = Painter::new(&m, false);
         p.paint(&g);
         assert_eq!(Screen::new(2).draw(&p, 2, 1), "\x1b[1;1H# ");
+    }
+
+    #[test]
+    fn a_back_colour_replaces_the_ground_behind_its_cell() {
+        let m = meta(2, 1, Some(&["#000000", "#ff8000"]), Some("#102030"));
+        let mut g = Grid::new(2, 1);
+        g.set(0, 0, '▀', 1);
+        g.set_back(0, 0, 0);
+        let mut p = Painter::new(&m, true);
+        p.paint(&g);
+        assert_eq!(p.cells[0].bg, Some(0x000000));
+        assert_eq!(p.cells[1].bg, Some(0x102030));
     }
 
     #[test]

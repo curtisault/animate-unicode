@@ -75,7 +75,9 @@ rust-toolchain.toml           1.97, wasm32 target, rustfmt, clippy
 Cargo.toml                    workspace; release profile opt-level=s, lto, panic=abort, strip
 package.json                  npm workspaces: web, site
 crates/animate-unicode/       the core crate                                  ✅ cargo test --release: 12 pass
-  src/grid.rs                 Grid, BLANK, WIDE_TAIL, text()
+  src/grid.rs                 Grid, BLANK, NO_BACK, WIDE_TAIL, text()
+  src/pixels.rs               Pixels: square pixels two a cell, as ▀ over a back colour
+  src/noise.rs                ascii.rest's scene hash, noise and fbm
   src/meta.rs                 Meta, Category, Charset (Basic/Extended/Wide)
   src/options.rs              Options: JSON object with typed getters + defaults
   src/piece.rs                Piece trait, Env { paper, mono, now }
@@ -187,7 +189,7 @@ and one line in `pieces/mod.rs` `REGISTRY`. `tests/contract.rs` enforces, for ev
 | options | `None` or a non-empty JSON object of defaults |
 | frame shape | `grid.text()` has exactly `rows` lines (the grid guarantees width) |
 | charset | every cell's code point is allowed by `meta.charset` (see Unicode); `WIDE_TAIL` only in `Charset::Wide` pieces and only directly after a non-tail cell |
-| colours | every colour index `< palette.len()` |
+| colours | every colour index `< palette.len()`, and every back colour too (or `NO_BACK`); no back colour without a palette |
 | first frame | not nearly empty (frame 0 is used as the still) |
 | motion | fps > 0 ⇒ ≥ 3 distinct frames over 6 s; fps = 0 ⇒ frames identical (unless `clock`) |
 | determinism | two fresh instances produce identical frames and colours at the same `t` (unless `clock`) |

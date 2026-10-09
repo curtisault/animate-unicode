@@ -8,9 +8,11 @@
  *
  * In a <pre> the piece is text in the pre's own colour. On a <canvas> it is
  * drawn in its palette (or the canvas's text colour) over `meta.ground`,
- * filling the canvas's width with cells `meta.cell` widths tall. Each
- * (glyph, colour) is drawn once into an atlas and copied from there; a frame
- * redraws only the cells that changed.
+ * filling the canvas's width with cells `meta.cell` widths tall. A cell with
+ * a back colour is filled with it first; half and full blocks are filled as
+ * rectangles, so a scene of them has no seams. Every other (glyph, colour)
+ * is drawn once into an atlas and copied from there; a frame redraws only
+ * the cells that changed.
  *
  * Play time only advances while the element is on screen and the tab is open,
  * and prefers-reduced-motion keeps the first frame unless `motion` is set.
@@ -43,6 +45,8 @@ export interface MountOptions {
 
 /** The right half of a double-width glyph, in the cells buffer. Must match animate_unicode::WIDE_TAIL. */
 export const WIDE_TAIL = 0;
+/** No colour behind a cell, in the backs buffer. Must match animate_unicode::NO_BACK. */
+export const NO_BACK = 255;
 
 // The bundled font first, as in element.ts's STYLE: one face, one width, for every glyph it has.
 const FONT = '"animate-unicode mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
@@ -58,6 +62,7 @@ export function mount(el: HTMLElement, wasm: InitOutput, player: Player, options
   // The grid, as views over wasm memory. Taken fresh each frame: the buffer moves if memory grows.
   const cells = () => new Uint32Array(wasm.memory.buffer, player.cells_ptr(), n);
   const colors = () => new Uint8Array(wasm.memory.buffer, player.colors_ptr(), n);
+  const backs = () => new Uint8Array(wasm.memory.buffer, player.backs_ptr(), n);
 
   const rgb = (css: string) => (css[0] === "#" ? [1, 3, 5].map((i) => parseInt(css.slice(i, i + 2), 16)) : (css.match(/[\d.]+/g) || []).map(Number));
   const dark = (css: string) => {
@@ -90,7 +95,7 @@ export function mount(el: HTMLElement, wasm: InitOutput, player: Player, options
     const slots = new Map<number, number>();
     let w = 0, h = 0, sw = 0, sh = 0, pw = 0, ph = 0, width = -1, ink = "";
     let xs = new Int32Array(0), ys = new Int32Array(0), gx = new Int32Array(0), gy = new Int32Array(0);
-    let last = new Uint32Array(0), lastColor = new Uint8Array(0), full = true;
+    let last = new Uint32Array(0), lastColor = new Uint8Array(0), lastBack = new Uint8Array(0), full = true;
     canvas.style.display ||= "block";
     canvas.style.width ||= "100%";
     canvas.style.aspectRatio = `${cols} / ${rows * cell}`;
@@ -145,7 +150,7 @@ export function mount(el: HTMLElement, wasm: InitOutput, player: Player, options
         full = true;
       }
       frame();
-      const c = cells(), k = colors();
+      const c = cells(), k = colors(), b = backs();
       if (ground) ctx.fillStyle = ground;
       if (full) {
         if (ground) ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -156,14 +161,26 @@ export function mount(el: HTMLElement, wasm: InitOutput, player: Player, options
         if (cp === WIDE_TAIL) continue;
         const x = i % cols, y = (i - x) / cols;
         const wide = x + 1 < cols && c[i + 1] === WIDE_TAIL;
-        const changed = full || cp !== last[i] || k[i] !== lastColor[i] || (wide && c[i + 1] !== last[i + 1]);
+        const back = palette && b[i] !== NO_BACK ? palette[b[i]!] : undefined;
+        const changed = full || cp !== last[i] || k[i] !== lastColor[i] || b[i] !== lastBack[i] || (wide && c[i + 1] !== last[i + 1]);
         if (!changed) continue;
         const x0 = xs[x]!, y0 = ys[y]!, cw = xs[x + (wide ? 2 : 1)]! - x0, ch = ys[y + 1]! - y0;
-        if (!full) {
+        if (back) {
+          ctx.fillStyle = back;
+          ctx.fillRect(x0, y0, cw, ch);
+          if (ground) ctx.fillStyle = ground;
+        } else if (!full) {
           if (ground) ctx.fillRect(x0, y0, cw, ch);
           else ctx.clearRect(x0, y0, cw, ch);
         }
-        if (cp !== 0x20) {
+        // Half and full blocks are filled exactly, so cells of them tile with no seams.
+        const half = cp === 0x2580 ? 1 : cp === 0x2584 ? 2 : cp === 0x2588 ? 3 : 0;
+        if (half && palette) {
+          ctx.fillStyle = palette[k[i]!] ?? palette[0]!;
+          const mid = Math.round(ch / 2);
+          ctx.fillRect(x0, half === 2 ? y0 + mid : y0, cw, half === 1 ? mid : half === 2 ? ch - mid : ch);
+          if (ground) ctx.fillStyle = ground;
+        } else if (cp !== 0x20) {
           const s = glyph(cp, k[i]!, wide);
           ctx.drawImage(atlas, (s % 32) * pw + 1 + x0 - gx[x]!, Math.floor(s / 32) * ph + 1 + y0 - gy[y]!, cw, ch, x0, y0, cw, ch);
         }
@@ -171,9 +188,11 @@ export function mount(el: HTMLElement, wasm: InitOutput, player: Player, options
       if (last.length !== n) {
         last = new Uint32Array(n);
         lastColor = new Uint8Array(n);
+        lastBack = new Uint8Array(n);
       }
       last.set(c);
       lastColor.set(k);
+      lastBack.set(b);
       full = false;
     };
     size();
