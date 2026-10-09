@@ -83,8 +83,10 @@ impl Grid {
     }
 
     /// A double-width glyph (CJK, most emoji) at `x`, with its tail at `x + 1`.
-    /// Drawn only when both cells are on the grid.
+    /// Drawn only when both cells are on the grid. Debug builds check that the
+    /// glyph really is two columns wide (East Asian Width W or F).
     pub fn set_wide(&mut self, x: i64, y: i64, ch: char, color: u8) {
+        debug_assert_eq!(unicode_width::UnicodeWidthChar::width(ch), Some(2), "{ch:?} is not a double-width glyph");
         if self.in_bounds(x, y) && self.in_bounds(x + 1, y) {
             let i = self.index(x as usize, y as usize);
             self.cells[i] = ch as u32;

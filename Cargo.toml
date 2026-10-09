@@ -11,6 +11,9 @@ repository = "https://github.com/curtisault/animate-unicode"
 [workspace.dependencies]
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+# East Asian Width, for checking wide glyphs: only in debug assertions and the
+# contract test, so release builds drop it.
+unicode-width = "0.2"
 
 # std is a deliberate choice (see docs/IMPLEMENTATION_PLAN.md, "Decisions"):
 # a 26 KB donut was judged fine. These settings keep that from growing needlessly.

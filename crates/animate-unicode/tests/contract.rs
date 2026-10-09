@@ -16,6 +16,7 @@
 
 use animate_unicode::{registry, Category, Charset, Env, Grid, Options, Piece, WIDE_TAIL};
 use std::time::Instant;
+use unicode_width::UnicodeWidthChar;
 
 const SAMPLE_AT: [f64; 6] = [0.0, 1.0, 2.0, 3.0, 4.0, 6.0];
 
@@ -162,6 +163,19 @@ fn every_piece_keeps_the_contract() {
                 } else if !allowed(m.charset, *cp) {
                     errors.push(format!("{at}: U+{cp:04X} is outside charset {:?}", m.charset));
                     break;
+                } else {
+                    // A double-width glyph needs its tail after it (set_wide),
+                    // and a tail may only follow one.
+                    let wide = char::from_u32(*cp).and_then(|c| c.width()) == Some(2);
+                    let tailed = x % m.cols + 1 < m.cols && g.cells()[x + 1] == WIDE_TAIL;
+                    if wide && !tailed {
+                        errors.push(format!("{at}: U+{cp:04X} is double width but drawn in one cell (use set_wide)"));
+                        break;
+                    }
+                    if tailed && !wide {
+                        errors.push(format!("{at}: U+{cp:04X} has a wide tail but is not double width"));
+                        break;
+                    }
                 }
             }
             if let Some(p) = m.palette {
