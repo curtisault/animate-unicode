@@ -17,6 +17,7 @@
 
 #![warn(missing_docs)]
 
+pub mod geom;
 pub mod grid;
 pub mod meta;
 pub mod options;
@@ -32,4 +33,4 @@ pub use meta::{Category, Charset, Meta};
 pub use options::Options;
 pub use palette::Ramp;
 pub use piece::{Env, Piece};
-pub use subcell::{Dots, Octants, Quadrants, Sextants};
+pub use subcell::{ColorDots, ColorOctants, ColorQuadrants, ColorSextants, Dots, Octants, Quadrants, Sextants};

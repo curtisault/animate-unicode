@@ -8,10 +8,11 @@
 //! | [`Octants`]   | 2 × 4       | U+1CD00–1CDE5, plus 26 older blocks  | `Extended` |
 //!
 //! Draw dots with `set`, `line` and `circle` in dot coordinates, then put the
-//! picture on a grid with [`Canvas::draw`]. An empty cell is a space, never
-//! U+2800, so `Grid::text` and the contract's "nearly empty" check see it as
-//! blank. A piece that colours each cell itself reads [`Canvas::glyph`] per
-//! cell instead of calling `draw`.
+//! picture on a grid with [`Canvas::draw`]. [`ColorCanvas`] does the same with
+//! a palette index and a depth per dot, for pieces in colour. An empty cell is
+//! a space, never U+2800, so `Grid::text` and the contract's "nearly empty"
+//! check see it as blank. A piece that colours each cell itself reads
+//! [`Canvas::glyph`] per cell instead of calling `draw`.
 //!
 //! The encodings are in docs/IMPLEMENTATION_PLAN.md, Appendix C.
 
@@ -488,6 +489,245 @@ impl<E: Encoding> Canvas<E> {
                 }
             }
         }
+    }
+}
+
+/// A canvas whose dots each carry a palette index, and a depth for drawing
+/// solids nearest-first.
+///
+/// A cell can show only one colour, so each cell takes the colour most of its
+/// dots have (the higher index on a tie: by the [`crate::palette`] convention,
+/// the brighter). [`ColorCanvas::draw`] keeps every dot in that colour;
+/// [`ColorCanvas::draw_split`] keeps only the dots of that colour, which keeps
+/// the edges between coloured regions crisp in solid encodings like octants.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ColorCanvas<E: Encoding> {
+    canvas: Canvas<E>,
+    /// A palette index per dot, row-major in dots; meaningful where a dot is on.
+    color: Vec<u8>,
+    /// Nearness per dot (larger is nearer); `-inf` where nothing was plotted.
+    depth: Vec<f32>,
+}
+
+/// Braille dots with a colour each.
+pub type ColorDots = ColorCanvas<Braille>;
+/// Sextants with a colour each.
+pub type ColorSextants = ColorCanvas<Sextant>;
+/// Quadrants with a colour each.
+pub type ColorQuadrants = ColorCanvas<Quadrant>;
+/// Octants with a colour each.
+pub type ColorOctants = ColorCanvas<Octant>;
+
+impl<E: Encoding> ColorCanvas<E> {
+    /// An empty canvas covering `cols × rows` cells. Panics on a zero size.
+    pub fn new(cols: usize, rows: usize) -> Self {
+        let canvas = Canvas::new(cols, rows);
+        let n = canvas.width() * canvas.height();
+        Self { canvas, color: vec![0; n], depth: vec![f32::NEG_INFINITY; n] }
+    }
+
+    /// Width in cells.
+    pub fn cols(&self) -> usize {
+        self.canvas.cols
+    }
+
+    /// Height in cells.
+    pub fn rows(&self) -> usize {
+        self.canvas.rows
+    }
+
+    /// Width in dots.
+    pub fn width(&self) -> usize {
+        self.canvas.width()
+    }
+
+    /// Height in dots.
+    pub fn height(&self) -> usize {
+        self.canvas.height()
+    }
+
+    /// Every dot off, every depth back to the far plane.
+    pub fn clear(&mut self) {
+        self.canvas.clear();
+        self.depth.fill(f32::NEG_INFINITY);
+    }
+
+    #[inline]
+    fn dot(&self, x: i64, y: i64) -> Option<usize> {
+        (x >= 0 && y >= 0 && (x as usize) < self.width() && (y as usize) < self.height()).then(|| y as usize * self.width() + x as usize)
+    }
+
+    /// Turns a dot on in `color`, whatever is there. Off-canvas dots are ignored.
+    #[inline]
+    pub fn set(&mut self, x: i64, y: i64, color: u8) {
+        if let Some(k) = self.dot(x, y) {
+            self.canvas.set(x, y);
+            self.color[k] = color;
+        }
+    }
+
+    /// Turns a dot on in `color` if `z` is nearer (larger) than what the dot
+    /// holds, and returns whether it did. Off-canvas dots are ignored.
+    #[inline]
+    pub fn plot(&mut self, x: i64, y: i64, z: f32, color: u8) -> bool {
+        match self.dot(x, y) {
+            Some(k) if z > self.depth[k] => {
+                self.depth[k] = z;
+                self.canvas.set(x, y);
+                self.color[k] = color;
+                true
+            }
+            _ => false,
+        }
+    }
+
+    /// Turns one dot off, keeping its depth. Off-canvas dots are ignored.
+    #[inline]
+    pub fn unset(&mut self, x: i64, y: i64) {
+        self.canvas.unset(x, y);
+    }
+
+    /// The colour of a dot that is on.
+    #[inline]
+    pub fn get(&self, x: i64, y: i64) -> Option<u8> {
+        self.dot(x, y).filter(|_| self.canvas.get(x, y)).map(|k| self.color[k])
+    }
+
+    /// The depth a dot holds: `-inf` off the canvas or where nothing was plotted.
+    #[inline]
+    pub fn depth(&self, x: i64, y: i64) -> f32 {
+        self.dot(x, y).map_or(f32::NEG_INFINITY, |k| self.depth[k])
+    }
+
+    /// A straight line of dots in `color`, both ends included (Bresenham).
+    pub fn line(&mut self, x0: i64, y0: i64, x1: i64, y1: i64, color: u8) {
+        bresenham(x0, y0, x1, y1, |x, y| self.set(x, y, color));
+    }
+
+    /// Shades by ordered dithering: each dot that is on stays on only if
+    /// [`dither`](crate::util::dither) keeps it at the shade `ink` gives its
+    /// colour. Plot a lit surface nearest-first with the colour standing for
+    /// its light, then thin it here, so the density follows the light.
+    pub fn dither_by(&mut self, ink: impl Fn(u8) -> f64) {
+        for y in 0..self.height() {
+            for x in 0..self.width() {
+                if let Some(c) = self.get(x as i64, y as i64) {
+                    if !crate::util::dither(x, y, ink(c)) {
+                        self.canvas.unset(x as i64, y as i64);
+                    }
+                }
+            }
+        }
+    }
+
+    /// The dot mask of a cell. Panics off the canvas.
+    pub fn mask(&self, cx: usize, cy: usize) -> u8 {
+        self.canvas.mask(cx, cy)
+    }
+
+    /// The colour most of a cell's dots have (the higher on a tie), or `None`
+    /// for an empty cell. Panics off the canvas.
+    pub fn cell_color(&self, cx: usize, cy: usize) -> Option<u8> {
+        let m = self.mask(cx, cy);
+        if m == 0 {
+            return None;
+        }
+        let mut seen = [(0u8, 0u8); 8];
+        let mut n = 0;
+        for bit in 0..E::W * E::H {
+            if m & (1 << bit) == 0 {
+                continue;
+            }
+            let c = self.color[(cy * E::H + bit / E::W) * self.width() + cx * E::W + bit % E::W];
+            match seen[..n].iter_mut().find(|s| s.0 == c) {
+                Some(s) => s.1 += 1,
+                None => {
+                    seen[n] = (c, 1);
+                    n += 1;
+                }
+            }
+        }
+        seen[..n].iter().max_by_key(|&&(c, count)| (count, c)).map(|s| s.0)
+    }
+
+    /// The mask of a cell's dots that are `color`. Panics off the canvas.
+    pub fn mask_of(&self, cx: usize, cy: usize, color: u8) -> u8 {
+        let m = self.mask(cx, cy);
+        (0..E::W * E::H)
+            .filter(|&bit| m & (1 << bit) != 0 && self.color[(cy * E::H + bit / E::W) * self.width() + cx * E::W + bit % E::W] == color)
+            .fold(0, |acc, bit| acc | 1 << bit)
+    }
+
+    /// Puts the picture on `grid` with its top-left cell at `(x, y)`: every
+    /// dot, each cell in its [`cell_color`](Self::cell_color). Empty cells are
+    /// left as they were. Clipped to the grid.
+    pub fn draw(&self, grid: &mut Grid, x: i64, y: i64) {
+        for cy in 0..self.rows() {
+            for cx in 0..self.cols() {
+                if let Some(c) = self.cell_color(cx, cy) {
+                    grid.set(x + cx as i64, y + cy as i64, E::glyph(self.mask(cx, cy)), c);
+                }
+            }
+        }
+    }
+
+    /// Like [`draw`](Self::draw), but a cell keeps only the dots of its own
+    /// colour, so where two regions meet the boundary stays sharp.
+    pub fn draw_split(&self, grid: &mut Grid, x: i64, y: i64) {
+        for cy in 0..self.rows() {
+            for cx in 0..self.cols() {
+                if let Some(c) = self.cell_color(cx, cy) {
+                    grid.set(x + cx as i64, y + cy as i64, E::glyph(self.mask_of(cx, cy, c)), c);
+                }
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod color_tests {
+    use super::*;
+
+    #[test]
+    fn a_cell_takes_its_commonest_colour_and_the_brighter_on_a_tie() {
+        let mut c = ColorOctants::new(1, 1);
+        assert_eq!(c.cell_color(0, 0), None);
+        c.set(0, 0, 3);
+        c.set(1, 0, 3);
+        c.set(0, 1, 7);
+        assert_eq!(c.cell_color(0, 0), Some(3));
+        c.set(1, 1, 7);
+        assert_eq!(c.cell_color(0, 0), Some(7), "two each: the higher index wins");
+        assert_eq!(c.mask_of(0, 0, 3), 0b0011);
+        let mut g = Grid::new(1, 1);
+        c.draw_split(&mut g, 0, 0);
+        assert_eq!((char::from_u32(g.get(0, 0)), g.color_at(0, 0)), (Some(Octant::glyph(0b1100)), 7));
+        c.draw(&mut g, 0, 0);
+        assert_eq!(char::from_u32(g.get(0, 0)), Some(Octant::glyph(0b1111)));
+    }
+
+    #[test]
+    fn plot_keeps_the_nearest_and_clear_resets_depth() {
+        let mut c = ColorDots::new(2, 1);
+        assert!(c.plot(1, 1, 0.5, 2));
+        assert!(!c.plot(1, 1, 0.2, 9), "farther: not drawn");
+        assert!(c.plot(1, 1, 0.9, 4));
+        assert_eq!((c.get(1, 1), c.depth(1, 1)), (Some(4), 0.9));
+        assert!(!c.plot(-1, 0, 9.0, 1), "off the canvas");
+        c.clear();
+        assert_eq!((c.get(1, 1), c.depth(1, 1)), (None, f32::NEG_INFINITY));
+    }
+
+    #[test]
+    fn dither_by_keeps_a_share_of_dots_by_their_colour() {
+        let mut c = ColorDots::new(2, 1);
+        for y in 0..4 {
+            for x in 0..4 {
+                c.set(x, y, if x < 2 { 0 } else { 1 });
+            }
+        }
+        c.dither_by(|k| if k == 0 { 0.0 } else { 1.0 });
+        assert_eq!((c.mask(0, 0), c.mask(1, 0)), (0, 0xFF));
     }
 }
 

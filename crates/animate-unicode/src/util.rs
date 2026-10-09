@@ -1,5 +1,6 @@
 //! Small things most pieces want: a seeded PRNG (never `rand` from a clock:
-//! frames must be deterministic in `t`), a ramp lookup, braille encoding.
+//! frames must be deterministic in `t`), a ramp lookup, braille encoding,
+//! ordered dithering.
 
 /// xorshift64*, seeded. Cheap, good enough for art, the same on every platform.
 #[derive(Clone, Debug)]
@@ -70,6 +71,15 @@ pub fn smoothstep(x: f64) -> f64 {
     x * x * (3.0 - 2.0 * x)
 }
 
+/// A 4×4 Bayer matrix, the thresholds 0–15 of ordered dithering.
+pub const BAYER: [[u8; 4]; 4] = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
+
+/// Ordered dithering: whether the dot at `(x, y)` is on for a shade `v` in
+/// [0, 1]. A patch of shade `v` gets about `v` of its dots, spread evenly.
+pub fn dither(x: usize, y: usize, v: f64) -> bool {
+    v * 16.0 > f64::from(BAYER[y % 4][x % 4])
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -93,6 +103,12 @@ mod tests {
         assert_eq!(braille([2, 0, 0, 0]), '\u{2808}'); // dot 4
         assert_eq!(braille([0, 0, 0, 3]), '\u{28C0}'); // dots 7 and 8
         assert_eq!(braille([3, 3, 3, 3]), '\u{28FF}');
+    }
+
+    #[test]
+    fn dither_sets_a_share_of_dots_by_shade() {
+        let count = |v: f64| (0..4).flat_map(|y| (0..4).map(move |x| (x, y))).filter(|&(x, y)| dither(x, y, v)).count();
+        assert_eq!((count(0.0), count(0.5), count(1.0)), (0, 8, 16));
     }
 
     #[test]
