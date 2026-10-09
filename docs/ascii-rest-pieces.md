@@ -33,11 +33,11 @@ are not tracked here.
 | effects | 8 | 6 | | | | 2 |
 | ui | 12 | | | 12 | | |
 | data | 10 | | | 10 | | |
-| type | 9 | 9 | | | | |
+| type | 9 | | | 9 | | |
 | logos | 28 | 28 | | | | |
 | companies | 14 | 14 | | | | |
 | distros | 23 | 23 | | | | |
-| **all** | **209** | **146** | | **60** | | **3** |
+| **all** | **209** | **137** | | **69** | | **3** |
 
 Recount after changing rows:
 
@@ -102,7 +102,7 @@ and particles (quadrant-fire now uses it too).
 | E2 | **Local time in `Env`.** `Env` has only `paper`. Clock pieces need the local wall time: from `Date` in the shell, the system clock in the CLI, and a fixed instant in the contract test so it stays deterministic. | analog-clock, calendar, digital-clock, landscape, sundial | done: `clock::Wall` and `Ticker`, `Env::now`, `Player::set_clock` (mount.ts calls it), chrono in the CLI |
 | E3 | **Categories.** ascii.rest has `companies` and `distros`; `Category` stops at `Logos`. Add the two, or fold them into `logos`. The site's sidebar groups and the CLI's `list` follow. | the 37 company and distro logos | todo |
 | E4 | **Logos from SVG.** A build script (`scripts/logo.py`, run with uvx like `font.py`) that renders each SVG and reduces it to an octant mask, choosing a wedge glyph (U+1FB3C–1FB67) where an edge cuts a cell at a slant, with a colour per cell. Its output is committed. One shared `logo` module draws any logo from that data and runs the glint or the scan line, so 65 logos cost data rather than 65 copies of the code. | logos, companies, distros | todo |
-| E5 | **Size.** 64.6 KB gz with 11 pieces, about 2.8 KB more for each further piece. After wave 1 (2026-10-09): 148.0 KB gz with 49 pieces, about 2.2 KB a piece since. After ui and data (2026-10-09): 213.7 KB gz with 70 pieces; those 21 cost about 3.1 KB each, the text pieces carrying their strings. The 146 still to build would add some 400 KB at that rate, to about 615 KB: well past the gate. Decide before wave 3. E4 makes logos cheaper. Before wave 3, decide whether to raise the gate or to split pieces into several wasm modules ([risk 5](IMPLEMENTATION_PLAN.md#risks-and-open-questions)). | everything after wave 2 | todo |
+| E5 | **Size.** 64.6 KB gz with 11 pieces, about 2.8 KB more for each further piece. After wave 1 (2026-10-09): 148.0 KB gz with 49 pieces, about 2.2 KB a piece since. After ui and data (2026-10-09): 213.7 KB gz with 70 pieces; those 21 cost about 3.1 KB each, the text pieces carrying their strings. After type (2026-10-09): 249.0 KB gz with 79 pieces; those 9 cost about 3.9 KB each, carrying fonts, stroke tables and Unicode's case tables (ASCII-only uppercasing would save 2 KB but mangle accented titles). The 137 still to build would add some 470 KB at wave 2's 3.4 KB a piece, to about 720 KB: well past the gate. Decide before wave 3. E4 makes logos cheaper. Before wave 3, decide whether to raise the gate or to split pieces into several wasm modules ([risk 5](IMPLEMENTATION_PLAN.md#risks-and-open-questions)). | everything after wave 2 | todo |
 
 Logo licences: devicon's SVGs are MIT, and Simple Icons' are CC0 (omarchy's
 is MIT). Five companies' marks came from their own sites: command-code,
@@ -334,15 +334,15 @@ carry only the source.
 
 | piece | size, fps | Unicode | enhancement | status |
 |---|---|---|---|---|
-| big-text | 66×8, 24 · options | octant letterforms | the glint as a colour gradient | todo |
-| dissolve | 64×13, 20 · options | braille dust | colour as the dust settles | todo |
-| glitch | 64×13, 15 · options | octant pixel word | RGB channel split in the palette | todo |
-| marquee | 61×10, 24 · options | a braille dot-matrix sign | coloured bulbs | todo |
-| morse | 64×19, 15 · options | braille tape marks | the lamp's glow in colour | todo |
-| scramble | 44×3, 20 · options | noise glyphs from the Extended ranges | letters settling into colour | todo |
-| split-flap | 61×18, 15 · options | half-block flaps mid-turn | board colours | todo |
-| typewriter | 44×3, 20 · options | text as it is, a choice of cursors | colour for the typed text | todo |
-| wave-text | 36×5, 15 · options | text with eighth-block shadows | the swell in colour | todo |
+| big-text | 66×8, 24 · options | octant letters, each outer corner taken off a dot; the double-line shadow as it is | rose to amber across the word, the glint passing in white | built |
+| dissolve | 64×13, 20 · options | braille, a dot a grain: strokes wear away dot by dot and grains fall or fly in | each word its colour, its grains dimming as they fade | built |
+| glitch | 64×13, 15 · options | ascii.rest's frames to the cell (fixture-tested) | the word white, the left-behind copy cyan, smears magenta, tears yellow, corrupt cells in any of the three | built |
+| marquee | 61×10, 24 · options | a braille dot-matrix sign, an LED a dot with a gap round it; `●`/`·` bulbs | amber LEDs, warm bulbs, a gold frame | built |
+| morse | 64×19, 15 · options | ascii.rest's frames to the cell (fixture-tested) | the lens glowing amber to white while keyed, yellow rays, amber marks, bright decoded letters | built |
+| scramble | 44×3, 20 · options | noise from braille, sextants, quadrants, arrows and geometric shapes | noise flickering cyan, green and violet; settled letters bright | built |
+| split-flap | 61×18, 15 · options | ascii.rest's frames to the cell (fixture-tested), half-block flaps mid-turn | cream cards on a dark board; remarks amber, red, green or cyan by what they ask | built |
+| typewriter | 44×3, 20 · options | ascii.rest's frames to the cell (fixture-tested) | an editor's colours: prefix dim, phrase bright, cursor in the accent | built |
+| wave-text | 36×5, 15 · options | ascii.rest's frames to the cell (fixture-tested) | each letter shaded by its height, deep blue in a trough to white on a crest | built |
 
 ### logos (28)
 

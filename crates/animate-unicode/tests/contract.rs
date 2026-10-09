@@ -319,3 +319,26 @@ fn uptime_bar_matches_the_typescript_original() {
         assert_eq!(grid.text(), body.trim_end_matches('\n'), "uptime bar at t={t}");
     }
 }
+
+/// Pieces whose text is ascii.rest's exactly (the colour is this port's
+/// own), against frames of the TypeScript captured with node in ../ascii,
+/// played in order: `fixtures/<slug>.txt` holds `t=` blocks.
+#[test]
+fn text_ports_match_the_typescript() {
+    for (slug, fixture) in [
+        ("typewriter", include_str!("fixtures/typewriter.txt")),
+        ("wave-text", include_str!("fixtures/wave-text.txt")),
+        ("split-flap", include_str!("fixtures/split-flap.txt")),
+        ("morse", include_str!("fixtures/morse.txt")),
+        ("glitch", include_str!("fixtures/glitch.txt")),
+    ] {
+        let (meta, mut piece) = registry::make(slug, "").unwrap();
+        let mut grid = Grid::new(meta.cols, meta.rows);
+        for block in fixture.split("\n\n") {
+            let (head, body) = block.split_once('\n').unwrap();
+            let t: f64 = head.strip_prefix("t=").unwrap().parse().unwrap();
+            piece.frame(t, &Env::default(), &mut grid);
+            assert_eq!(grid.text(), body.trim_end_matches('\n'), "{slug} at t={t}");
+        }
+    }
+}

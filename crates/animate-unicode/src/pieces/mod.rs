@@ -6,6 +6,7 @@ use crate::registry::Entry;
 
 pub mod arrow_field;
 pub mod bar_chart;
+pub mod big_text;
 pub mod boot_log;
 pub mod bouncing_balls;
 pub mod box_frames;
@@ -18,6 +19,7 @@ pub mod chladni;
 pub mod cpu_meters;
 pub mod cube;
 pub mod digital_clock;
+pub mod dissolve;
 pub mod dividers;
 pub mod dna_helix;
 pub mod donut;
@@ -33,6 +35,7 @@ pub mod fountain;
 pub mod gauge;
 pub mod geometric_tiles;
 pub mod glider_gun;
+pub mod glitch;
 pub mod glxgears;
 pub mod gyroscope;
 pub mod harmonograph;
@@ -46,8 +49,10 @@ pub mod kanji_rain;
 pub mod langtons_ant;
 pub mod lorenz;
 pub mod mandelbrot;
+pub mod marquee;
 pub mod maze;
 pub mod mobius_strip;
+pub mod morse;
 pub mod newtons_cradle;
 pub mod not_found;
 pub mod octant_sphere;
@@ -60,20 +65,24 @@ pub mod quadrant_fire;
 pub mod radar;
 pub mod reaction_diffusion;
 pub mod rule_30;
+pub mod scramble;
 pub mod sextant_plasma;
 pub mod sierpinski;
 pub mod skeleton;
 pub mod smoke;
 pub mod sparkline;
 pub mod spinners;
+pub mod split_flap;
 pub mod spring;
 pub mod terminal;
 pub mod tesseract;
 pub mod torus_knot;
 pub mod twisted_ring;
+pub mod typewriter;
 pub mod uptime_bar;
 pub mod voronoi;
 pub mod wave_interference;
+pub mod wave_text;
 
 // One piece a line, so this stays the one place to see every piece.
 /// Every piece, in the order the site lists them within a category.
@@ -149,4 +158,13 @@ pub static REGISTRY: &[Entry] = &[
     Entry { meta: &radar::META, make: radar::make },
     Entry { meta: &sparkline::META, make: sparkline::make },
     Entry { meta: &uptime_bar::META, make: uptime_bar::make },
+    Entry { meta: &typewriter::META, make: typewriter::make },
+    Entry { meta: &scramble::META, make: scramble::make },
+    Entry { meta: &wave_text::META, make: wave_text::make },
+    Entry { meta: &split_flap::META, make: split_flap::make },
+    Entry { meta: &big_text::META, make: big_text::make },
+    Entry { meta: &marquee::META, make: marquee::make },
+    Entry { meta: &morse::META, make: morse::make },
+    Entry { meta: &glitch::META, make: glitch::make },
+    Entry { meta: &dissolve::META, make: dissolve::make },
 ];
