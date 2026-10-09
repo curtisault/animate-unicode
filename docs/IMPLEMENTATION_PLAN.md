@@ -664,6 +664,7 @@ Measured 2026-10-08 on this machine. TS minified with esbuild 0.25; Rust 1.97, `
 | One small piece alone (geometric-tiles): the base every module repeats | 74.2 KB | 33.4 KB |
 | **Split by category** (2026-10-09): effects (2 pieces) to physics (15) | 86.5–202.3 KB | **40.8–91.1 KB** a module, 539.0 KB in all |
 | After wave 3 (2026-10-09): 11 modules, 134 pieces | 137.9–216.4 KB | 62.4–95.8 KB a module, 886.0 KB in all |
+| After wave 4 (2026-10-09): 14 modules, 194 pieces; the 60 logos are data for one shared `logo` module | 138.8–315.8 KB | 43.2 KB (companies), 55.9 KB (distros), 61.8 KB (logos); 1 028.5 KB in all |
 
 Reading: the fixed cost of `std` + serde_json + bindgen is ~33 KB gz; each additional piece should add roughly what its TS does (1–3 KB gz) since the runtime is already paid for. Re-measured after eleven pieces: the eight Phase 6 pieces added 22.3 KB gz, about 2.8 KB each, the top of the projected range (octant-sphere carries its 256-glyph table). At that rate the 500 KB gate is some 150 pieces away. After wave 2 the one module was 249 KB with 79 pieces, the 30 of wave 2 costing about 3.4 KB each, so the 500 KB gate would have fallen in wave 3; the module was split by category instead.
 

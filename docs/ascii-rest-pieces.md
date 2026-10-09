@@ -34,10 +34,10 @@ are not tracked here.
 | ui | 12 | | | 12 | | |
 | data | 10 | | | 10 | | |
 | type | 9 | | | 9 | | |
-| logos | 28 | 28 | | | | |
-| companies | 14 | 14 | | | | |
-| distros | 23 | 23 | | | | |
-| **all** | **209** | **82** | | **124** | | **3** |
+| logos | 28 | | | 28 | | |
+| companies | 14 | 5 | | 9 | | |
+| distros | 23 | | | 23 | | |
+| **all** | **209** | **22** | | **184** | | **3** |
 
 Recount after changing rows:
 
@@ -125,6 +125,9 @@ Each wave is one branch per category, stacked.
    Built 2026-10-09: 55 pieces, every category its own module, the largest
    (objects) 96 KB gz.
 4. **Logos, companies, distros** (65), after E3 and E4.
+   Built 2026-10-09: 60 pieces, in modules of 43 (companies) to 62 KB gz
+   (logos). The five companies drawn from their own marks (command-code,
+   databuddy, greptile, orchid, polar) wait for a licence to use them.
 5. **Scenes** (15), after E1. These are the largest: tokyo-rain alone is
    1 123 lines of TS.
 
@@ -351,78 +354,78 @@ carry only the source.
 
 | piece | size, fps | drawn from | status |
 |---|---|---|---|
-| c | 49×28, 30 · colour, options | devicon's c-original.svg (MIT) | todo |
-| clojure | 56×28, 30 · colour, options | devicon's clojure-original.svg (MIT) | todo |
-| cpp | 50×28, 30 · colour, options | devicon's cplusplus-original.svg (MIT) | todo |
-| csharp | 49×28, 30 · colour, options | devicon's csharp-original.svg (MIT) | todo |
-| css | 50×28, 30 · colour, options | devicon's css3-original.svg (MIT) | todo |
-| dart | 56×28, 30 · colour, options | devicon's dart-original.svg (MIT) | todo |
-| elixir | 38×28, 30 · colour, options | devicon's elixir-original.svg (MIT) | todo |
-| elm | 56×28, 30 · colour, options | devicon's elm-original.svg (MIT) | todo |
-| erlang | 70×23, 30 · colour, options | devicon's erlang-original.svg (MIT) | todo |
-| go | 79×16, 30 · colour, options | devicon's go-original-wordmark.svg (MIT) | todo |
-| haskell | 69×25, 30 · colour, options | devicon's haskell-original.svg (MIT) | todo |
-| html | 50×28, 30 · colour, options | devicon's html5-original.svg (MIT) | todo |
-| java | 42×28, 30 · colour, options | devicon's java-original.svg (MIT) | todo |
-| javascript | 56×28, 30 · colour, options | devicon's javascript-original.svg (MIT) | todo |
-| julia | 60×28, 30 · colour, options | devicon's julia-original.svg (MIT) | todo |
-| kotlin | 56×28, 30 · colour, options | devicon's kotlin-original.svg (MIT) | todo |
-| lua | 56×28, 30 · colour, options | devicon's lua-original.svg (MIT) | todo |
-| ocaml | 64×28, 30 · colour, options | devicon's ocaml-original.svg (MIT) | todo |
-| perl | 56×28, 30 · colour, options | devicon's perl-original.svg (MIT) | todo |
-| php | 69×19, 30 · colour, options | devicon's php-original.svg (MIT) | todo |
-| python | 51×28, 30 · colour, options | devicon's python-original.svg (MIT) | todo |
-| r | 69×27, 30 · colour, options | devicon's r-original.svg (MIT) | todo |
-| ruby | 56×28, 30 · colour, options | devicon's ruby-original.svg (MIT) | todo |
-| rust | 64×32, 30 · colour, options | devicon's rust-original.svg (MIT) | todo |
-| scala | 37×28, 30 · colour, options | devicon's scala-original.svg (MIT) | todo |
-| swift | 58×28, 30 · colour, options | devicon's swift-original.svg (MIT) | todo |
-| typescript | 56×28, 30 · colour, options | devicon's typescript-original.svg (MIT) | todo |
-| zig | 61×28, 30 · colour, options | devicon's zig-original.svg (MIT) | todo |
+| c | 49×28, 30 · colour, options | devicon's c-original.svg (MIT) | built |
+| clojure | 56×28, 30 · colour, options | devicon's clojure-original.svg (MIT) | built |
+| cpp | 50×28, 30 · colour, options | devicon's cplusplus-original.svg (MIT) | built |
+| csharp | 49×28, 30 · colour, options | devicon's csharp-original.svg (MIT) | built |
+| css | 50×28, 30 · colour, options | devicon's css3-original.svg (MIT) | built |
+| dart | 56×28, 30 · colour, options | devicon's dart-original.svg (MIT) | built |
+| elixir | 38×28, 30 · colour, options | devicon's elixir-original.svg (MIT) | built |
+| elm | 56×28, 30 · colour, options | devicon's elm-original.svg (MIT) | built |
+| erlang | 70×23, 30 · colour, options | devicon's erlang-original.svg (MIT) | built |
+| go | 79×16, 30 · colour, options | devicon's go-original-wordmark.svg (MIT) | built |
+| haskell | 69×25, 30 · colour, options | devicon's haskell-original.svg (MIT) | built |
+| html | 50×28, 30 · colour, options | devicon's html5-original.svg (MIT) | built |
+| java | 42×28, 30 · colour, options | devicon's java-original.svg (MIT) | built |
+| javascript | 56×28, 30 · colour, options | devicon's javascript-original.svg (MIT) | built |
+| julia | 60×28, 30 · colour, options | devicon's julia-original.svg (MIT) | built |
+| kotlin | 56×28, 30 · colour, options | devicon's kotlin-original.svg (MIT) | built |
+| lua | 56×28, 30 · colour, options | devicon's lua-original.svg (MIT) | built |
+| ocaml | 64×28, 30 · colour, options | devicon's ocaml-original.svg (MIT) | built |
+| perl | 56×28, 30 · colour, options | devicon's perl-original.svg (MIT) | built |
+| php | 69×19, 30 · colour, options | devicon's php-original.svg (MIT) | built |
+| python | 51×28, 30 · colour, options | devicon's python-original.svg (MIT) | built |
+| r | 69×27, 30 · colour, options | devicon's r-original.svg (MIT) | built |
+| ruby | 56×28, 30 · colour, options | devicon's ruby-original.svg (MIT) | built |
+| rust | 64×32, 30 · colour, options | devicon's rust-original.svg (MIT) | built |
+| scala | 37×28, 30 · colour, options | devicon's scala-original.svg (MIT) | built |
+| swift | 58×28, 30 · colour, options | devicon's swift-original.svg (MIT) | built |
+| typescript | 56×28, 30 · colour, options | devicon's typescript-original.svg (MIT) | built |
+| zig | 61×28, 30 · colour, options | devicon's zig-original.svg (MIT) | built |
 
 ### companies (14)
 
 | piece | size, fps | drawn from | status |
 |---|---|---|---|
-| apple | 46×28, 30 · colour, options | Simple Icons' apple.svg (CC0) | todo |
-| cloudflare | 79×19, 30 · colour, options | Simple Icons' cloudflare.svg (CC0) | todo |
-| coderabbit | 64×28, 30 · colour, options | Simple Icons' coderabbit.svg (CC0) | todo |
+| apple | 46×28, 30 · colour, options | Simple Icons' apple.svg (CC0) | built |
+| cloudflare | 79×19, 30 · colour, options | Simple Icons' cloudflare.svg (CC0) | built |
+| coderabbit | 64×28, 30 · colour, options | Simple Icons' coderabbit.svg (CC0) | built |
 | command-code | 64×32, 30 · colour, options | the company's own mark (licence to check) | todo |
 | databuddy | 56×28, 30 · colour, options | the company's own mark (licence to check) | todo |
 | greptile | 49×28, 30 · colour, options | the company's own mark (licence to check) | todo |
-| helium | 49×28, 30 · colour, options | Simple Icons' heliumbrowser.svg (CC0) | todo |
-| mintlify | 56×28, 30 · colour, options | Simple Icons' mintlify.svg (CC0) | todo |
+| helium | 49×28, 30 · colour, options | Simple Icons' heliumbrowser.svg (CC0) | built |
+| mintlify | 56×28, 30 · colour, options | Simple Icons' mintlify.svg (CC0) | built |
 | orchid | 57×28, 30 · colour, options | the company's own mark (licence to check) | todo |
-| planetscale | 56×28, 30 · colour, options | Simple Icons' planetscale.svg (CC0) | todo |
-| playstation | 70×28, 30 · colour, options | Simple Icons' playstation.svg (CC0) | todo |
+| planetscale | 56×28, 30 · colour, options | Simple Icons' planetscale.svg (CC0) | built |
+| playstation | 70×28, 30 · colour, options | Simple Icons' playstation.svg (CC0) | built |
 | polar | 51×28, 30 · colour, options | the company's own mark (licence to check) | todo |
-| supabase | 55×28, 30 · colour, options | Simple Icons' supabase.svg (CC0) | todo |
-| vercel | 64×28, 30 · colour, options | Simple Icons' vercel.svg (CC0) | todo |
+| supabase | 55×28, 30 · colour, options | Simple Icons' supabase.svg (CC0) | built |
+| vercel | 64×28, 30 · colour, options | Simple Icons' vercel.svg (CC0) | built |
 
 ### distros (23)
 
 | piece | size, fps | drawn from | status |
 |---|---|---|---|
-| almalinux | 56×28, 30 · colour, options | devicon's almalinux-original.svg (MIT) | todo |
-| alpine-linux | 64×28, 30 · colour, options | Simple Icons' alpinelinux.svg (CC0) | todo |
-| arch-linux | 59×28, 30 · colour, options | devicon's archlinux-original.svg (MIT) | todo |
-| centos | 56×28, 30 · colour, options | devicon's centos-original.svg (MIT) | todo |
-| debian | 46×28, 30 · colour, options | devicon's debian-original.svg (MIT) | todo |
-| deepin | 56×28, 30 · colour, options | Simple Icons' deepin.svg (CC0) | todo |
-| elementary-os | 56×28, 30 · colour, options | Simple Icons' elementary.svg (CC0) | todo |
-| endeavouros | 67×28, 30 · colour, options | Simple Icons' endeavouros.svg (CC0) | todo |
-| fedora | 56×28, 30 · colour, options | devicon's fedora-original.svg (MIT) | todo |
-| gentoo | 54×28, 30 · colour, options | devicon's gentoo-plain.svg (MIT) | todo |
-| kali-linux | 71×27, 30 · colour, options | devicon's kalilinux-original.svg (MIT) | todo |
-| linux-mint | 56×28, 30 · colour, options | devicon's linuxmint-original.svg (MIT) | todo |
-| manjaro | 56×28, 30 · colour, options | Simple Icons' manjaro.svg (CC0) | todo |
-| nixos | 64×28, 30 · colour, options | devicon's nixos-original.svg (MIT) | todo |
-| omarchy | 56×28, 30 · colour, options | Simple Icons' omarchy.svg (MIT, from omarchy.org) | todo |
-| opensuse | 69×18, 30 · colour, options | devicon's opensuse-original.svg (MIT) | todo |
-| pop-os | 56×28, 30 · colour, options | Simple Icons' popos.svg (CC0) | todo |
-| red-hat | 56×28, 30 · colour, options | devicon's redhat-original.svg (MIT) | todo |
-| rocky-linux | 56×28, 30 · colour, options | devicon's rockylinux-original.svg (MIT) | todo |
-| tux | 49×28, 30 · colour, options | devicon's linux-original.svg (MIT) | todo |
-| ubuntu | 58×28, 30 · colour, options | Simple Icons' ubuntu.svg (CC0) | todo |
-| void-linux | 56×28, 30 · colour, options | Simple Icons' voidlinux.svg (CC0) | todo |
-| zorin-os | 64×28, 30 · colour, options | Simple Icons' zorin.svg (CC0) | todo |
+| almalinux | 56×28, 30 · colour, options | devicon's almalinux-original.svg (MIT) | built |
+| alpine-linux | 64×28, 30 · colour, options | Simple Icons' alpinelinux.svg (CC0) | built |
+| arch-linux | 59×28, 30 · colour, options | devicon's archlinux-original.svg (MIT) | built |
+| centos | 56×28, 30 · colour, options | devicon's centos-original.svg (MIT) | built |
+| debian | 46×28, 30 · colour, options | devicon's debian-original.svg (MIT) | built |
+| deepin | 56×28, 30 · colour, options | Simple Icons' deepin.svg (CC0) | built |
+| elementary-os | 56×28, 30 · colour, options | Simple Icons' elementary.svg (CC0) | built |
+| endeavouros | 67×28, 30 · colour, options | Simple Icons' endeavouros.svg (CC0) | built |
+| fedora | 56×28, 30 · colour, options | devicon's fedora-original.svg (MIT) | built |
+| gentoo | 54×28, 30 · colour, options | devicon's gentoo-plain.svg (MIT) | built |
+| kali-linux | 71×27, 30 · colour, options | devicon's kalilinux-original.svg (MIT) | built |
+| linux-mint | 56×28, 30 · colour, options | devicon's linuxmint-original.svg (MIT) | built |
+| manjaro | 56×28, 30 · colour, options | Simple Icons' manjaro.svg (CC0) | built |
+| nixos | 64×28, 30 · colour, options | devicon's nixos-original.svg (MIT) | built |
+| omarchy | 56×28, 30 · colour, options | Simple Icons' omarchy.svg (MIT, from omarchy.org) | built |
+| opensuse | 69×18, 30 · colour, options | devicon's opensuse-original.svg (MIT) | built |
+| pop-os | 56×28, 30 · colour, options | Simple Icons' popos.svg (CC0) | built |
+| red-hat | 56×28, 30 · colour, options | devicon's redhat-original.svg (MIT) | built |
+| rocky-linux | 56×28, 30 · colour, options | devicon's rockylinux-original.svg (MIT) | built |
+| tux | 49×28, 30 · colour, options | devicon's linux-original.svg (MIT) | built |
+| ubuntu | 58×28, 30 · colour, options | Simple Icons' ubuntu.svg (CC0) | built |
+| void-linux | 56×28, 30 · colour, options | Simple Icons' voidlinux.svg (CC0) | built |
+| zorin-os | 64×28, 30 · colour, options | Simple Icons' zorin.svg (CC0) | built |
