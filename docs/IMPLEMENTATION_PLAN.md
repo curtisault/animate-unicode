@@ -20,7 +20,7 @@ or a named command verifies. Nothing in this document is a guess unless marked
   - [5 · Fonts](#phase-5)
   - [6 · Pieces](#phase-6)
   - [7 · CLI](#phase-7)
-  - [8 · Packaging, deploy, CI](#phase-8)
+  - [8 · Packaging, deploy, CI](deploy-plan.md) (its own document)
 - [Testing strategy](#testing-strategy)
 - [Performance budgets](#performance-budgets)
 - [Risks and open questions](#risks-and-open-questions)
@@ -246,7 +246,7 @@ Tasks:
 3. Run `mise run lint`, `mise run test`, `mise run build`, `mise run size` and make each pass.
 4. `mise run dev`, open http://localhost:5173, confirm the donut turns in a `<pre>` and braille-wave draws. Check the console for warnings. Resize the window; navigate to `/donut` and back.
 5. Write `LICENSE` (MIT, owner's name). Initialise git (owner said they will; coordinate).
-6. Push; confirm CI passes on GitHub.
+6. Push; confirm CI passes on GitHub. (Deferred with Phase 8: see [deploy-plan.md](deploy-plan.md).)
 
 Acceptance: `mise run check` exits 0 locally and in CI; both pieces animate in a browser.
 
@@ -549,13 +549,9 @@ Acceptance: `cargo run -p animate-unicode-cli --release -- donut` plays and exit
 <a id="phase-8"></a>
 ### Phase 8 · Packaging, deploy, CI (1 day)
 
-1. **Site hosting**: Cloudflare Workers static assets as ascii.rest does (`../ascii/site/wrangler.jsonc`, `_headers`, `_redirects`). Needs: SPA fallback to `index.html`, `Content-Type: application/wasm` (Workers sets it), CORS open on `/element.js` and the wasm if the tag is to be used cross-origin from other sites, long cache on hashed assets.
-2. **Serving the library from the site root** (`<script type="module" src="https://<site>/element.js">`): a Vite `lib` build or a second esbuild step that emits `element.js` + the wasm at stable paths (not hashed). ascii.rest does this by copying `dist/` into the site.
-3. **npm publish** of `web/` (name TBD) with `pkg/` included; a `release.yml` on tags.
-4. **CI**: `ci.yml` exists; add the size gate (Phase 2), Node smoke test, elm-test. Cache: `jdx/mise-action` caches tools; `Swatinem/rust-cache` the target dir; npm cache via `actions/setup-node` is unnecessary (mise provides node) but `npm ci` needs a lockfile committed.
-5. **README**: install, HTML usage, pieces table (generate it from `metas_json()` with a script, as `../ascii/scripts/readme.ts` does), contributing (a short CONTRIBUTING.md adapted from ascii.rest's).
-
-Acceptance: a tagged release publishes to npm and deploys the site; a plain HTML file on another origin shows a piece with two lines.
+Moved to its own document, [deploy-plan.md](deploy-plan.md), on 2026-10-08,
+to be done later: the original tasks, what Phases 0–7 already put in place
+for them, and what is still open (the remote, the name, the first CI run).
 
 ## Testing strategy
 
