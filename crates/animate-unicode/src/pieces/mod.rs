@@ -25,6 +25,8 @@ pub mod effects;
 pub mod generative;
 #[cfg(feature = "nature")]
 pub mod nature;
+#[cfg(feature = "objects")]
+pub mod objects;
 #[cfg(feature = "physics")]
 pub mod physics;
 #[cfg(feature = "shapes")]
@@ -54,6 +56,8 @@ pub static CATEGORIES: &[(Category, &[Entry])] = &[
     (Category::Nature, nature::REGISTRY),
     #[cfg(feature = "creatures")]
     (Category::Creatures, creatures::REGISTRY),
+    #[cfg(feature = "objects")]
+    (Category::Objects, objects::REGISTRY),
     #[cfg(feature = "generative")]
     (Category::Generative, generative::REGISTRY),
     #[cfg(feature = "effects")]

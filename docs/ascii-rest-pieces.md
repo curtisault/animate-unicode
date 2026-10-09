@@ -28,7 +28,7 @@ are not tracked here.
 | physics | 14 | | | 14 | | |
 | nature | 16 | 2 | | 14 | | |
 | creatures | 10 | | | 10 | | |
-| objects | 14 | 14 | | | | |
+| objects | 14 | | | 14 | | |
 | generative | 13 | | | 13 | | |
 | effects | 8 | 6 | | | | 2 |
 | ui | 12 | | | 12 | | |
@@ -37,7 +37,7 @@ are not tracked here.
 | logos | 28 | 28 | | | | |
 | companies | 14 | 14 | | | | |
 | distros | 23 | 23 | | | | |
-| **all** | **209** | **102** | | **104** | | **3** |
+| **all** | **209** | **88** | | **118** | | **3** |
 
 Recount after changing rows:
 
@@ -253,20 +253,20 @@ carry only the source.
 
 | piece | size, fps | Unicode | enhancement | status |
 |---|---|---|---|---|
-| analog-clock | 47×23, 8 · options, clock | braille face and hands at any angle | a coloured second hand, finer ticks | todo |
-| candle | 40×30, 15 | octant wax, quadrant flame | flame palette and a soft glow | todo |
-| coffee | 52×24, 20 | braille steam, octant cup | colour for the cup and the coffee | todo |
-| ferris-wheel | 64×26, 10 | braille rim and spokes | coloured cabins, lights along the rim at night | todo |
-| hawa-mahal | 61×24, 10 | octant facade | lamps behind the jali in warm colours | todo |
-| hourglass | 43×21, 30 | the sand per braille dot | sand colour, a glass highlight | todo |
-| kite | 64×24, 15 | braille string, wedge-cut kite | coloured panels and a tail | todo |
-| lava-lamp | 30×27, 15 | metaballs at octant resolution | wax and glass in colour, a glow | todo |
-| lighthouse | 64×30, 20 | braille beam cone with dither | beam and lamp in colour | todo |
-| skyline | 64×23, 10 | octant buildings, quadrant windows | warm and cool windows in colour | todo |
-| sundial | 65×23, 10 · clock | octant instrument | the shadow in colour, a sunlit face | todo |
-| train | 76×26, 15 | octant engine, braille smoke | colour for the engine and carriages | todo |
-| vinyl | 64×25, 24 | braille grooves | a coloured label, a highlight sweeping the grooves | todo |
-| windmill | 64×28, 20 | braille lattice sails | colour for the mill and the clouds | todo |
+| analog-clock | 47×23, 8 · options, clock | a braille face: a dithered bezel, minute dots, hands as lines of dots at their true angles | a brass bezel, white hands, a red second hand with a ring, cream numerals | built |
+| candle | 40×30, 15 | ascii.rest's eight samples a cell, each an octant dot | brass lit gold by the flame, cream wax glowing near the top, a blue-rooted white-gold flame, a scatter of warm glow, grey smoke | built |
+| coffee | 52×24, 20 | octant cup and saucer, a sample a dot; braille steam crossing the coffee but not the porcelain | a cobalt cup, a cream saucer, dark coffee with tan crema and a glint, grey steam | built |
+| ferris-wheel | 64×26, 10 | a braille rim (a true circle), dotted spokes and frame; box-drawn cabins | pale steel, warm bulbs chasing round, eight coloured cabins | built |
+| hawa-mahal | 61×24, 10 | each of ascii.rest's strokes an octant dot pattern: solid walls, pointed hoods, rounded sides, lattice jali | pink sandstone with cream ledges and balcony, each screen dark until its lamp comes up amber | built |
+| hourglass | 43×21, 30 | the sand per braille dot; the glass as two fine curves | gold sand, pale blue glass with a white highlight, a dark wood stand | built |
+| kite | 64×24, 15 | octant sail riding and rolling smoothly, gold panels sparser than red; braille string and tail | a harlequin kite, red and gold on dark spars, bows of every colour | built |
+| lava-lamp | 30×27, 15 | metaballs at octant resolution, outlined where they meet the oil | wax magenta-red cooling up the glass, orange near the bulb, silver metal, a warm glow | built |
+| lighthouse | 64×30, 20 | a braille beam cone dithered in the haze, braille crests and spray; an octant tower and rocks | red and white bands (red sparser), a gold lantern and beam, a dark sea lit gold under it, white surf | built |
+| skyline | 64×23, 10 | octant tower outlines and haze, each pane four dots | warm tungsten and cool fluorescent windows, a red mast light, a pale moon, reflections in their own colours | built |
+| sundial | 65×23, 10 · clock | an octant face dithered by the sun, hour lines, a hard shadow edge with a fringe; an octant gnomon | sunlit cream marble, a slate-blue shadow, ochre stone, a gold sun or stars | built |
+| train | 76×26, 15 | redrawn in octants from its shapes, sliding a dot at a time; wheels as circles whose spokes turn; braille smoke | a green engine, black smokebox, brass dome, red wheels, a maroon coach with pale windows | built |
+| vinyl | 64×25, 24 | braille grooves a dot apart; the sheen fills between them; the label's print cut out of it | dark grooves, a silver sheen, a red label, walnut and a silver arm | built |
+| windmill | 64×28, 20 | braille lattice sails a dot thick, braille clouds; an octant mill | a green mill, a thatched cap, a white stage, cream laths on dark stocks, white clouds | built |
 
 ### generative (13)
 
