@@ -319,6 +319,39 @@ Acceptance: `node --test web/test` green; `mise run size` printed in CI; a delib
 <a id="phase-3"></a>
 ### Phase 3 · Web shell (2–3 days)
 
+**Built 2026-10-08** on branch `phase-3-shell`; the manual pass in Chrome,
+Safari and on Android is the owner's (record it with the page's copy button).
+
+- **`quadrant-fire`** (Phase 6 #3): doom-fire.ts's simulation ported line for
+  line and held to its TS frames by a fixture (`tests/fixtures/doom-fire.txt`),
+  drawn in `Quadrants` and the 35-step Doom palette over a `#070707` ground.
+  Faint quadrants need two lit neighbours, as doom-fire's faint glyphs do.
+- **`debug-wide`** joins `debug-panic` in `crates/wasm/src/debug.rs` (debug
+  builds only): 漢 字 中 and a moving 🔥 between narrow glyphs, colours
+  swapping each second, a digit ruler underneath.
+- **`site/test.html`** (not `site/public/`: it needs Vite to resolve the
+  shell) is the checklist page, built beside the Elm site. One tag per case,
+  tick boxes, live readouts (braille row widths, wasm memory over 240 swaps,
+  whether a server-rendered placeholder survives loading), and a button that
+  copies the pass as Markdown. Debug-only cases say so in a release build.
+- **Element:** `motion` attribute. A swap to a piece that fails to load now
+  stops and clears the old one (ascii.rest keeps showing it); a first load
+  that fails still keeps the element's server-rendered children.
+- **Font:** the `@font-face` is out of `STYLE` until Phase 5 ships the file.
+  Declared without it, every braille page logged a failed font load (the dev
+  server answers the missing URL with index.html, a host with a 404). The rule
+  is kept in a comment in `element.ts`.
+- **npm package:** `npm pack` was leaving out all of `pkg/`, because
+  wasm-pack writes a `*` .gitignore there. The wasm tasks now build with
+  `--no-pack` and delete it; `web/test/package.test.mjs` dry-runs `npm pack`
+  and checks every export and the wasm are in the tarball. `prepublishOnly`
+  runs `mise run build:web`. The name is still the placeholder: on 2026-10-08
+  `animate-unicode`, `unicode-art` and `unicode-art-element` were all free on npm.
+- Checked headless (Lightpanda): every case mounts the right element, swaps
+  and re-adds restart cleanly, memory stays flat, the console is clean apart
+  from the expected bad-slug warning. Pixels, DPR seams and fonts need the
+  real browsers.
+
 `web/src/mount.ts` and `element.ts` are ports; this phase proves them.
 
 Tasks:
@@ -357,7 +390,7 @@ Acceptance: `mise run build:site` output served statically works for `/`, `/donu
 Tasks:
 1. Pick an OFL monospace with the `Extended` ranges. Candidates **(coverage unverified, check with `pyftsubset --unicodes=… --verbose` or `fc-query`)**: Cascadia Mono (added Symbols for Legacy Computing in the 2404 release), Iosevka (has U+1FB00 block), JetBrains Mono (braille yes, legacy computing no), GNU Unifont (everything, bitmap look). Recommend Cascadia Mono or Iosevka Fixed.
 2. Subset with fonttools: `pyftsubset Font.ttf --unicodes="U+00B0,U+00B7,U+2022,U+2190-21FF,U+2500-25FF,U+2800-28FF,U+1FB00-1FBFF" --flavor=woff2 --output-file=site/public/fonts/animate-unicode-mono.woff2`. Target < 20 KB. Add `python` + `pip:fonttools[woff]` to mise if the subsetting is to be reproducible (or vendor the output and a script).
-3. The `@font-face` in `element.ts` already lists this path and `unicode-range`. The `unicode-range` must match the subset. On the site, also declare it in `site.css` so `<pre>` stills (if any) use it.
+3. Put the `@font-face` back at the front of `STYLE` in `element.ts`: the rule is in the comment above it (taken out in Phase 3 so the missing file logged nothing). The `unicode-range` must match the subset. On the site, also declare it in `site.css` so `<pre>` stills (if any) use it.
 4. Verify in `<pre>`: a braille piece keeps every row the same pixel width (measure with `getBoundingClientRect` on each row in a test page); same for sextants. Verify the canvas path is unaffected (it clips per cell).
 5. Android: system monospace there has no box drawing at all; this font must carry U+2500–259F too (it does in the ranges above).
 
@@ -372,7 +405,7 @@ Start with pieces that show what unicode buys. Each one: a file, a `REGISTRY` li
 |---|---|---|---|---|
 | 1 | `braille-wave` | Extended | done | on `Dots` since Phase 1 |
 | 2 | `braille-lissajous` | Extended | a Lissajous curve traced in dots with a fading tail | tests `Dots::line`, determinism from `t` |
-| 3 | `quadrant-fire` | Basic, palette | doom-fire at 2× vertical resolution using `▀▄█` with fg/bg colour | first coloured piece; needs palette convention; port `../ascii/src/pieces/doom-fire.ts` |
+| 3 | `quadrant-fire` | Basic, palette | done in Phase 3: doom-fire's spread in quadrants, Doom palette | simulation fixture-tested against doom-fire.ts |
 | 4 | `sextant-plasma` | Extended, palette | a plasma field rendered in sextants (2×3 per cell) | proves astral glyphs end to end |
 | 5 | `braille-donut` | Extended | the donut rendered into a dot bitmap at 2×4 | proves the resolution gain over ASCII |
 | 6 | `box-frames` | Basic | port of ascii.rest's; proves box drawing joins | easy |

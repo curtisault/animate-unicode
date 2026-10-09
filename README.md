@@ -14,7 +14,7 @@ and box-drawing glyphs), with cells that are code points rather than UTF-16
 units, so braille, sextants, geometric shapes and double-width glyphs are each
 one cell like any other.
 
-**Status: scaffold.** Two pieces, the contract test, the wasm boundary, the
+**Status: early.** Three pieces, the contract test, the wasm boundary, the
 `<unicode-art>` tag and an Elm site that lists them. The plan for building it
 out is in [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md).
 
@@ -38,6 +38,9 @@ mise run test         # Rust tests and the piece contract, then the wasm from No
 mise run dev          # a debug wasm build, then the site at http://localhost:5173
 mise run check        # what CI runs: lint, test, build
 ```
+
+With `mise run dev` up, http://localhost:5173/test.html is the shell's checklist
+page: every rendering case on one page, to tick through in each browser.
 
 `mise run` lists every task. The CLI: `cargo run -p animate-unicode-cli --release -- donut --seconds 5`.
 
