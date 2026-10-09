@@ -370,6 +370,38 @@ Acceptance: a checklist page `site/public/test.html` (plain HTML, no Elm) with o
 <a id="phase-4"></a>
 ### Phase 4 · Elm site (2–3 days)
 
+**Built 2026-10-08** on branch `phase-4-site`.
+
+- **Modules:** `Meta.elm` (all 13 fields, the three sidebar groups), `Route.elm`
+  (`/`, `/<slug>`, everything else not found; `canonical` drops trailing and
+  doubled slashes), `Options.elm` (defaults in the piece's order, typed edits,
+  the JSON of changed values), `Main.elm` (a `port module`: `copy` for the
+  clipboard). A second module also ended the vite-plugin-elm empty-dependency
+  warning from Phase 0.
+- **Layout** after ascii.rest: sidebar in groups art / components / more,
+  then categories; the index is a grid of live cards; a piece page has its
+  facts, `mono` (pieces with a palette) and `paper` (pieces without a ground,
+  or in mono) toggles, the live piece in a well keyed by slug, options, usage
+  snippets with copy buttons, and previous / next.
+- **Options UI:** number → number input (a piece's options carry no bounds, so
+  no slider), bool → checkbox, string → text, anything else shown read-only.
+  Only valid values that differ from the default reach the `options`
+  attribute; a half-typed number is marked invalid and left out.
+- **Decoder failures** show a page with the decoder's message instead of an
+  empty site.
+- **Stills without script (4.5): (a), client-only.** (b) stays in the
+  backlog: a Node prerender of each slug's first frame into a static page,
+  with Elm on a child node.
+- **Routing:** `/donut/` is replaced by `/donut`; `site/public/_redirects`
+  (`/* /index.html 200`) is the host's SPA fallback; files such as test.html
+  are served as they are.
+- **Tests:** `site/tests` (routes, the decoder on the wasm module's real JSON,
+  options), `mise run test:elm`, part of `mise run test`; lint formats-checks
+  `site/tests` too. elm-review (optional) not added.
+- Checked headless on the production build under `vite preview`: `/`,
+  `/donut/`, `/braille-wave`, `/quadrant-fire` and `/nope` render the right
+  page with a clean console; option edits restart the piece live.
+
 `site/src/Main.elm` is a `Browser.application` with `/` and `/:slug`. It works but is bare.
 
 Tasks:
@@ -479,7 +511,7 @@ Debug builds skip the timing budgets (`cfg!(debug_assertions)`); always run `mis
 1. **A panicking piece stops its own tag** (measured in Phase 2: the instance survives, the player is left unusable and leaks what it held). Mitigated by the contract test and by pieces using clipping `put/set` instead of raw indexing. Keep raw `cells_mut()[k]` for hot loops only, with the bounds proven.
 2. **Font coverage for `Extended` in `<pre>`** is the biggest visual risk; the canvas path does not have it. Phase 5 must be tested on real Android and Windows.
 3. **Wide glyphs in `<pre>`** depend on the font being exactly 2:1 for CJK; many "monospace" fonts are not. Treat `Wide` as canvas-first.
-4. **Elm and SSR** do not mix (Phase 4 #5). Decision pending: client-only, or prerender with Elm mounted on a child node.
+4. **Elm and SSR** do not mix (Phase 4 #5). Decided in Phase 4: client-only for now; a prerender with Elm mounted on a child node is in the backlog.
 5. **One module for all pieces**: per-piece lazy loading is lost vs ascii.rest. Revisit if the module grows large; wasm-bindgen does not split modules, so this would mean one crate per bundle.
 6. **mise `npm:` backend** resolved `elm-test@latest` to 0.19.0 and then refused its `fsevents`. Pinned to `0.19.1-revision17`. Watch for the same with `elm-format` (pinned 0.8.8) and `elm-review`.
 7. **`rust = { version = "1.97", targets = "wasm32-unknown-unknown" }`**: the `targets` option worked on this machine (`cargo check --target wasm32-unknown-unknown` passed) but the target had also been added by hand earlier; confirm on a clean CI runner.
