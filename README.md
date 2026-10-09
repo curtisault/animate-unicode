@@ -42,7 +42,12 @@ mise run check        # what CI runs: lint, test, build
 With `mise run dev` up, http://localhost:5173/test.html is the shell's checklist
 page: every rendering case on one page, to tick through in each browser.
 
-`mise run` lists every task. The CLI: `cargo run -p animate-unicode-cli --release -- donut --seconds 5`.
+`mise run` lists every task.
+
+In a terminal: `mise run play braille-donut` plays a piece until you press a
+key (`--seconds`, `--mono`, `--light`, `--fps`, `--options`; `list` names them
+all). Braille, sextants and octants need a recent monospace font, kanji-rain
+one with CJK.
 
 ## Adding a piece
 

@@ -508,6 +508,32 @@ Acceptance per piece: contract green, looks right in the browser at 1× and 2× 
 <a id="phase-7"></a>
 ### Phase 7 · CLI (1 day)
 
+**Done 2026-10-08** on branch `phase-7-cli`. `crates/cli`: `paint.rs`
+(grid to terminal cells, and a diff writer: changed runs only, carried over
+gaps of up to four cells, each run reset to the terminal's colours),
+`play.rs` (the terminal), `main.rs` (flags, list, lookup). After ascii.rest's
+terminal.ts and cli.ts.
+
+- Raw mode, alternate screen, cursor hidden, wrap off. Any key stops it;
+  Ctrl+C exits 130. SIGTERM/SIGHUP (signal-hook, Unix) set a flag the loop
+  checks. A guard restores on ordinary exits; since release aborts on panic,
+  a panic hook restores first. All checked in a pty: q, Ctrl+C, SIGTERM,
+  resize, a 20×10 terminal, `--seconds 2` (stops at 2.0 s), and a deliberate
+  panic (terminal left in canonical mode with echo, alternate screen exited).
+- Colour: truecolor from the palette over the piece's ground; `--mono` for
+  the terminal's ink. **ascii.rest's dark/light palette halves are not
+  adopted**: our palettes are single. `--light` sets `Env.paper` for pieces
+  without a ground; a piece on a ground shades for that ground, as on canvas.
+- Centred, cropped to the middle when smaller (a note on stderr after), full
+  redraw on resize. Wide glyphs: written once, tail skipped, the terminal's
+  wcwidth trusted; a crop never splits one (a space instead). Square-celled
+  pieces (`cell: 1`) pair rows as half blocks, as ascii.rest does.
+- Pacing: frames on fixed boundaries from the start (a late frame skips ahead,
+  no burst); play time advances with the clock, at most 100 ms a frame.
+- `list` by category in sidebar order; a name or slug finds a piece, a typo
+  gets "did you mean" (edit distance with transpositions). Piped, it prints
+  frame 0 as text. `mise run play <piece>`.
+
 `crates/cli/src/main.rs` is a stub (raw ANSI, sleeps, no input).
 
 Tasks:
