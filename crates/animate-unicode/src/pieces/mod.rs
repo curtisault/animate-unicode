@@ -15,14 +15,20 @@
 use crate::registry::Entry;
 use crate::Category;
 
+#[cfg(feature = "companies")]
+pub mod companies;
 #[cfg(feature = "creatures")]
 pub mod creatures;
 #[cfg(feature = "data")]
 pub mod data;
+#[cfg(feature = "distros")]
+pub mod distros;
 #[cfg(feature = "effects")]
 pub mod effects;
 #[cfg(feature = "generative")]
 pub mod generative;
+#[cfg(feature = "logos")]
+pub mod logos;
 #[cfg(feature = "nature")]
 pub mod nature;
 #[cfg(feature = "objects")]
@@ -46,6 +52,12 @@ pub static CATEGORIES: &[(Category, &[Entry])] = &[
     (Category::Data, data::REGISTRY),
     #[cfg(feature = "type")]
     (Category::Type, r#type::REGISTRY),
+    #[cfg(feature = "logos")]
+    (Category::Logos, logos::REGISTRY),
+    #[cfg(feature = "companies")]
+    (Category::Companies, companies::REGISTRY),
+    #[cfg(feature = "distros")]
+    (Category::Distros, distros::REGISTRY),
     #[cfg(feature = "shapes")]
     (Category::Shapes, shapes::REGISTRY),
     #[cfg(feature = "space")]

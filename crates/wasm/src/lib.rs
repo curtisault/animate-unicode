@@ -57,6 +57,7 @@ pub struct Player {
     piece: Box<dyn Piece>,
     grid: Grid,
     now: Option<Wall>,
+    mono: bool,
 }
 
 #[wasm_bindgen]
@@ -66,10 +67,16 @@ impl Player {
     pub fn new(slug: &str, options_json: &str) -> Result<Player, JsError> {
         #[cfg(feature = "debug")]
         if let Some(entry) = debug::find(slug) {
-            return Ok(Player { meta: entry.meta, piece: (entry.make)(&Default::default()), grid: Grid::new(entry.meta.cols, entry.meta.rows), now: None });
+            return Ok(Player {
+                meta: entry.meta,
+                piece: (entry.make)(&Default::default()),
+                grid: Grid::new(entry.meta.cols, entry.meta.rows),
+                now: None,
+                mono: false,
+            });
         }
         let (meta, piece) = registry::make(slug, options_json).map_err(|e| JsError::new(&e.to_string()))?;
-        Ok(Player { meta, piece, grid: Grid::new(meta.cols, meta.rows), now: None })
+        Ok(Player { meta, piece, grid: Grid::new(meta.cols, meta.rows), now: None, mono: false })
     }
 
     /// Frame width in cells.
@@ -94,7 +101,7 @@ impl Player {
 
     /// Draws the frame at `t` seconds into the grid.
     pub fn frame(&mut self, t: f64, paper: bool) {
-        self.piece.frame(t, &Env { paper, now: self.now }, &mut self.grid);
+        self.piece.frame(t, &Env { paper, mono: self.mono, now: self.now }, &mut self.grid);
     }
 
     /// The wall clock for the frames that follow, for a piece whose `meta.clock`
@@ -102,6 +109,12 @@ impl Player {
     /// Until it is called, such a piece shows a fixed moment.
     pub fn set_clock(&mut self, unix_ms: f64, offset_minutes: i32) {
         self.now = Some(Wall { unix: unix_ms / 1000.0, offset: offset_minutes });
+    }
+
+    /// Whether the frames that follow are shown in one ink (a `<pre>`) rather
+    /// than in the palette (a canvas). False until it is called.
+    pub fn set_mono(&mut self, mono: bool) {
+        self.mono = mono;
     }
 
     /// Start of the `cols × rows` code points in wasm memory. Re-read after

@@ -26,11 +26,11 @@ struct Run {
 }
 
 /// Plays a fresh instance from t = 0 in 1/fps steps, keeping the frames at the sample times.
-fn play(entry: &registry::Entry, times: &[f64], paper: bool) -> Run {
+fn play(entry: &registry::Entry, times: &[f64], paper: bool, mono: bool) -> Run {
     let meta = entry.meta;
     let mut piece: Box<dyn Piece> = (entry.make)(&Options::default().with_defaults(meta.options));
     let mut grid = Grid::new(meta.cols, meta.rows);
-    let env = Env { paper, now: None };
+    let env = Env { paper, mono, now: None };
     let step = if meta.fps > 0 { 1.0 / meta.fps as f64 } else { 0.5 };
     let end = times.iter().cloned().fold(0.0, f64::max);
     let mut frames = vec![None; times.len()];
@@ -141,11 +141,13 @@ fn every_piece_keeps_the_contract() {
         }
 
         // frames
-        let run = play(entry, &SAMPLE_AT, false);
-        let run2 = play(entry, &SAMPLE_AT, false);
-        let paper = play(entry, &[0.0, 1.0], true);
-        for (k, g) in run.frames.iter().enumerate() {
-            let at = format!("t={}", SAMPLE_AT[k]);
+        let run = play(entry, &SAMPLE_AT, false, false);
+        let run2 = play(entry, &SAMPLE_AT, false, false);
+        let paper = play(entry, &[0.0, 1.0], true, false);
+        // In one ink a piece may draw something else; it is held to the same rules.
+        let mono = play(entry, &SAMPLE_AT, false, true);
+        for (k, g) in run.frames.iter().chain(&mono.frames).enumerate() {
+            let at = format!("t={}{}", SAMPLE_AT[k % SAMPLE_AT.len()], if k < SAMPLE_AT.len() { "" } else { " in one ink" });
             let text = g.text();
             if text.lines().count() != m.rows {
                 errors.push(format!("{at}: {} lines, meta.rows is {}", text.lines().count(), m.rows));
@@ -185,10 +187,12 @@ fn every_piece_keeps_the_contract() {
             }
         }
         let f0 = &run.frames[0];
-        let ink = f0.cells().iter().filter(|&&c| c != 0x20 && c != WIDE_TAIL).count();
         let cells = (m.cols * m.rows) as f64;
-        if (ink as f64) / cells < 0.02 && ink < 3 {
-            errors.push("first frame is nearly empty (frame 0 should be a good still)".into());
+        for f in [f0, &mono.frames[0]] {
+            let ink = f.cells().iter().filter(|&&c| c != 0x20 && c != WIDE_TAIL).count();
+            if (ink as f64) / cells < 0.02 && ink < 3 {
+                errors.push("first frame is nearly empty (frame 0 should be a good still)".into());
+            }
         }
         let mut distinct: Vec<&[u32]> = run.frames.iter().map(|g| g.cells()).collect();
         distinct.sort_unstable();

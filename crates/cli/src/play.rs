@@ -115,7 +115,7 @@ pub fn play(meta: &Meta, mut piece: Box<dyn Piece>, settings: &Settings) -> io::
     let (mut t, mut last) = (0.0, start);
     let mut term = size();
     let mut draw = |t: f64, term: (usize, usize), screen: &mut Screen, out: &mut io::BufWriter<_>| -> io::Result<()> {
-        piece.frame(t, &Env { paper, now: meta.clock.then(wall) }, &mut grid);
+        piece.frame(t, &Env { paper, mono: settings.mono || meta.palette.is_none(), now: meta.clock.then(wall) }, &mut grid);
         painter.paint(&grid);
         out.write_all(screen.draw(&painter, term.0, term.1).as_bytes())?;
         out.flush()

@@ -20,6 +20,8 @@
 pub mod clock;
 pub mod geom;
 pub mod grid;
+#[cfg(any(feature = "logos", feature = "companies", feature = "distros"))]
+pub mod logo;
 pub mod meta;
 pub mod options;
 pub mod palette;

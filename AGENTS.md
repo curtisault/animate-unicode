@@ -26,7 +26,7 @@ with Unicode where ascii.rest uses ASCII.
 | `crates/cli` | The terminal player |
 | `web/` | The TypeScript shell: the custom element and the canvas renderer; the npm package |
 | `site/` | The Elm site (Vite) |
-| `scripts/` | `font.py` (the subset font) and `octants.py` (the octant table) |
+| `scripts/` | `font.py` (the subset font), `octants.py` (the octant table) and `logo.py` (the logos' octant art) |
 | `docs/IMPLEMENTATION_PLAN.md` | The plan, phase by phase, with what each one built |
 | `docs/ascii-rest-pieces.md` | Every ascii.rest piece, translated to Unicode: the progress tracker |
 | `docs/deploy-plan.md` | Packaging, hosting, npm and CI, still open |

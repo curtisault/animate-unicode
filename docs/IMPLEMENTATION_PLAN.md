@@ -78,7 +78,7 @@ crates/animate-unicode/       the core crate                                  �
   src/grid.rs                 Grid, BLANK, WIDE_TAIL, text()
   src/meta.rs                 Meta, Category, Charset (Basic/Extended/Wide)
   src/options.rs              Options: JSON object with typed getters + defaults
-  src/piece.rs                Piece trait, Env { paper }
+  src/piece.rs                Piece trait, Env { paper, mono, now }
   src/registry.rs             REGISTRY lookup, make(slug, options_json)
   src/util.rs                 Rng (xorshift64*), ramp(), braille(), smoothstep()
   src/pieces/mod.rs           REGISTRY list
@@ -192,6 +192,7 @@ and one line in `pieces/mod.rs` `REGISTRY`. `tests/contract.rs` enforces, for ev
 | motion | fps > 0 ⇒ ≥ 3 distinct frames over 6 s; fps = 0 ⇒ frames identical (unless `clock`) |
 | determinism | two fresh instances produce identical frames and colours at the same `t` (unless `clock`) |
 | paper | a frame with `Env { paper: true }` is the right shape |
+| one ink | frames with `Env { mono: true }` (a `<pre>`, the CLI's `--mono`) keep the frame-shape, charset, colour and first-frame rules too |
 | scenes | ≥ 4 palette colours on inked cells in frame 0 |
 | time budget | release only: avg ≤ 4 ms/frame (scenes 10 ms), worst ≤ 30 ms (scenes 40 ms) |
 
@@ -202,6 +203,7 @@ CONTRIBUTING.md, which is worth reading in full):
 - Use `util::Rng` seeded from a constant or from `t`; never a clock.
 - Keep state between frames (z-buffer, particles) but **derive the picture from `t`**, not from "the previous frame", because the server, the contract test and a scrolled-back-into-view element all call `frame` at arbitrary `t`.
 - Flip shading ramps for `env.paper` (`util::ramp` does it).
+- Where parts differ only by colour, draw something that reads in one ink when `env.mono` (a logo's plain variant, gaps between parts).
 - Draw with `grid.put/set/text_at`; they clip, so shapes can overhang edges.
 
 ## Unicode

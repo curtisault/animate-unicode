@@ -7,6 +7,10 @@ use crate::{clock::Wall, Grid};
 pub struct Env {
     /// True when the text is dark on a light ground, so a shaded piece can flip its ramp.
     pub paper: bool,
+    /// True when the frame is shown in one ink (a `<pre>`, a terminal without
+    /// colour) rather than in the palette, so a piece whose parts differ only by
+    /// colour can draw a version that reads without it.
+    pub mono: bool,
     /// The wall clock, for a piece with `meta.clock`. `None` where there is
     /// no clock to read (the contract test, a still): such a piece then shows
     /// [`Wall::FIXED`], so its frames stay deterministic.

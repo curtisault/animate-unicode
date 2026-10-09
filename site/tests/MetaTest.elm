@@ -21,7 +21,7 @@ flags =
 -}
 rustCategories : List String
 rustCategories =
-    [ "scenes", "ui", "data", "type", "logos", "shapes", "space", "physics", "nature", "creatures", "objects", "generative", "effects" ]
+    [ "scenes", "ui", "data", "type", "logos", "companies", "distros", "shapes", "space", "physics", "nature", "creatures", "objects", "generative", "effects" ]
 
 
 suite : Test

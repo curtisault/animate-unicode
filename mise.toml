@@ -83,6 +83,12 @@ CARGO_TARGET_DIR={{config_root}}/target cargo run -q --release -p animate-unicod
 description = "Subset Iosevka Fixed Extended into web/fonts/animate-unicode-mono.woff2 (scripts/font.py)"
 run = "uvx --from 'fonttools[woff]==4.60.1' python -I scripts/font.py"
 
+# The logos' output is checked in (pieces/<category>/art); run this only to add a
+# logo or redraw one. Downloads the SVGs once into target/logos.
+[tasks."build:logos"]
+description = "Draw the logos, companies and distros from their SVGs as octant art (scripts/logo.py)"
+run = "uvx --python 3.14 --from 'resvg-py==0.5.0' --with 'pillow==12.3.0' --with 'numpy==2.5.3' python -I scripts/logo.py"
+
 [tasks."build:web"]
 description = "Type-check and emit the TS shell (web/dist)"
 depends = ["build:wasm"]

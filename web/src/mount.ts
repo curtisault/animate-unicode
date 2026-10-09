@@ -64,6 +64,8 @@ export function mount(el: HTMLElement, wasm: InitOutput, player: Player, options
     const c = rgb(css);
     return 0.2126 * (c[0] ?? 0) + 0.7152 * (c[1] ?? 0) + 0.0722 * (c[2] ?? 0) < 128;
   };
+  // In a <pre>, or on a canvas without a palette, the piece is one ink.
+  player.set_mono(!(canvas && palette));
   const paper = () => (canvas && ground ? !dark(ground) : dark(getComputedStyle(el).color));
 
   // A piece that shows the time is told the wall clock before each frame.
