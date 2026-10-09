@@ -13,3 +13,8 @@ path = "src/main.rs"
 
 [dependencies]
 animate-unicode = { path = "../animate-unicode" }
+crossterm = "0.29"
+
+[target.'cfg(unix)'.dependencies]
+# SIGTERM and SIGHUP set a flag the player checks, so the terminal is put back.
+signal-hook = "0.4"

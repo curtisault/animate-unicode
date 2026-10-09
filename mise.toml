@@ -127,6 +127,10 @@ run = [
   "npm --prefix site run typecheck",
 ]
 
+[tasks.play]
+description = "Play a piece in this terminal: `mise run play donut --seconds 5` (any key stops it)"
+run = "cargo run --release -q -p animate-unicode-cli --"
+
 [tasks.show]
 description = "Print a piece's frames at t = 0, 1, 2.5, 5 in a box: `mise run show donut` (no slug = every piece)"
 run = "cargo run --release -q -p animate-unicode --example show --"
