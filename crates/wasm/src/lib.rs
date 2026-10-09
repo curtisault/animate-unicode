@@ -26,8 +26,8 @@
 //!
 //! With the `debug` feature (what `mise run dev` builds) a panic first prints
 //! its message and source location with `console.error`, and `Player::new`
-//! accepts the unregistered slug [`DEBUG_PANIC`], a piece that panics from one
-//! second in, to show all of this in a page.
+//! accepts the unregistered slug `debug-panic` (in [`debug`]), a piece that
+//! panics from one second in, to show all of this in a page.
 //!
 //! The shell (web/src/mount.ts) stops a tag whose piece throws, rather than
 //! calling it again every frame, and the element frees a stuck player inside a
@@ -44,40 +44,8 @@ pub fn start() {
     console_error_panic_hook::set_once();
 }
 
-/// Debug builds only: the slug of a deliberately broken piece. `Player::new`
-/// accepts it, though the registry never lists it, so a dev page can show what
-/// a bug in a piece does: `<unicode-art piece="debug-panic">`.
 #[cfg(feature = "debug")]
-pub const DEBUG_PANIC: &str = "debug-panic";
-
-#[cfg(feature = "debug")]
-static PANICS_META: Meta = Meta {
-    name: "debug panic",
-    slug: DEBUG_PANIC,
-    note: "draws for a second, then writes one cell past the end of its grid",
-    cols: 4,
-    rows: 2,
-    ..Meta::DEFAULT
-};
-
-/// A piece that draws for its first second, then writes one cell past the end
-/// of its grid on every frame: what a bug in a piece looks like at run time.
-#[cfg(feature = "debug")]
-struct Panics;
-
-#[cfg(feature = "debug")]
-impl Piece for Panics {
-    fn frame(&mut self, t: f64, _: &Env, grid: &mut Grid) {
-        grid.clear();
-        grid.text_at(0, 0, "fine", 0);
-        grid.text_at(0, 1, "....", 0);
-        if t < 1.0 {
-            return;
-        }
-        let past_the_end = grid.cells().len();
-        grid.cells_mut()[past_the_end] = '!' as u32;
-    }
-}
+pub mod debug;
 
 /// One piece and the grid it draws into. Call `free()` when done with it.
 #[wasm_bindgen]
@@ -93,8 +61,8 @@ impl Player {
     #[wasm_bindgen(constructor)]
     pub fn new(slug: &str, options_json: &str) -> Result<Player, JsError> {
         #[cfg(feature = "debug")]
-        if slug == DEBUG_PANIC {
-            return Ok(Player { meta: &PANICS_META, piece: Box::new(Panics), grid: Grid::new(PANICS_META.cols, PANICS_META.rows) });
+        if let Some(entry) = debug::find(slug) {
+            return Ok(Player { meta: entry.meta, piece: (entry.make)(&Default::default()), grid: Grid::new(entry.meta.cols, entry.meta.rows) });
         }
         let (meta, piece) = registry::make(slug, options_json).map_err(|e| JsError::new(&e.to_string()))?;
         Ok(Player { meta, piece, grid: Grid::new(meta.cols, meta.rows) })
