@@ -22,16 +22,18 @@
 import { mount, type Meta, type MountOptions } from "./mount.ts";
 import { Player, wasm } from "./wasm.ts";
 
+// The bundled font (web/fonts, built by scripts/font.py from Iosevka Fixed Extended, SIL OFL 1.1): ASCII, box
+// drawing, blocks, geometric shapes, arrows, braille, sextants and octants, every glyph 0.6 em wide. It leads the
+// stack so a piece's every glyph comes from one face with one width, and rows line up on any platform; wide glyphs
+// (CJK, emoji) are outside its range and come from the system. Located next to this module, so it travels with the
+// npm package and a bundler copies it like any other asset. The range must match scripts/font.py's RANGES.
+const FONT_URL = new URL("../fonts/animate-unicode-mono.woff2", import.meta.url).href;
+const UNICODE_RANGE = "U+0020-007E,U+00B0,U+00B7,U+2022,U+2190-21FF,U+2500-25FF,U+2800-28FF,U+1CD00-1CDE5,U+1FB00-1FBFF";
+
 // :where gives these no specificity, so any rule of the page's own wins.
-//
-// The bundled font (Phase 5 of the plan) will cover braille, geometric shapes and legacy computing where the system
-// face has none, one cell wide. Its @font-face goes back in front of STYLE when the file exists:
-//   @font-face{font-family:"animate-unicode mono";src:url(/fonts/animate-unicode-mono.woff2) format("woff2");
-//     unicode-range:U+00B0,U+00B7,U+2022,U+2190-21FF,U+2500-25FF,U+2800-28FF,U+1FB00-1FBFF;font-display:swap}
-// Declared before the file exists, every page with braille logs a failed font load (a 404, or a decode error where
-// the host answers with index.html), so for now the family is only named in the stack and falls through.
 const STYLE =
-  ':where(unicode-art){display:block}:where(unicode-art>pre){margin:0;font:inherit;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"animate-unicode mono",monospace;line-height:1.2;letter-spacing:0;white-space:pre;font-variant-ligatures:none}';
+  `@font-face{font-family:"animate-unicode mono";src:url(${FONT_URL}) format("woff2");unicode-range:${UNICODE_RANGE};font-display:swap}` +
+  ':where(unicode-art){display:block}:where(unicode-art>pre){margin:0;font:inherit;font-family:"animate-unicode mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;line-height:1.2;letter-spacing:0;white-space:pre;font-variant-ligatures:none}';
 
 const Base = (typeof HTMLElement === "undefined" ? class {} : HTMLElement) as typeof HTMLElement;
 

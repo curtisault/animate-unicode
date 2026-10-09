@@ -23,7 +23,8 @@
   },
   "files": [
     "dist",
-    "pkg"
+    "pkg",
+    "fonts"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",

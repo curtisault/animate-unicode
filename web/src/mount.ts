@@ -44,7 +44,8 @@ export interface MountOptions {
 /** The right half of a double-width glyph, in the cells buffer. Must match animate_unicode::WIDE_TAIL. */
 export const WIDE_TAIL = 0;
 
-const FONT = 'ui-monospace, SFMono-Regular, Menlo, Consolas, "animate-unicode mono", monospace';
+// The bundled font first, as in element.ts's STYLE: one face, one width, for every glyph it has.
+const FONT = '"animate-unicode mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
 
 export function mount(el: HTMLElement, wasm: InitOutput, player: Player, options: MountOptions = {}): () => void {
   const meta = JSON.parse(player.meta_json()) as Meta;
@@ -72,6 +73,7 @@ export function mount(el: HTMLElement, wasm: InitOutput, player: Player, options
   };
 
   let ro: ResizeObserver | undefined;
+  let unfont = () => {};
   if (canvas) {
     const ctx = canvas.getContext("2d")!;
     const atlas = document.createElement("canvas");
@@ -167,6 +169,22 @@ export function mount(el: HTMLElement, wasm: InitOutput, player: Player, options
       full = false;
     };
     size();
+    // A canvas does not wait for a web font: glyphs drawn before the bundled font arrives come from a fallback face
+    // and stay in the atlas. Ask for it (a canvas alone never would), and start the atlas over when any font loads.
+    const fonts = typeof document !== "undefined" ? document.fonts : undefined;
+    const refont = () => {
+      slots.clear();
+      actx.clearRect(0, 0, atlas.width, atlas.height);
+      full = true;
+      try {
+        draw(); // now, for a still; an animated piece would anyway on its next frame
+      } catch {
+        // a piece that panics is stopped and reported by the frame loop
+      }
+    };
+    fonts?.addEventListener("loadingdone", refont);
+    fonts?.load(`${Math.max(8, Math.round(w / 0.6))}px "animate-unicode mono"`).catch(() => {});
+    unfont = () => fonts?.removeEventListener("loadingdone", refont);
     ro = new ResizeObserver(() => {
       if (canvas.clientWidth !== width) {
         size();
@@ -179,9 +197,14 @@ export function mount(el: HTMLElement, wasm: InitOutput, player: Player, options
     draw();
   } catch (error) {
     ro?.disconnect();
+    unfont();
     throw error;
   }
-  if (!fps) return () => ro?.disconnect();
+  if (!fps)
+    return () => {
+      ro?.disconnect();
+      unfont();
+    };
 
   const still = matchMedia("(prefers-reduced-motion: reduce)");
   let raf = 0;
@@ -225,6 +248,7 @@ export function mount(el: HTMLElement, wasm: InitOutput, player: Player, options
   return () => {
     io.disconnect();
     ro?.disconnect();
+    unfont();
     cancelAnimationFrame(raf);
     raf = 0;
     document.removeEventListener("visibilitychange", run);
