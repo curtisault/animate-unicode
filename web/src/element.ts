@@ -28,7 +28,7 @@ import { Player, wasm } from "./wasm.ts";
 // (CJK, emoji) are outside its range and come from the system. Located next to this module, so it travels with the
 // npm package and a bundler copies it like any other asset. The range must match scripts/font.py's RANGES.
 const FONT_URL = new URL("../fonts/animate-unicode-mono.woff2", import.meta.url).href;
-const UNICODE_RANGE = "U+0020-007E,U+00B0,U+00B7,U+2022,U+2190-21FF,U+2500-25FF,U+2800-28FF,U+1CD00-1CDE5,U+1FB00-1FBFF";
+const UNICODE_RANGE = "U+0020-007E,U+00B0,U+00B7,U+2022,U+2190-21FF,U+2500-25FF,U+2800-28FF,U+1CD00-1CDE5,U+1CEA0-1CEAF,U+1FB00-1FBFF";
 
 // :where gives these no specificity, so any rule of the page's own wins.
 const STYLE =

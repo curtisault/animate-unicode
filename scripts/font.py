@@ -44,6 +44,7 @@ RANGES = [
     (0x2500, 0x25FF),  # box drawing, blocks, geometric shapes (● U+25CF among them)
     (0x2800, 0x28FF),  # braille
     (0x1CD00, 0x1CDE5),  # octants (Unicode 16)
+    (0x1CEA0, 0x1CEAF),  # quarter blocks: the octant table's four single corners
     (0x1FB00, 0x1FBFF),  # symbols for legacy computing: sextants, wedges
 ]
 # Ranges where some code points are unassigned or the font lacks a glyph; the

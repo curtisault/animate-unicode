@@ -83,8 +83,9 @@ pub enum Charset {
     /// font covers.
     Basic,
     /// Basic plus braille (U+2800–28FF), geometric shapes (U+25A0–25FF),
-    /// arrows (U+2190–21FF), and the sextants and octants of Symbols for
-    /// Legacy Computing (U+1FB00–1FBFF). Needs the bundled font.
+    /// arrows (U+2190–21FF), Symbols for Legacy Computing (U+1FB00–1FBFF:
+    /// sextants, wedges), octants (U+1CD00–1CDE5) and the quarter blocks the
+    /// octant table borrows (U+1CEA0–1CEAF). Needs the bundled font.
     Extended,
     /// Anything, including double-width glyphs (CJK, emoji) that take two
     /// cells. Colour emoji ignore the palette.

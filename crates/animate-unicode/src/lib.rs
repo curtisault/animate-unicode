@@ -32,4 +32,4 @@ pub use meta::{Category, Charset, Meta};
 pub use options::Options;
 pub use palette::Ramp;
 pub use piece::{Env, Piece};
-pub use subcell::{Dots, Quadrants, Sextants};
+pub use subcell::{Dots, Octants, Quadrants, Sextants};

@@ -57,7 +57,7 @@ fn play(entry: &registry::Entry, times: &[f64], paper: bool) -> Run {
 
 fn allowed(charset: Charset, cp: u32) -> bool {
     let basic = matches!(cp, 0x20..=0x7E | 0xB7 | 0xB0 | 0x2022 | 0x25CF | 0x2500..=0x259F);
-    let extended = matches!(cp, 0x2190..=0x21FF | 0x25A0..=0x25FF | 0x2800..=0x28FF | 0x1FB00..=0x1FBFF);
+    let extended = matches!(cp, 0x2190..=0x21FF | 0x25A0..=0x25FF | 0x2800..=0x28FF | 0x1CD00..=0x1CDE5 | 0x1CEA0..=0x1CEAF | 0x1FB00..=0x1FBFF);
     match charset {
         Charset::Basic => basic,
         Charset::Extended => basic || extended,
