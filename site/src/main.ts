@@ -9,9 +9,14 @@ import { Elm } from "./Main.elm";
 
 await wasm();
 
-Elm.Main.init({
+const app = Elm.Main.init({
   node: document.getElementById("app"),
   flags: { pieces: JSON.parse(metas_json()) },
+});
+
+// The copy buttons: Elm has no clipboard of its own.
+app.ports.copy?.subscribe((text) => {
+  navigator.clipboard?.writeText(String(text)).catch(() => {});
 });
 
 // Dev only (Vite drops this from production builds): `debugPanic()` in the

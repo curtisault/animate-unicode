@@ -1,27 +1,49 @@
-/* The site: one monospace face, nothing that moves without a reason. */
+/*
+ * The site, after ascii.rest's: one monospace face, ink on a pale ground or
+ * the reverse, a sidebar index on wide screens, the art sitting in wells.
+ */
 :root {
-  --ink: #1a1a1a;
-  --paper: #fafafa;
-  --dim: #767676;
-  --rule: #e4e4e4;
+  --bg: #f5f6f7;
+  --ink: #1e2125;
+  --text: #3b4149;
+  --muted: #5f6873;
+  --well: #eceef0;
+  --rule: #dfe2e6;
+  --bad: #b3261e;
+  --paper-bg: #f4efe2;
+  --paper-ink: #2a2622;
+  --face: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --ink: #e6e6e6;
-    --paper: #111111;
-    --dim: #8a8a8a;
-    --rule: #2a2a2a;
+    --bg: #131518;
+    --ink: #e8ebef;
+    --text: #c3c9d1;
+    --muted: #8c95a1;
+    --well: #1a1d21;
+    --rule: #262a2f;
+    --bad: #f2867c;
+    color-scheme: dark;
   }
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 html {
-  color: var(--ink);
-  background: var(--paper);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: var(--text);
+  background: var(--bg);
+  font-family: var(--face);
   font-size: 0.875rem;
-  line-height: 1.5;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -29,83 +51,328 @@ body {
 }
 
 a {
-  color: inherit;
+  color: var(--ink);
+  text-underline-offset: 0.2em;
 }
+
+h1,
+h2,
+h3 {
+  color: var(--ink);
+  font-size: inherit;
+  font-weight: 600;
+  margin: 0;
+}
+
+pre,
+code {
+  font: inherit;
+}
+
+/* Layout: a sidebar beside the page; stacked on narrow screens. */
 
 .layout {
   display: grid;
-  grid-template-columns: 14rem 1fr;
+  grid-template-columns: 15rem minmax(0, 1fr);
   min-height: 100vh;
 }
 
-@media (max-width: 40rem) {
-  .layout {
-    grid-template-columns: 1fr;
-  }
-}
-
 .sidebar {
-  padding: 1.5rem 1rem;
+  position: sticky;
+  top: 0;
+  align-self: start;
+  max-height: 100vh;
+  overflow-y: auto;
+  padding: 1.5rem 1rem 2rem 1.25rem;
   border-right: 1px solid var(--rule);
 }
 
-.sidebar h1 {
-  font-size: inherit;
-  font-weight: 500;
-  margin: 0 0 1rem;
+.main {
+  padding: 2rem 2rem 4rem;
+  max-width: 64rem;
+}
+
+@media (max-width: 48rem) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+  .sidebar {
+    position: static;
+    max-height: none;
+    border-right: 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .main {
+    padding: 1.5rem 1rem 3rem;
+  }
+}
+
+/* Sidebar: groups, then categories, then pieces. */
+
+.sidebar .site {
+  margin: 0 0 1.25rem;
+  font-weight: 600;
+}
+
+.sidebar .site a {
+  text-decoration: none;
+}
+
+.sidebar section {
+  margin-bottom: 1.25rem;
 }
 
 .sidebar h2 {
-  font-size: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-bottom: 0.25rem;
+}
+
+.sidebar h3 {
   font-weight: 400;
-  color: var(--dim);
-  margin: 1rem 0 0.25rem;
+  color: var(--muted);
+  margin: 0.5rem 0 0.1rem;
 }
 
 .sidebar ul {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0 0 0 0.75rem;
 }
 
 .sidebar a {
   text-decoration: none;
+  color: var(--text);
 }
 
+.sidebar a:hover,
 .sidebar a[aria-current="page"] {
+  color: var(--ink);
   text-decoration: underline;
 }
 
-.main {
-  padding: 1.5rem;
-  min-width: 0;
+/* Page heads. */
+
+header h1 {
+  font-size: 1.25rem;
 }
 
-.piece {
+.lede {
+  margin: 0.25rem 0 0;
+  max-width: 44rem;
+}
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  color: var(--muted);
+  margin: 0.75rem 0 0;
+}
+
+.facts a {
+  color: var(--muted);
+}
+
+/* Wells: where a piece sits. A scene's well takes the piece's ground. */
+
+.well {
+  display: grid;
+  place-items: center;
+  background: var(--well);
+  border-radius: 6px;
+  overflow: hidden;
+  padding: 1rem;
+  font-size: 0.4375rem;
+  min-height: 9rem;
+}
+
+.well.big {
+  font-size: 0.75rem;
+  padding: 2rem 1.5rem;
+  margin: 1.25rem 0 0;
+}
+
+.well.paper {
+  background: var(--paper-bg);
+  color: var(--paper-ink);
+}
+
+.well .art {
+  width: 100%;
+  display: grid;
+  place-items: center;
+}
+
+.well unicode-art {
+  max-width: 100%;
+}
+
+/* A canvas fills its tag's width: give coloured pieces the well's. */
+.well unicode-art:has(canvas) {
+  width: 100%;
+}
+
+/* The index: every piece as a card, by category. */
+
+.intro {
   margin-bottom: 2.5rem;
 }
 
-.piece h2 {
-  font-size: inherit;
-  font-weight: 500;
-  margin: 0 0 0.25rem;
+.category {
+  margin-bottom: 2.5rem;
+  scroll-margin-top: 1rem;
 }
 
-.piece p {
-  color: var(--dim);
-  margin: 0 0 1rem;
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
 }
 
-unicode-art {
-  max-width: 48rem;
+.count {
+  color: var(--muted);
 }
 
-code {
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: 1.25rem;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.card .well {
+  margin-bottom: 0.4rem;
+  transition: outline-color 0.15s;
+  outline: 1px solid transparent;
+}
+
+.card:hover .well,
+.card:focus-visible .well {
+  outline-color: var(--muted);
+}
+
+.card .name {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.card .note {
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+/* The piece page. */
+
+.toggles {
+  display: flex;
+  gap: 1.25rem;
+  margin-top: 1.25rem;
+  min-height: 1.5em;
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+}
+
+.block {
+  margin-top: 2.5rem;
+}
+
+.fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+}
+
+.field {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.field span {
+  color: var(--muted);
+}
+
+.field input[type="number"],
+.field input[type="text"] {
   font: inherit;
+  color: var(--ink);
+  background: var(--well);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 0.2rem 0.4rem;
+  width: 8rem;
 }
 
-pre.snippet {
-  color: var(--dim);
-  margin: 1rem 0 0;
+.field input[aria-invalid="true"] {
+  border-color: var(--bad);
+}
+
+.button {
+  font: inherit;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.button:hover {
+  color: var(--ink);
+}
+
+.snippet {
+  margin-bottom: 1rem;
+}
+
+.snippet .head {
+  margin-bottom: 0.25rem;
+}
+
+.snippet h3 {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.snippet pre {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  background: var(--well);
+  border-radius: 6px;
+  color: var(--ink);
   overflow-x: auto;
+}
+
+.pager {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 3rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule);
+}
+
+.error,
+.broken pre {
+  color: var(--bad);
+  white-space: pre-wrap;
+}
+
+.broken {
+  padding: 2rem;
 }
