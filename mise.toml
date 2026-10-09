@@ -79,8 +79,8 @@ description = "npm install in web/ and site/ (the workspace root does both)"
 run = "npm install"
 
 [tasks.test]
-description = "Everything tested: the Rust crates, then the wasm boundary from Node"
-depends = ["test:rust", "test:wasm"]
+description = "Everything tested: the Rust crates, the wasm boundary from Node, the Elm site"
+depends = ["test:rust", "test:wasm", "test:elm"]
 
 [tasks."test:rust"]
 description = "Rust unit tests and the piece contract (release: the timing budgets mean nothing in debug)"
@@ -96,9 +96,14 @@ run = [
   "WASM_PKG=target/wasm-debug-pkg WASM_DEBUG=1 node --test 'web/test/*.test.mjs'",
 ]
 
+[tasks."test:elm"]
+description = "The site's Elm tests (site/tests): routes, the meta decoder, options"
+dir = "site"
+run = "elm-test"
+
 [tasks.fmt]
 description = "Format everything"
-run = ["cargo fmt --all", "elm-format site/src --yes", "npm --prefix web run fmt"]
+run = ["cargo fmt --all", "elm-format site/src site/tests --yes", "npm --prefix web run fmt"]
 
 [tasks.lint]
 description = "rustfmt --check, clippy, rustdoc, elm-format --validate, tsc --noEmit (needs the wasm: the shell imports web/pkg's types)"
@@ -109,7 +114,7 @@ run = [
   "RUSTDOCFLAGS='-D warnings' cargo doc --no-deps -p animate-unicode",
   "cargo clippy -p animate-unicode-wasm --target wasm32-unknown-unknown -- -D warnings",
   "cargo clippy -p animate-unicode-wasm --target wasm32-unknown-unknown --features debug -- -D warnings",
-  "elm-format site/src --validate",
+  "elm-format site/src site/tests --validate",
   "npm --prefix web run typecheck",
   "npm --prefix site run typecheck",
 ]
