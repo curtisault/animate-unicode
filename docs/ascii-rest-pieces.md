@@ -30,14 +30,14 @@ are not tracked here.
 | creatures | 10 | | | 10 | | |
 | objects | 14 | | | 14 | | |
 | generative | 13 | | | 13 | | |
-| effects | 8 | 6 | | | | 2 |
+| effects | 8 | | | 6 | | 2 |
 | ui | 12 | | | 12 | | |
 | data | 10 | | | 10 | | |
 | type | 9 | | | 9 | | |
 | logos | 28 | 28 | | | | |
 | companies | 14 | 14 | | | | |
 | distros | 23 | 23 | | | | |
-| **all** | **209** | **88** | | **118** | | **3** |
+| **all** | **209** | **82** | | **124** | | **3** |
 
 Recount after changing rows:
 
@@ -122,6 +122,8 @@ Each wave is one branch per category, stacked.
    objects are sprites that have to be redrawn at the higher resolution, not
    converted. E5 is done: each category is its own wasm module. Landscape and
    sunrise move to wave 5: their skies need E1.
+   Built 2026-10-09: 55 pieces, every category its own module, the largest
+   (objects) 96 KB gz.
 4. **Logos, companies, distros** (65), after E3 and E4.
 5. **Scenes** (15), after E1. These are the largest: tokyo-rain alone is
    1 123 lines of TS.
@@ -291,13 +293,13 @@ carry only the source.
 | piece | size, fps | Unicode | enhancement | status |
 |---|---|---|---|---|
 | doom-fire | 60×18, 24 | quadrants, Doom palette | — | covered: quadrant-fire |
-| fireworks | 64×24, 30 | braille sparks | a palette per shell, trails cooling | todo |
+| fireworks | 64×24, 30 | braille sparks and trails along each spark's own path | a hue per shell (red, green, blue, gold, purple, white), heads bright, trails cooling; gold willows | built |
 | matrix-rain | 63×24, 20 | full-width katakana and kanji | — | covered: kanji-rain |
-| rotozoomer | 64×24, 30 | the texture sampled per octant dot | brick colours | todo |
-| sparks | 64×20, 30 | braille sparks | colour cooling from white to red | todo |
-| synthwave | 65×28, 20 | braille grid in perspective, octant sun stripes | a neon palette | todo |
-| tunnel | 64×24, 30 | the texture sampled per octant dot | colour with depth fog | todo |
-| tv-static | 58×26, 20 · options | octant noise, half the dots lit | a colour test card (SMPTE bars) | todo |
+| rotozoomer | 64×24, 30 | the texture sampled per octant dot; faces, lit and shadowed bevels at different densities | terracotta bricks, bevels lit from the upper left | built |
+| sparks | 64×20, 30 | braille sparks with streaks; an octant grinder and plate | sparks cooling from white through yellow and orange to red; a teal grinder, a dark disc with a yellow label, steel | built |
+| synthwave | 65×28, 20 | a braille grid in perspective, thinning into haze; an octant sun with sinking stripe gaps and a ridge | a neon palette: the sun gold to hot pink, a cyan ridge, a magenta grid glowing pink | built |
+| tunnel | 64×24, 30 | a ray per octant dot, the pattern averaged over each dot's footprint | ice-blue and deep-blue tiles sinking into violet fog | built |
+| tv-static | 58×26, 20 · options | octant snow, about half the dots lit; card bars dithered at their levels | SMPTE colour bars, strip and bottom strip; grey snow; a walnut set | built |
 
 ### ui (12)
 
