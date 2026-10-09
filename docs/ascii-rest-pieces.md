@@ -23,7 +23,7 @@ are not tracked here.
 | category | pieces | todo | wip | built | done | covered |
 |---|---|---|---|---|---|---|
 | scenes | 15 | 15 | | | | |
-| shapes | 12 | 11 | | | | 1 |
+| shapes | 12 | | | 11 | | 1 |
 | space | 11 | 11 | | | | |
 | physics | 14 | 14 | | | | |
 | nature | 16 | 16 | | | | |
@@ -37,7 +37,7 @@ are not tracked here.
 | logos | 28 | 28 | | | | |
 | companies | 14 | 14 | | | | |
 | distros | 23 | 23 | | | | |
-| **all** | **209** | **205** | **1** | | | **3** |
+| **all** | **209** | **194** | **1** | **11** | | **3** |
 
 Recount after changing rows:
 
@@ -89,6 +89,13 @@ enhanced.
 
 Some rows cannot start until the engine has more. Each of these is a small
 phase of its own, with its own branch.
+
+Already added, with the shapes (branch `pieces-shapes`):
+`subcell::ColorCanvas` (`ColorDots`, `ColorOctants`, …), a dot canvas with a
+palette index and a depth per dot. A cell takes its commonest colour;
+`draw_split` keeps only that colour's dots, and `dither_by` thins a lit surface
+by its shade. It also brought `util::dither` (4×4 Bayer) and `geom` (vectors
+and rotation matrices).
 
 | # | what | needed by | status |
 |---|---|---|---|
@@ -158,18 +165,18 @@ carry only the source.
 
 | piece | size, fps | Unicode | enhancement | status |
 |---|---|---|---|---|
-| cube | 32×18, 24 | braille wireframe, hidden edges stippled | faces flat-shaded in octant dither between the quarter turns | todo |
-| dna-helix | 64×15, 20 | braille strands, base pairs as ─ rungs | colour by base (A T C G), the far strand dimmed | todo |
+| cube | 32×18, 24 | braille: faces dithered by their light, solid edges over them | a colour per pair of faces (red, green, blue), so each quarter turn hands one colour to the next | built |
+| dna-helix | 64×15, 20 | braille: near backbone two dots thick and clearing round itself, far one a dot thick | base pairs coloured half by half (A T C G) from a seeded sequence; dims with depth | built |
 | donut | 40×22, 30 | braille, z-buffer per dot, Bayer dither | — | covered: braille-donut |
-| glxgears | 56×31, 24 | octant fill, braille rims | the red, green and blue gears of glxgears, lit faces | todo |
-| gyroscope | 60×32, 30 | braille rings, depth-sorted per dot | a colour per gimbal; the rotor's spin shown by a moving stripe | todo |
-| heart | 52×24, 30 | octant Bayer dither | red ramp with a specular highlight that rides the beat | todo |
-| icosahedron | 46×22, 30 | braille wireframe, hidden edges dotted | faces flat-shaded in octant dither, edges kept as gaps | todo |
-| mobius-strip | 58×20, 30 | braille, z-buffer per dot, dither | a colour gradient along the strip, so the one face reads as one | todo |
-| spring | 40×28, 30 | braille coil, back coils dimmer | a shaded weight in octants and a shadow that grows as it nears | todo |
-| tesseract | 54×28, 30 | braille lines, depth by dot density | edges coloured by their w coordinate | todo |
-| torus-knot | 60×28, 30 | braille tube, z-buffer per dot, dither | a palette ramp for the lit tube | todo |
-| twisted-ring | 46×21, 30 | braille, z-buffer per dot, dither | one colour running along the face, showing it is a single face | todo |
+| glxgears | 56×31, 24 | octants; a cell keeps only the dots of the part covering most of it | glxgears' red, green and blue; lit and shadowed walls; dark walls dithered for one ink | built |
+| gyroscope | 60×32, 30 | braille, z-buffered per dot, dithered by light | gold, silver and copper gimbals round a steel rotor; two-dot gaps where parts cross | built |
+| heart | 52×24, 30 | octants, ray-marched per dot, Bayer dither | a ramp of reds with a solid pink-white glint | built |
+| icosahedron | 46×22, 30 | braille wireframe, hidden edges every third dot | edges coloured by depth, ice-white in front to deep blue behind | built |
+| mobius-strip | 58×20, 30 | braille, z-buffered per dot, dithered | a rainbow running twice round the one face, so it never jumps at the twist | built |
+| spring | 40×28, 30 | braille helix at four dots a row, stretching smoothly; front coils thick, back ones thin | a steel coil and a brass drum lit from the left | built |
+| tesseract | 54×28, 30 | braille lines, far half dotted | edges coloured by w, amber toward the 4D eye and violet away | built |
+| torus-knot | 60×28, 30 | braille, z-buffered per dot, dithered; crossings cut two dots back | a sea-glass ramp with a white glint | built |
+| twisted-ring | 46×21, 30 | braille faces dithered by light, corners as solid lines | colour runs along the one face and returns after four laps | built |
 
 ### space (11)
 
