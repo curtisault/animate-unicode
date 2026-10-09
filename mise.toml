@@ -30,6 +30,8 @@ wasm-tools = "latest"
 # elm-test is pinned: npm's `latest` is a 0.19.3 prerelease, and mise's `latest`
 # picked 0.19.0, whose old fsevents trips mise's malware advisory check.
 "npm:elm-test" = "0.19.1-revision17"
+# Runs scripts/font.py with a pinned fonttools, no install: `mise run build:font`.
+"aqua:astral-sh/uv" = "0.12.23"
 # Reruns a task when files change: `watchexec -e rs -- mise run build:wasm`.
 watchexec = "latest"
 
@@ -51,6 +53,12 @@ run = "wasm-pack build crates/wasm --target web --release --no-pack --out-dir ..
 description = "Build crates/wasm into web/pkg with the debug feature: panics print their message and location"
 env = { CARGO_TARGET_DIR = "{{config_root}}/target/wasm-debug" }
 run = "wasm-pack build crates/wasm --target web --release --no-pack --out-dir ../../web/pkg --out-name animate_unicode -- --features debug && rm -f web/pkg/.gitignore"
+
+# The font's output is checked in (web/fonts); run this only to change its ranges
+# or the Iosevka version. Downloads the release once into target/font.
+[tasks."build:font"]
+description = "Subset Iosevka Fixed Extended into web/fonts/animate-unicode-mono.woff2 (scripts/font.py)"
+run = "uvx --from 'fonttools[woff]==4.60.1' python -I scripts/font.py"
 
 [tasks."build:web"]
 description = "Type-check and emit the TS shell (web/dist)"
