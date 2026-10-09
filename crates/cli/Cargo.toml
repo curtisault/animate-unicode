@@ -14,6 +14,8 @@ path = "src/main.rs"
 [dependencies]
 animate-unicode = { path = "../animate-unicode" }
 crossterm = "0.29"
+# The local zone's offset from UTC, for pieces that show the time.
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
 
 [target.'cfg(unix)'.dependencies]
 # SIGTERM and SIGHUP set a flag the player checks, so the terminal is put back.

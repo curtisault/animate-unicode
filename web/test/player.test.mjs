@@ -120,3 +120,15 @@ test("free() releases the player and its memory", () => {
   churn();
   assert.equal(wasm.memory.buffer.byteLength, before);
 });
+
+test("a clock piece shows the wall clock set_clock gives it, in local time", () => {
+  const p = new mod.Player("calendar", "");
+  p.frame(0, false);
+  assert.match(p.text(), /october 2026/, "untold, it shows the fixed moment");
+  // 2027-01-31 23:30 UTC, an hour ahead: already 1 February locally.
+  p.set_clock(Date.UTC(2027, 0, 31, 23, 30, 0), 60);
+  p.frame(0.5, false);
+  assert.match(p.text(), /february 2027/);
+  assert.match(p.text(), /monday 1 +00:30:00/);
+  p.free();
+});

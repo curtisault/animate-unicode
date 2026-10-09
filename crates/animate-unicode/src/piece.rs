@@ -1,12 +1,16 @@
 //! The piece contract.
 
-use crate::Grid;
+use crate::{clock::Wall, Grid};
 
 /// What the piece is told about where it is drawn.
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Env {
     /// True when the text is dark on a light ground, so a shaded piece can flip its ramp.
     pub paper: bool,
+    /// The wall clock, for a piece with `meta.clock`. `None` where there is
+    /// no clock to read (the contract test, a still): such a piece then shows
+    /// [`Wall::FIXED`], so its frames stay deterministic.
+    pub now: Option<Wall>,
 }
 
 /// A piece: something that draws the picture at `t` seconds into a grid.

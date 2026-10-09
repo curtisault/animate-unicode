@@ -33,7 +33,7 @@
 //! calling it again every frame, and the element frees a stuck player inside a
 //! `try`: freeing it throws too.
 
-use animate_unicode::{registry, Env, Grid, Meta, Piece};
+use animate_unicode::{registry, Env, Grid, Meta, Piece, Wall};
 use wasm_bindgen::prelude::*;
 
 /// Runs once when the module is instantiated: in a debug build, routes panics
@@ -53,6 +53,7 @@ pub struct Player {
     meta: &'static Meta,
     piece: Box<dyn Piece>,
     grid: Grid,
+    now: Option<Wall>,
 }
 
 #[wasm_bindgen]
@@ -62,10 +63,10 @@ impl Player {
     pub fn new(slug: &str, options_json: &str) -> Result<Player, JsError> {
         #[cfg(feature = "debug")]
         if let Some(entry) = debug::find(slug) {
-            return Ok(Player { meta: entry.meta, piece: (entry.make)(&Default::default()), grid: Grid::new(entry.meta.cols, entry.meta.rows) });
+            return Ok(Player { meta: entry.meta, piece: (entry.make)(&Default::default()), grid: Grid::new(entry.meta.cols, entry.meta.rows), now: None });
         }
         let (meta, piece) = registry::make(slug, options_json).map_err(|e| JsError::new(&e.to_string()))?;
-        Ok(Player { meta, piece, grid: Grid::new(meta.cols, meta.rows) })
+        Ok(Player { meta, piece, grid: Grid::new(meta.cols, meta.rows), now: None })
     }
 
     /// Frame width in cells.
@@ -90,7 +91,14 @@ impl Player {
 
     /// Draws the frame at `t` seconds into the grid.
     pub fn frame(&mut self, t: f64, paper: bool) {
-        self.piece.frame(t, &Env { paper }, &mut self.grid);
+        self.piece.frame(t, &Env { paper, now: self.now }, &mut self.grid);
+    }
+
+    /// The wall clock for the frames that follow, for a piece whose `meta.clock`
+    /// is set: `Date.now()` and minutes ahead of UTC (`-getTimezoneOffset()`).
+    /// Until it is called, such a piece shows a fixed moment.
+    pub fn set_clock(&mut self, unix_ms: f64, offset_minutes: i32) {
+        self.now = Some(Wall { unix: unix_ms / 1000.0, offset: offset_minutes });
     }
 
     /// Start of the `cols × rows` code points in wasm memory. Re-read after

@@ -66,9 +66,15 @@ export function mount(el: HTMLElement, wasm: InitOutput, player: Player, options
   };
   const paper = () => (canvas && ground ? !dark(ground) : dark(getComputedStyle(el).color));
 
+  // A piece that shows the time is told the wall clock before each frame.
+  const frame = () => {
+    if (meta.clock) player.set_clock(Date.now(), -new Date().getTimezoneOffset());
+    player.frame(t, paper());
+  };
+
   let t = 0;
   let draw = () => {
-    player.frame(t, paper());
+    frame();
     el.textContent = player.text();
   };
 
@@ -136,7 +142,7 @@ export function mount(el: HTMLElement, wasm: InitOutput, player: Player, options
         actx.clearRect(0, 0, atlas.width, atlas.height);
         full = true;
       }
-      player.frame(t, paper());
+      frame();
       const c = cells(), k = colors();
       if (ground) ctx.fillStyle = ground;
       if (full) {

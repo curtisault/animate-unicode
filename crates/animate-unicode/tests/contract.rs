@@ -30,7 +30,7 @@ fn play(entry: &registry::Entry, times: &[f64], paper: bool) -> Run {
     let meta = entry.meta;
     let mut piece: Box<dyn Piece> = (entry.make)(&Options::default().with_defaults(meta.options));
     let mut grid = Grid::new(meta.cols, meta.rows);
-    let env = Env { paper };
+    let env = Env { paper, now: None };
     let step = if meta.fps > 0 { 1.0 / meta.fps as f64 } else { 0.5 };
     let end = times.iter().cloned().fold(0.0, f64::max);
     let mut frames = vec![None; times.len()];

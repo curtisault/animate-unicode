@@ -17,6 +17,7 @@
 
 #![warn(missing_docs)]
 
+pub mod clock;
 pub mod geom;
 pub mod grid;
 pub mod meta;
@@ -28,6 +29,7 @@ pub mod registry;
 pub mod subcell;
 pub mod util;
 
+pub use clock::Wall;
 pub use grid::{Grid, BLANK, WIDE_TAIL};
 pub use meta::{Category, Charset, Meta};
 pub use options::Options;

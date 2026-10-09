@@ -30,7 +30,7 @@ fn main() {
     for slug in &slugs {
         let (meta, mut piece) = registry::make(slug, &options).unwrap_or_else(|e| fail(&e.to_string()));
         let mut grid = Grid::new(meta.cols, meta.rows);
-        let env = Env { paper };
+        let env = Env { paper, now: None };
         // Played from 0 in 1/fps steps, as a viewer would see it.
         let step = 1.0 / f64::from(meta.fps.max(1));
         let rule = format!("+{}+", "-".repeat(meta.cols));

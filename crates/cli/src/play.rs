@@ -7,7 +7,7 @@
 //! there; a panic hook puts the terminal back first instead.
 
 use crate::paint::{dark, Painter, Screen};
-use animate_unicode::{Env, Grid, Meta, Piece};
+use animate_unicode::{Env, Grid, Meta, Piece, Wall};
 use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
 use crossterm::terminal;
 use std::io::{self, Write};
@@ -91,11 +91,17 @@ fn size() -> (usize, usize) {
     }
 }
 
+/// The wall clock now, and how far local time is from UTC.
+pub fn wall() -> Wall {
+    let now = chrono::Local::now();
+    Wall { unix: now.timestamp_millis() as f64 / 1000.0, offset: now.offset().local_minus_utc() / 60 }
+}
+
 /// Plays `piece` until a key, Ctrl+C, a signal or `settings.seconds`.
 pub fn play(meta: &Meta, mut piece: Box<dyn Piece>, settings: &Settings) -> io::Result<Played> {
     let mut painter = Painter::new(meta, !settings.mono);
     // A coloured piece on its own ground shades for that ground, as on a canvas.
-    let env = Env { paper: painter.ground().map_or(settings.light, |g| !dark(g)) };
+    let paper = painter.ground().map_or(settings.light, |g| !dark(g));
     let mut grid = Grid::new(meta.cols, meta.rows);
     let mut screen = Screen::new(painter.cells.len());
     let rate = settings.fps.unwrap_or(meta.fps);
@@ -109,7 +115,7 @@ pub fn play(meta: &Meta, mut piece: Box<dyn Piece>, settings: &Settings) -> io::
     let (mut t, mut last) = (0.0, start);
     let mut term = size();
     let mut draw = |t: f64, term: (usize, usize), screen: &mut Screen, out: &mut io::BufWriter<_>| -> io::Result<()> {
-        piece.frame(t, &env, &mut grid);
+        piece.frame(t, &Env { paper, now: meta.clock.then(wall) }, &mut grid);
         painter.paint(&grid);
         out.write_all(screen.draw(&painter, term.0, term.1).as_bytes())?;
         out.flush()

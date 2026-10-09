@@ -172,7 +172,7 @@ fn run() -> Result<ExitCode, Usage> {
     if !std::io::stdout().is_terminal() {
         let mut piece = piece;
         let mut grid = Grid::new(meta.cols, meta.rows);
-        piece.frame(0.0, &Env { paper: args.light }, &mut grid);
+        piece.frame(0.0, &Env { paper: args.light, now: Some(play::wall()) }, &mut grid);
         let mut p = paint::Painter::new(meta, false);
         p.paint(&grid);
         println!("{}", p.text());
