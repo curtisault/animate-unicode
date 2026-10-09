@@ -29,7 +29,7 @@ are not tracked here.
 | nature | 16 | 16 | | | | |
 | creatures | 10 | 10 | | | | |
 | objects | 14 | 14 | | | | |
-| generative | 13 | 13 | | | | |
+| generative | 13 | | | 13 | | |
 | effects | 8 | 6 | | | | 2 |
 | ui | 12 | 11 | 1 | | | |
 | data | 10 | 10 | | | | |
@@ -37,7 +37,7 @@ are not tracked here.
 | logos | 28 | 28 | | | | |
 | companies | 14 | 14 | | | | |
 | distros | 23 | 23 | | | | |
-| **all** | **209** | **194** | **1** | **11** | | **3** |
+| **all** | **209** | **181** | **1** | **24** | | **3** |
 
 Recount after changing rows:
 
@@ -95,7 +95,9 @@ Already added, with the shapes (branch `pieces-shapes`):
 palette index and a depth per dot. A cell takes its commonest colour;
 `draw_split` keeps only that colour's dots, and `dither_by` thins a lit surface
 by its shade. It also brought `util::dither` (4×4 Bayer) and `geom` (vectors
-and rotation matrices).
+and rotation matrices). The generative pieces added `util::Mulberry32`,
+ascii.rest's own generator bit for bit, so ports place the same seeds, mazes
+and particles (quadrant-fire now uses it too).
 
 | # | what | needed by | status |
 |---|---|---|---|
@@ -272,19 +274,19 @@ carry only the source.
 
 | piece | size, fps | Unicode | enhancement | status |
 |---|---|---|---|---|
-| epicycles | 60×24, 30 | braille circles and trace | a colour per circle | todo |
-| flow-field | 64×22, 20 | braille trails, 8 particles a cell | colour by direction (a hue wheel) | todo |
-| glider-gun | 56×20, 10 | one Life cell per octant dot | colour by cell age | todo |
-| hilbert-curve | 65×17, 20 | a curve one order finer, in braille | the lit runners leave coloured trails | todo |
-| julia-set | 66×24, 20 | octant dither on escape time | escape-time palette | todo |
-| langtons-ant | 72×25, 30 | one grid square per octant dot | a coloured turmite variant as an option | todo |
-| mandelbrot | 64×26, 15 | octant dither on escape time | smooth-coloured escape time | todo |
-| maze | 61×21, 20 | a maze carved per braille dot | the solving path in colour | todo |
-| plasma | 64×22, 24 | filled colour per cell | a full palette version; sextant-plasma is the contour one | todo |
-| reaction-diffusion | 60×24, 20 | the field simulated per octant dot | a colour ramp for the two chemicals | todo |
-| rule-30 | 64×20, 8 | one cell per braille dot | a colour per rule | todo |
-| sierpinski | 59×26, 20 | braille points | colour by the vertex chosen | todo |
-| voronoi | 64×22, 15 | octant region edges | a colour per region | todo |
+| epicycles | 60×24, 30 | braille trace a dot wide; the first five circles' rims and arms dotted | a colour per circle; the trail cools from gold to embers | built |
+| flow-field | 64×22, 20 | the TS field and particles (its own generator), trails laid per braille dot | each dot coloured by its heading, violet climbing to orange falling | built |
+| glider-gun | 56×20, 10 | one Life cell per octant dot: a 112×80 field, the lane twice as long | colour by age: births white, cooling to blue; period 30 tested | built |
+| hilbert-curve | 65×17, 20 | one order finer (32 by 16) in braille | two runners, amber and cyan, two dots wide, fading along their trails | built |
+| julia-set | 66×24, 20 | per octant dot, the glow dithered | violet through rose and gold to white at the edge | built |
+| langtons-ant | 72×25, 30 | one square per octant dot: four times the board; highway run to step 13 400 | squares coloured by when they last flipped, hot to cold; highway tested | built |
+| mandelbrot | 64×26, 15 | per octant dot, the boundary glow dithered | smooth escape time through a cycling palette; 2.2 ms avg, 6.7 worst over the full zoom | built |
+| maze | 61×21, 20 | a 30 by 20 maze in braille (four times the rooms); backtracker matches the TS | the stack a cyan thread, the way through in amber | built |
+| plasma | 64×22, 24 | per octant dot in twelve bands, a cell keeping its main band's dots | filled colour bands, ink-blue to gold; density follows the band for one ink | built |
+| reaction-diffusion | 60×24, 20 | ascii.rest's 60×48 reaction (matches the TS), read between grid points per octant dot | teal to cream by strength, with crisp edges | built |
+| rule-30 | 64×20, 8 | one cell per octant dot: 128 across, four generations a row | a colour per rule; rule 90 grows six levels | built |
+| sierpinski | 59×26, 20 | the chaos game per braille dot, truly equilateral | each dot coloured by the corner it jumped toward, so the three copies show | built |
+| voronoi | 64×22, 15 | nearest seed per octant dot, borders left dark | a colour per cell, brighter toward its seed | built |
 
 ### effects (8)
 
