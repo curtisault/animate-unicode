@@ -22,11 +22,11 @@ are not tracked here.
 
 | category | pieces | todo | wip | built | done | covered |
 |---|---|---|---|---|---|---|
-| scenes | 15 | 15 | | | | |
+| scenes | 15 | | | 15 | | |
 | shapes | 12 | | | 11 | | 1 |
 | space | 11 | | | 11 | | |
 | physics | 14 | | | 14 | | |
-| nature | 16 | 2 | | 14 | | |
+| nature | 16 | | | 16 | | |
 | creatures | 10 | | | 10 | | |
 | objects | 14 | | | 14 | | |
 | generative | 13 | | | 13 | | |
@@ -37,7 +37,7 @@ are not tracked here.
 | logos | 28 | | | 28 | | |
 | companies | 14 | 5 | | 9 | | |
 | distros | 23 | | | 23 | | |
-| **all** | **209** | **22** | | **184** | | **3** |
+| **all** | **209** | **5** | | **201** | | **3** |
 
 Recount after changing rows:
 
@@ -98,7 +98,7 @@ and particles (quadrant-fire now uses it too).
 
 | # | what | needed by | status |
 |---|---|---|---|
-| E1 | **Two colours a cell.** A background colour per cell beside the foreground: `Grid`, the wasm `Player`, the canvas renderer (fill the cell, then draw the glyph), and the CLI (`48;2;r;g;b`). Half blocks (`▀` over a different `▄`) then give two square pixels a cell, each in its own colour. The `<pre>` path has one ink, so a piece using this needs an octant-dither fallback there. | the 15 scenes, sunrise, landscape; a filled plasma | todo |
+| E1 | **Two colours a cell.** A background colour per cell beside the foreground: `Grid`, the wasm `Player`, the canvas renderer (fill the cell, then draw the glyph), and the CLI (`48;2;r;g;b`). Half blocks (`▀` over a different `▄`) then give two square pixels a cell, each in its own colour. The `<pre>` path has one ink, so a piece using this needs an octant-dither fallback there. | the 15 scenes, sunrise, landscape; a filled plasma | done (2026-10-09): `Grid` keeps a back colour a cell (`NO_BACK` for none), through the `Player` (`backs_ptr`), the canvas (a frame with back colours is one image of half cells, scaled up) and the CLI. `pixels::Pixels` paints two square pixels a cell as `▀` over a back colour, dithered to the palette, or octant dots in one ink. The canvas also draws octants, sextants and wedges as exact shapes, not from the font, so they tile without seams |
 | E2 | **Local time in `Env`.** `Env` has only `paper`. Clock pieces need the local wall time: from `Date` in the shell, the system clock in the CLI, and a fixed instant in the contract test so it stays deterministic. | analog-clock, calendar, digital-clock, landscape, sundial | done: `clock::Wall` and `Ticker`, `Env::now`, `Player::set_clock` (mount.ts calls it), chrono in the CLI |
 | E3 | **Categories.** ascii.rest has `companies` and `distros`; `Category` stops at `Logos`. Add the two, or fold them into `logos`. The site's sidebar groups and the CLI's `list` follow, and each new category gets its Cargo feature in both crates, which makes it its own wasm module. | the 37 company and distro logos | done (2026-10-09): `Category::Companies` and `Category::Distros`, a feature and a wasm module each, in the site's components group after the logos |
 | E4 | **Logos from SVG.** A build script (`scripts/logo.py`, run with uvx like `font.py`) that renders each SVG and reduces it to an octant mask, choosing a wedge glyph (U+1FB3C–1FB67) where an edge cuts a cell at a slant, with a colour per cell. Its output is committed. One shared `logo` module draws any logo from that data and runs the glint or the scan line, so 65 logos cost data rather than 65 copies of the code. | logos, companies, distros | done (2026-10-09): `scripts/logo.py` (`mise run build:logos`) renders each SVG with resvg, pinned by SHA-256, and picks the octant or wedge that best covers each cell's samples; where a part meets a much lighter or darker one the cell takes the colour most of it has and leaves the other bare, so thin parts (C#'s #) show as cuts. `crate::logo` plays the glint or the scan line over the art. A piece learns it is in one ink from `Env::mono` (`Player::set_mono`, the CLI's `--mono`), and then draws the plain variant, or the colour drawing with its white left bare, as ascii.rest does. E1 would sharpen the colour boundaries, now a cell apart |
@@ -130,6 +130,11 @@ Each wave is one branch per category, stacked.
    databuddy, greptile, orchid, polar) wait for a licence to use them.
 5. **Scenes** (15), after E1. These are the largest: tokyo-rain alone is
    1 123 lines of TS.
+   Built 2026-10-09: the 15 scenes, landscape and sunrise. A scene is 320 × 80
+   cells of two square pixels each, ascii.rest's 200 × 100 square cells at 1.6
+   times the detail and the same shape (the plan's 200 × 100 cells would have
+   stretched them twice as tall). The scenes made one 202 KB gz module, so they
+   are three categories, cities, nights and wilds, of 84–120 KB gz each.
 
 ## Pieces
 
@@ -137,8 +142,9 @@ Each wave is one branch per category, stacked.
 the size: a braille piece shows four times the rows of dots in the same
 cells.
 
-**Scenes.** Every scene is a halftone of `· • ●` in palette colours on square
-cells (`cell: 1`), 200×100. Half blocks with two colours a cell (E1), on
+**Scenes.** Here they are three categories, cities, nights and wilds (each a
+wasm module), at 320×80 cells: see wave 5 above. In ascii.rest every scene is a
+halftone of `· • ●` in palette colours on square cells (`cell: 1`), 200×100. Half blocks with two colours a cell (E1), on
 ordinary 1:2 cells at 200×100, make that 200×200 solid pixels: twice the
 vertical resolution, with no gaps between dots. The dithering then moves to
 colour, and the shapes become solid.
@@ -150,21 +156,21 @@ carry only the source.
 
 | piece | size, fps | Unicode | enhancement | status |
 |---|---|---|---|---|
-| alpine-dawn | 200×100, 15 · colour, square cells | half blocks, two colours a cell | alpenglow sliding down the faces; the lake mirror breaks up in ripples | todo |
-| aurora-fjord | 200×100, 15 · colour, square cells | half blocks, two colours a cell | curtain folds in vertical eighth-block streaks; the cabin's window flickers | todo |
-| deep-reef | 200×100, 15 · colour, square cells | half blocks, two colours a cell | caustics wandering over the sand; fish as octant sprites, not dots | todo |
-| desert-night | 200×100, 15 · colour, square cells | half blocks, two colours a cell | stars by magnitude (· • ● ✦), meteors as braille streaks | todo |
-| earthrise | 200×100, 15 · colour, square cells | half blocks, two colours a cell | the earth as an octant globe with cloud bands; craters lit by the low sun | todo |
-| kyoto-dusk | 200×100, 15 · colour, square cells | half blocks, two colours a cell | petals drifting in braille; the lantern's light flickering on the wall | todo |
-| lantern-lake | 200×100, 15 · colour, square cells | half blocks, two colours a cell | lanterns glow and dim as they climb; their reflections break on the water | todo |
-| marine-drive | 200×100, 15 · colour, square cells | half blocks, two colours a cell | traffic lights streaming along the curve; the necklace reflected and rippling | todo |
-| misty-forest | 200×100, 15 · colour, square cells | half blocks, two colours a cell | fog layers drifting at different speeds; sunbeams dithered in octants | todo |
-| night-coast | 200×100, 15 · colour, square cells | half blocks, two colours a cell | the beam as a dithered cone through cloud; moonglade on the swell | todo |
-| ocean-sunset | 200×100, 15 · colour, square cells | half blocks, two colours a cell | the sun flattening at the horizon; glitter as braille sparkles | todo |
-| storm-plains | 200×100, 15 · colour, square cells | half blocks, two colours a cell | lightning lighting the cloud from inside; wheat waving in gust fronts | todo |
-| taj-dawn | 200×100, 15 · colour, square cells | half blocks, two colours a cell | the haze lifting over the minutes; birds crossing the pool | todo |
-| tokyo-rain | 200×100, 15 · colour, square cells | half blocks, two colours a cell | rain in braille at three depths; neon smeared in the road's reflection | todo |
-| varanasi-ghats | 200×100, 15 · colour, square cells | half blocks, two colours a cell | diyas drifting on the current; smoke from the aarti in braille | todo |
+| alpine-dawn | 200×100, 15 · colour, square cells | half blocks, two colours a cell | alpenglow sliding down the faces; the lake mirror breaks up in ripples | built: in wilds |
+| aurora-fjord | 200×100, 15 · colour, square cells | half blocks, two colours a cell | curtain folds in vertical eighth-block streaks; the cabin's window flickers | built: in nights |
+| deep-reef | 200×100, 15 · colour, square cells | half blocks, two colours a cell | caustics wandering over the sand; fish as octant sprites, not dots | built: in wilds |
+| desert-night | 200×100, 15 · colour, square cells | half blocks, two colours a cell | stars by magnitude (· • ● ✦), meteors as braille streaks | built: in nights |
+| earthrise | 200×100, 15 · colour, square cells | half blocks, two colours a cell | the earth as an octant globe with cloud bands; craters lit by the low sun | built: in nights |
+| kyoto-dusk | 200×100, 15 · colour, square cells | half blocks, two colours a cell | petals drifting in braille; the lantern's light flickering on the wall | built: in cities |
+| lantern-lake | 200×100, 15 · colour, square cells | half blocks, two colours a cell | lanterns glow and dim as they climb; their reflections break on the water | built: in nights |
+| marine-drive | 200×100, 15 · colour, square cells | half blocks, two colours a cell | traffic lights streaming along the curve; the necklace reflected and rippling | built: in cities |
+| misty-forest | 200×100, 15 · colour, square cells | half blocks, two colours a cell | fog layers drifting at different speeds; sunbeams dithered in octants | built: in wilds |
+| night-coast | 200×100, 15 · colour, square cells | half blocks, two colours a cell | the beam as a dithered cone through cloud; moonglade on the swell | built: in nights |
+| ocean-sunset | 200×100, 15 · colour, square cells | half blocks, two colours a cell | the sun flattening at the horizon; glitter as braille sparkles | built: in wilds |
+| storm-plains | 200×100, 15 · colour, square cells | half blocks, two colours a cell | lightning lighting the cloud from inside; wheat waving in gust fronts | built: in wilds |
+| taj-dawn | 200×100, 15 · colour, square cells | half blocks, two colours a cell | the haze lifting over the minutes; birds crossing the pool | built: in cities |
+| tokyo-rain | 200×100, 15 · colour, square cells | half blocks, two colours a cell | rain in braille at three depths; neon smeared in the road's reflection | built: in cities |
+| varanasi-ghats | 200×100, 15 · colour, square cells | half blocks, two colours a cell | diyas drifting on the current; smoke from the aarti in braille | built: in cities |
 
 ### shapes (12)
 
@@ -230,13 +236,13 @@ carry only the source.
 | fern | 44×30, 20 | the chaos game's points plotted in braille, 8 a cell | depth: the front leaflets bright green, the back ones darker, the young tip paler, a woody rachis | built |
 | fireflies | 60×18, 15 · options | braille glow halos falling off dot by dot; a braille moon, treeline and grass | pale yellow hearts through yellow-green to a faint green edge behind the grass | built |
 | fractal-tree | 60×24, 15 · options | braille limbs thinning as they fork, an octant trunk flaring to its roots, a braille stipple of leaves | brown bark lit on the left, deep green leaves, yellow-green tips | built |
-| landscape | 64×18, 8 · options, clock | octant ridges, half-block sky | a sky gradient set by the hour | todo: waits for E1, with the scenes |
+| landscape | 64×18, 8 · options, clock | octant ridges, half-block sky | a sky gradient set by the hour | built |
 | lightning | 64×22, 20 | a braille bolt jagged at a dot's scale, doubled at its brightest; braille rain and cloud | a slate cloud lit violet-white over the bolt, a white bolt with violet forks, rain and slopes catching the flash | built |
 | rain | 64×20, 30 | braille streaks at three depths; true elliptical rings in the puddles; braille splash crowns | rain paling with nearness, slate water, rings catching the light | built |
 | ruled-mountains | 64×20, 10 | braille lines at 4× vertical resolution, hidden lines removed per dot | a cold haze: back lines blue-violet, front ones nearly white | built |
 | sea-swell | 64×14, 20 | the swell's line at octant resolution; the boat drawn dot by dot, its sail cut on the diagonal, pitching to any angle | blue water darkening with depth, white foam on the steep face, a red hull, a white sail, a low pale sun | built |
 | snowfall | 64×22, 20 | braille flakes, one, two or four dots by depth; eighth-block drifts, ridges and caps | white snow over a blue-shadowed body, far flakes grey, a brown fence | built |
-| sunrise | 60×20, 15 | half-block sky gradient, braille glitter | the sky warming in colour | todo: waits for E1, with the scenes |
+| sunrise | 60×20, 15 | half-block sky gradient, braille glitter | the sky warming in colour | built |
 | wind | 64×14, 15 | braille streamlines a dot thick, fading tail to head; heads curling in a spiral | pale cyan air, autumn leaves riding the gusts | built |
 
 ### creatures (10)
