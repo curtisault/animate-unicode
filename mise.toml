@@ -36,16 +36,21 @@ watchexec = "latest"
 # The two wasm builds share web/pkg, so neither is cached by sources/outputs:
 # after `dev` writes the debug build, a cached `build:wasm` would skip and ship
 # it. A rebuild with nothing changed takes about a second.
+#
+# web/pkg ships inside the npm package, so: --no-pack (no nested package.json),
+# and the `*` .gitignore wasm-pack writes there is deleted, since npm would
+# honour it and leave the wasm out of the tarball. The root .gitignore already
+# keeps web/pkg out of git.
 [tasks."build:wasm"]
 description = "Build crates/wasm into web/pkg (wasm-bindgen, --target web, release)"
-run = "wasm-pack build crates/wasm --target web --release --out-dir ../../web/pkg --out-name animate_unicode"
+run = "wasm-pack build crates/wasm --target web --release --no-pack --out-dir ../../web/pkg --out-name animate_unicode && rm -f web/pkg/.gitignore"
 
 # Its own cargo target dir: the feature set differs, and sharing one would make
 # each build overwrite the other's .wasm under target/wasm32-unknown-unknown.
 [tasks."build:wasm:debug"]
 description = "Build crates/wasm into web/pkg with the debug feature: panics print their message and location"
 env = { CARGO_TARGET_DIR = "{{config_root}}/target/wasm-debug" }
-run = "wasm-pack build crates/wasm --target web --release --out-dir ../../web/pkg --out-name animate_unicode -- --features debug"
+run = "wasm-pack build crates/wasm --target web --release --no-pack --out-dir ../../web/pkg --out-name animate_unicode -- --features debug && rm -f web/pkg/.gitignore"
 
 [tasks."build:web"]
 description = "Type-check and emit the TS shell (web/dist)"
@@ -82,12 +87,12 @@ description = "Rust unit tests and the piece contract (release: the timing budge
 run = "cargo test --workspace --release"
 
 [tasks."test:wasm"]
-description = "web/test against the release build in web/pkg, then against a debug build (the panic test)"
-depends = ["build:wasm"]
+description = "web/test against the release build in web/pkg (and the npm tarball), then against a debug build"
+depends = ["build:web"]
 env = { CARGO_TARGET_DIR = "{{config_root}}/target/wasm-debug" }
 run = [
   "node --test 'web/test/*.test.mjs'",
-  "wasm-pack --quiet build crates/wasm --target web --release --out-dir ../../target/wasm-debug-pkg --out-name animate_unicode -- --features debug",
+  "wasm-pack --quiet build crates/wasm --target web --release --no-pack --out-dir ../../target/wasm-debug-pkg --out-name animate_unicode -- --features debug",
   "WASM_PKG=target/wasm-debug-pkg WASM_DEBUG=1 node --test 'web/test/*.test.mjs'",
 ]
 
