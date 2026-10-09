@@ -11,25 +11,32 @@
  *   options  JSON overriding the piece's option defaults: '{"speed":2}'
  *   label    what the picture shows, for screen readers; the piece's name otherwise
  *   mono     draws a coloured piece as text in one ink, like any other
+ *   motion   plays even when the reader prefers reduced motion; only for a
+ *            page that gives the reader its own way to stop it
  *
  * Text pieces draw into a <pre> in the element's colour and font size; the
  * coloured ones draw onto a <canvas> as wide as the element. Whatever the
  * element holds before it loads (a first frame rendered on the server, say)
  * stays until the piece is ready.
  */
-import { mount, type Meta } from "./mount.ts";
+import { mount, type Meta, type MountOptions } from "./mount.ts";
 import { Player, wasm } from "./wasm.ts";
 
-// :where gives these no specificity, so any rule of the page's own wins. The bundled font (Phase 5 of the plan)
-// covers braille, geometric shapes and legacy computing where the system face has none, one cell wide.
+// :where gives these no specificity, so any rule of the page's own wins.
+//
+// The bundled font (Phase 5 of the plan) will cover braille, geometric shapes and legacy computing where the system
+// face has none, one cell wide. Its @font-face goes back in front of STYLE when the file exists:
+//   @font-face{font-family:"animate-unicode mono";src:url(/fonts/animate-unicode-mono.woff2) format("woff2");
+//     unicode-range:U+00B0,U+00B7,U+2022,U+2190-21FF,U+2500-25FF,U+2800-28FF,U+1FB00-1FBFF;font-display:swap}
+// Declared before the file exists, every page with braille logs a failed font load (a 404, or a decode error where
+// the host answers with index.html), so for now the family is only named in the stack and falls through.
 const STYLE =
-  '@font-face{font-family:"animate-unicode mono";src:url(/fonts/animate-unicode-mono.woff2) format("woff2");unicode-range:U+00B0,U+00B7,U+2022,U+2190-21FF,U+2500-25FF,U+2800-28FF,U+1FB00-1FBFF;font-display:swap}' +
   ':where(unicode-art){display:block}:where(unicode-art>pre){margin:0;font:inherit;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"animate-unicode mono",monospace;line-height:1.2;letter-spacing:0;white-space:pre;font-variant-ligatures:none}';
 
 const Base = (typeof HTMLElement === "undefined" ? class {} : HTMLElement) as typeof HTMLElement;
 
 export class UnicodeArt extends Base {
-  static observedAttributes = ["piece", "fps", "options", "label", "mono"];
+  static observedAttributes = ["piece", "fps", "options", "label", "mono", "motion"];
   #stop: (() => void) | null = null;
   #player: Player | null = null;
   #run = 0;
@@ -69,6 +76,13 @@ export class UnicodeArt extends Base {
       player = new Player(slug, this.getAttribute("options") ?? "");
     } catch (error) {
       console.warn(`<unicode-art> could not load ${slug}:`, error);
+      // A piece that was playing is not the one asked for any more: stop it and
+      // clear its drawing. With nothing playing yet, whatever the element held
+      // (a server-rendered still) stays as the fallback.
+      if (run === this.#run && this.#player) {
+        this.#teardown();
+        this.replaceChildren();
+      }
       return;
     }
     // Another attribute change, or removal, while this one loaded.
@@ -78,7 +92,8 @@ export class UnicodeArt extends Base {
     }
     const meta = JSON.parse(player.meta_json()) as Meta;
     const fps = this.getAttribute("fps");
-    const options = fps !== null && fps !== "" && !Number.isNaN(+fps) ? { fps: +fps } : {};
+    const options: MountOptions = { motion: this.hasAttribute("motion") };
+    if (fps !== null && fps !== "" && !Number.isNaN(+fps)) options.fps = +fps;
     const el = document.createElement(meta.palette && !this.hasAttribute("mono") ? "canvas" : "pre");
     el.setAttribute("role", "img");
     el.setAttribute("aria-label", this.getAttribute("label") || meta.name);
