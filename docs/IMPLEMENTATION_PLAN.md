@@ -212,10 +212,10 @@ and enforced by the contract test's `allowed()`:
 | Charset | Ranges | Font need | Cells |
 |---|---|---|---|
 | `Basic` | U+0020–007E, `·°•●` (U+00B7, U+00B0, U+2022, U+25CF), box drawing U+2500–257F, blocks U+2580–259F | system monospace; a 3 KB fallback cut covers Android | 1 |
-| `Extended` | Basic + arrows U+2190–21FF, geometric shapes U+25A0–25FF, braille U+2800–28FF, Symbols for Legacy Computing U+1FB00–1FBFF (sextants, octants, wedges) | the bundled font (Phase 5) | 1 |
+| `Extended` | Basic + arrows U+2190–21FF, geometric shapes U+25A0–25FF, braille U+2800–28FF, Symbols for Legacy Computing U+1FB00–1FBFF (sextants, wedges), octants U+1CD00–1CDE5 and the quarter blocks U+1CEA0–1CEAF they borrow | the bundled font (Phase 5) | 1 |
 | `Wide` | any valid scalar; double-width glyphs occupy two cells via `set_wide` | system CJK/emoji fonts; colour emoji ignore `fillStyle` | 1 or 2 |
 
-Not in `allowed()` yet, add when a piece needs them: octants U+1CD00–1CDE5 (Unicode 16), quadrant/sextant separated blocks U+1CC00–1CEBF.
+Not in `allowed()` yet, add when a piece needs them: the rest of U+1CC00–1CEBF (separated quadrants and sextants, sixteenths, and more).
 
 Why code points matter, concretely: `../ascii/src/mount.ts:128` does
 `text.charCodeAt(k)` per cell, so a sextant (U+1FB00, two UTF-16 units) would
@@ -468,15 +468,29 @@ Start with pieces that show what unicode buys. Each one: a file, a `REGISTRY` li
 | # | slug | charset | what | notes |
 |---|---|---|---|---|
 | 1 | `braille-wave` | Extended | done | on `Dots` since Phase 1 |
-| 2 | `braille-lissajous` | Extended | a Lissajous curve traced in dots with a fading tail | tests `Dots::line`, determinism from `t` |
+| 2 | `braille-lissajous` | Extended | done: a 3:2 figure whose phase drifts; head a solid `Dots::line`, tail thinning by a fixed per-sample hash | options `a`, `b`, `speed`; pure in `t` |
 | 3 | `quadrant-fire` | Basic, palette | done in Phase 3: doom-fire's spread in quadrants, Doom palette | simulation fixture-tested against doom-fire.ts |
-| 4 | `sextant-plasma` | Extended, palette | a plasma field rendered in sextants (2×3 per cell) | proves astral glyphs end to end |
-| 5 | `braille-donut` | Extended | the donut rendered into a dot bitmap at 2×4 | proves the resolution gain over ASCII |
-| 6 | `box-frames` | Basic | port of ascii.rest's; proves box drawing joins | easy |
-| 7 | `geometric-tiles` | Extended | ◢◣◤◥ ◆ ● rotating tile pattern | tests U+25A0–25FF rendering widths |
-| 8 | `arrow-field` | Extended | a vector field drawn with ←↑→↓↖↗↘↙ | cheap, pretty |
-| 9 | `octant-sphere` | Extended | a lit sphere in octants (U+1CD00) | needs the octant range added to `allowed()` and the font |
-| 10 | `kanji-rain` | Wide | matrix-style rain of CJK | the first `Wide` piece; exercises `set_wide` and tails |
+| 4 | `sextant-plasma` | Extended, palette | done: the plasma drawn as contour lines at sextant resolution, one colour per band | a filled plasma needs two colours a cell; contours need one |
+| 5 | `braille-donut` | Extended | done: the torus at 80×88 dots, z-buffered per dot, shaded by 4×4 Bayer dithering, flipped on paper | 0.47 ms a frame (sine tables) |
+| 6 | `box-frames` | Basic | done: port of ascii.rest's, fixture-tested (`tests/fixtures/box-frames.txt`) | still |
+| 7 | `geometric-tiles` | Extended | done: ◤◥◢◣ rosettes turning in rings, ◆ on crests, ● at the centre | Iosevka's geometric shapes are 0.49 em icons, not cell-filling, so tiles stand apart |
+| 8 | `arrow-field` | Extended | done: three wandering vortices in a current, arrows snapped to eight ways, `·` where slack | |
+| 9 | `octant-sphere` | Extended, palette | done: a lit beach ball; a cell shows its majority gore, so seams are a dot wide | octant table from UnicodeData (below) |
+| 10 | `kanji-rain` | Wide, palette | done: 24 streams of full-width katakana and kanji | the first `Wide` piece |
+
+**Phase 6, 2026-10-08,** on branch `phase-6-pieces`, with what the pieces needed:
+
+- **Octants:** `subcell::Octant` / `Octants`. `scripts/octants.py` builds the
+  256-entry table from Unicode 16's UnicodeData.txt by name: 230 BLOCK
+  OCTANT characters, and 26 masks that reuse older glyphs (space, halves,
+  quadrants, quarter rows, the four single corners U+1CEA0–1CEAF, the middle
+  quarters U+1FBE6–7, full). `allowed()` and `Charset::Extended` now include
+  U+1CD00–1CDE5 and U+1CEA0–1CEAF; the font gained U+1CEA0–1CEAF (18.0 KB).
+- **Wide glyphs:** `unicode-width` (in debug assertions and the contract only).
+  `Grid::set_wide` debug-asserts width 2; the contract fails a double-width
+  glyph drawn without its tail, and a tail behind a narrow glyph (checked by
+  breaking kanji-rain on purpose).
+- Size after 11 pieces: see Appendix B.
 
 Porting from TS (`../ascii/src/pieces/*.ts`, 210 files): mechanical. Pattern:
 `const out = new Array(cols*rows).fill(" ")` → `grid.clear()`; `out[k] = ch` →
@@ -616,8 +630,10 @@ Measured 2026-10-08 on this machine. TS minified with esbuild 0.25; Rust 1.97, `
 | **This scaffold**: 2 pieces + serde_json + wasm-bindgen, wasm-pack release | **77.6 KB** | **35.8 KB** |
 | Scaffold's wasm-bindgen JS glue (`animate_unicode.js`) | 12.9 KB | — |
 | Site bundle (Elm + shell + glue) | 43.8 KB | 16.1 KB |
+| After Phase 3: 3 pieces (quadrant-fire added) | 90.5 KB | 42.3 KB |
+| **After Phase 6: 11 pieces** (2026-10-08) | **139.6 KB** | **64.6 KB** |
 
-Reading: the fixed cost of `std` + serde_json + bindgen is ~33 KB gz; each additional piece should add roughly what its TS does (1–3 KB gz) since the runtime is already paid for. Re-measure after ten pieces to confirm **(the per-piece figure is a projection)**.
+Reading: the fixed cost of `std` + serde_json + bindgen is ~33 KB gz; each additional piece should add roughly what its TS does (1–3 KB gz) since the runtime is already paid for. Re-measured after eleven pieces: the eight Phase 6 pieces added 22.3 KB gz, about 2.8 KB each, the top of the projected range (octant-sphere carries its 256-glyph table). At that rate the 500 KB gate is some 150 pieces away.
 
 <a id="appendix-c"></a>
 ## Appendix C: glyph encodings

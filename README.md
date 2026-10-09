@@ -14,7 +14,7 @@ and box-drawing glyphs), with cells that are code points rather than UTF-16
 units, so braille, sextants, geometric shapes and double-width glyphs are each
 one cell like any other.
 
-**Status: early.** Three pieces, the contract test, the wasm boundary, the
+**Status: early.** Eleven pieces, the contract test, the wasm boundary, the
 `<unicode-art>` tag and an Elm site that lists them. The plan for building it
 out is in [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md).
 
