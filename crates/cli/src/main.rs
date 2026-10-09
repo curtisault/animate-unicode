@@ -237,8 +237,10 @@ mod tests {
     #[test]
     fn list_has_every_piece_once_by_category() {
         let out = list(60);
+        // Whole words, so heart is not counted again inside heartbeat.
+        let words: Vec<&str> = out.split_whitespace().collect();
         for e in registry::all() {
-            assert_eq!(out.matches(&format!(" {}", e.meta.slug)).count() + out.matches(&format!("\n{}", e.meta.slug)).count(), 1, "{}", e.meta.slug);
+            assert_eq!(words.iter().filter(|&&w| w == e.meta.slug).count(), 1, "{}", e.meta.slug);
         }
         assert!(out.lines().all(|l| l.chars().count() <= 60), "{out}");
         assert!(out.contains(&format!("{} pieces.", registry::all().len())));
