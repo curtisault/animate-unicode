@@ -25,6 +25,8 @@ pub mod generative;
 pub mod physics;
 #[cfg(feature = "shapes")]
 pub mod shapes;
+#[cfg(feature = "space")]
+pub mod space;
 #[cfg(feature = "type")]
 pub mod r#type;
 #[cfg(feature = "ui")]
@@ -40,6 +42,8 @@ pub static CATEGORIES: &[(Category, &[Entry])] = &[
     (Category::Type, r#type::REGISTRY),
     #[cfg(feature = "shapes")]
     (Category::Shapes, shapes::REGISTRY),
+    #[cfg(feature = "space")]
+    (Category::Space, space::REGISTRY),
     #[cfg(feature = "physics")]
     (Category::Physics, physics::REGISTRY),
     #[cfg(feature = "generative")]

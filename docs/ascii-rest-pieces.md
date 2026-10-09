@@ -24,7 +24,7 @@ are not tracked here.
 |---|---|---|---|---|---|---|
 | scenes | 15 | 15 | | | | |
 | shapes | 12 | | | 11 | | 1 |
-| space | 11 | 11 | | | | |
+| space | 11 | | | 11 | | |
 | physics | 14 | | | 14 | | |
 | nature | 16 | 16 | | | | |
 | creatures | 10 | 10 | | | | |
@@ -37,7 +37,7 @@ are not tracked here.
 | logos | 28 | 28 | | | | |
 | companies | 14 | 14 | | | | |
 | distros | 23 | 23 | | | | |
-| **all** | **209** | **137** | | **69** | | **3** |
+| **all** | **209** | **126** | | **80** | | **3** |
 
 Recount after changing rows:
 
@@ -181,17 +181,17 @@ carry only the source.
 
 | piece | size, fps | Unicode | enhancement | status |
 |---|---|---|---|---|
-| black-hole | 64×20, 15 | octant disk, braille photon ring | temperature colours (white, orange, red), Doppler-bright side | todo |
-| earth | 60×30, 20 | octant globe | ocean, land, ice and a dimmed night side in colour; a finer map if the size allows | todo |
-| eclipse | 64×27, 20 | octant discs, braille corona rays | the corona and the diamond ring in colour | todo |
-| galaxy | 64×26, 20 | braille stars, brightness by density | a yellow core shading to blue arms, a dark dust lane | todo |
-| moon-phases | 46×23, 15 | octant dither on the disc | maria in grey; earthshine faintly on the dark side | todo |
-| planet | 64×18, 20 | octant bands, braille ring | banded colours and the ring's shadow across the globe | todo |
-| rocket | 48×28, 20 | octant body, quadrant exhaust (quadrant-fire's spread) | a coloured flame and a smoke cloud on the pad | todo |
-| saptarishi | 64×18, 12 · options | stars as · • ● ✦ by magnitude | colour by spectral class; the asterism's lines fade in, in braille | todo |
-| solar-system | 61×29, 20 · options | braille orbits as true ellipses, ● planets | a colour per planet; Kepler periods kept | todo |
-| starfield | 64×24, 30 · options | braille streaks that lengthen with speed | warm-to-cold colour shift toward the edges | todo |
-| three-body | 65×15, 30 | braille trails that thin with age | a colour per body | todo |
+| black-hole | 64×20, 15 | a ray traced through the bent space for every octant dot, dithered; a photon ring round the shadow | the gas by temperature, white-hot at the inner edge to deep red, hotter on the side coming toward us | built |
+| earth | 60×30, 20 | an octant globe, the map blended so the coasts run smooth; land dense, sea a light texture | green and desert land by latitude, polar ice, a blue sea with the sun's glint, a dim night side, a blue rim of air | built |
+| eclipse | 64×27, 20 | the sun, moon, beads and corona sampled per octant dot | a white-gold sun darkening to orange at the limb, a pearl corona cooling to blue, pink prominences, a white diamond ring with flares | built |
+| galaxy | 64×26, 20 | braille, each dot a star shown where the light beats its own random threshold | a yellow core, blue-white arms with pink knots, brown dust lanes, white orbiting stars | built |
+| moon-phases | 46×23, 15 | octant dither on the disc, a fine terminator | grey by the ground: dark maria, bright craters and rays; a faint blue earthshine; the dark side's rim | built |
+| planet | 64×18, 20 | octants, the geometry worked out once and only the clouds turning | cream zones, brown belts, a white storm, a grey-blue pole, gold rings and a dusky inner ring, shadows both ways | built |
+| rocket | 48×28, 20 | redrawn in octants: the sprite's outline at dot resolution, moving a dot at a time; a braced lattice tower | a cylinder-shaded white rocket, a flame white to red, grey smoke lit orange by it, a red beacon | built |
+| saptarishi | 64×18, 12 · options | ● and • by magnitude; dotted braille lines; braille meteors | each star its spectral class (K orange, A white, B blue); the lines draw in round the dipper, hold and fade | built |
+| solar-system | 61×29, 20 · options | braille orbits as true ellipses with the sun at a focus, each planet placed by Kepler's equation | a colour per planet, trails that stretch at perihelion, a glowing sun | built |
+| starfield | 64×24, 30 · options | braille streaks as long as the shutter, thinning to the tail | amber ahead, cooling to blue at the edges | built |
+| three-body | 65×15, 30 | a dotted braille eight; braille trails that thin with age | red, green and blue bodies | built |
 
 ### physics (14)
 
