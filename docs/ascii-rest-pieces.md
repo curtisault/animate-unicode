@@ -25,7 +25,7 @@ are not tracked here.
 | scenes | 15 | 15 | | | | |
 | shapes | 12 | | | 11 | | 1 |
 | space | 11 | 11 | | | | |
-| physics | 14 | 14 | | | | |
+| physics | 14 | | | 14 | | |
 | nature | 16 | 16 | | | | |
 | creatures | 10 | 10 | | | | |
 | objects | 14 | 14 | | | | |
@@ -37,7 +37,7 @@ are not tracked here.
 | logos | 28 | 28 | | | | |
 | companies | 14 | 14 | | | | |
 | distros | 23 | 23 | | | | |
-| **all** | **209** | **181** | **1** | **24** | | **3** |
+| **all** | **209** | **167** | **1** | **38** | | **3** |
 
 Recount after changing rows:
 
@@ -105,7 +105,7 @@ and particles (quadrant-fire now uses it too).
 | E2 | **Local time in `Env`.** `Env` has only `paper`. Clock pieces need the local wall time: from `Date` in the shell, the system clock in the CLI, and a fixed instant in the contract test so it stays deterministic. | analog-clock, calendar, digital-clock, landscape, sundial | todo |
 | E3 | **Categories.** ascii.rest has `companies` and `distros`; `Category` stops at `Logos`. Add the two, or fold them into `logos`. The site's sidebar groups and the CLI's `list` follow. | the 37 company and distro logos | todo |
 | E4 | **Logos from SVG.** A build script (`scripts/logo.py`, run with uvx like `font.py`) that renders each SVG and reduces it to an octant mask, choosing a wedge glyph (U+1FB3C–1FB67) where an edge cuts a cell at a slant, with a colour per cell. Its output is committed. One shared `logo` module draws any logo from that data and runs the glint or the scan line, so 65 logos cost data rather than 65 copies of the code. | logos, companies, distros | todo |
-| E5 | **Size.** 64.6 KB gz with 11 pieces, about 2.8 KB more for each further piece. The 205 still to build would add some 575 KB at that rate, well past the 500 KB gate. E4 makes logos cheaper. Before wave 3, decide whether to raise the gate or to split pieces into several wasm modules ([risk 5](IMPLEMENTATION_PLAN.md#risks-and-open-questions)). | everything after wave 2 | todo |
+| E5 | **Size.** 64.6 KB gz with 11 pieces, about 2.8 KB more for each further piece. After wave 1 (2026-10-09): 148.0 KB gz with 49 pieces, about 2.2 KB a piece since. The 167 still to build would add some 370 KB at that rate, to about 520 KB: just past the 500 KB gate. E4 makes logos cheaper. Before wave 3, decide whether to raise the gate or to split pieces into several wasm modules ([risk 5](IMPLEMENTATION_PLAN.md#risks-and-open-questions)). | everything after wave 2 | todo |
 
 Logo licences: devicon's SVGs are MIT, and Simple Icons' are CC0 (omarchy's
 is MIT). Five companies' marks came from their own sites: command-code,
@@ -200,20 +200,20 @@ carry only the source.
 
 | piece | size, fps | Unicode | enhancement | status |
 |---|---|---|---|---|
-| bouncing-balls | 64×22, 30 · options | octant balls, squash as ellipses | a colour per ball, shadows on the floor | todo |
-| chladni | 45×23, 12 | braille grains, 8 a cell | the plate changing mode, tinted per mode | todo |
-| double-pendulum | 48×25, 30 | braille arms and trail | the trail coloured by tip speed | todo |
-| falling-sand | 55×22, 20 | the sand simulated per octant dot | grains in a few sand tones | todo |
-| flag | 62×21, 30 · options | sextant cloth with a shading ramp | real stripes in colour, lit by the folds | todo |
-| fountain | 57×22, 30 | braille drops | blue water, splash crowns in the basin | todo |
-| harmonograph | 64×28, 30 | braille pen line (as braille-lissajous) | ink fading in colour along the line | todo |
-| lorenz | 60×22, 30 | braille trajectory | coloured by age and by which wing it is on | todo |
-| newtons-cradle | 74×17, 30 · options | octant balls, braille strings | steel shading with a moving highlight | todo |
-| pendulum-wave | 67×19, 30 | octant bobs from above | colour by phase, so the waves show | todo |
-| plucked-string | 64×14, 30 | braille string at 4× vertical resolution | the first harmonics drawn as faint coloured ghosts | todo |
-| pond-ripples | 64×20, 20 | braille rings | water palette, raindrop splashes | todo |
-| smoke | 44×24, 30 | braille density dither | grey thinning to nothing; a glowing incense tip | todo |
-| wave-interference | 72×26, 24 · options | sextant field, braille nodal lines | crests and troughs in two colours | todo |
+| bouncing-balls | 64×22, 30 · options | the TS physics; lit rubber spheres per octant dot, squashed to keep their area | a colour per ball, dithered shading, shadows that pale as a ball rises | built |
+| chladni | 45×23, 12 | a grain per braille dot on dot-wide nodal lines; 2 600 grains, paired along a Hilbert curve | each figure's sand its own tint, grains in flight white | built |
+| double-pendulum | 48×25, 30 | the TS RK4; braille rods and a trail twice as long | the trail coloured by tip speed, blue to white, thinning with age | built |
+| falling-sand | 55×22, 20 | the TS automaton with a grain per octant dot: four times the grains | the heap pours in layers of three sand tones | built |
+| flag | 62×21, 30 · options | the TS cloth strips laid per octant dot row, folds dithered | crimson and cream stripes, each in four shades of its fold's light | built |
+| fountain | 57×22, 30 | the TS drops (same hash), each a braille dot; the surface ripples a dot at a time | water coloured by speed, deep blue to white | built |
+| harmonograph | 64×28, 30 | a true braille curve a dot wide | ink turning rose to blue as the figure winds in | built |
+| lorenz | 60×22, 30 | the TS RK4 and view; the path a joined braille curve | one wing ice blue, the other amber, by age and nearness | built |
+| newtons-cradle | 74×17, 30 · options | octant chrome discs, dot-wide strings and legs | chrome shaded by what it reflects, with a sliding highlight | built |
+| pendulum-wave | 67×19, 30 | octant discs moving a dot at a time | each bob coloured by its phase, so the waves show as bands of hue | built |
+| plucked-string | 64×14, 30 | the TS harmonics, the string per braille dot | its first three harmonics drawn faintly behind it, each its colour | built |
+| pond-ripples | 64×20, 20 | the TS rain (same hash); rings as true braille circles | water blue by strength; crossings of strong rings flash white | built |
+| smoke | 44×24, 30 | the TS puffs and flow; the thread a braille line, the haze dithered | grey haze thinning out, a flickering ember | built |
+| wave-interference | 72×26, 24 · options | the tank per octant dot, dithered by height | crests cyan to white, troughs deep blue, still lines dark lanes | built |
 
 ### nature (16)
 
