@@ -15,6 +15,8 @@ pub enum Category {
     Nights,
     /// Scenes of wild places: mountains, forest, sea, plains, a reef.
     Wilds,
+    /// Scenes of our own, not ascii.rest's: cyberpunk cities in neon and rain.
+    Cyberpunk,
     /// Geometry turning or morphing: the donut, a cube.
     Shapes,
     /// Planets, stars, orbits.
@@ -51,6 +53,7 @@ impl Category {
         Category::Cities,
         Category::Nights,
         Category::Wilds,
+        Category::Cyberpunk,
         Category::Ui,
         Category::Data,
         Category::Type,
@@ -69,8 +72,9 @@ impl Category {
 
     /// True for the scenes' categories: the contract holds a scene to a
     /// scene's sizes and budgets, and the site shows them first, as art.
+    /// (Cyberpunk is a scenes category too.)
     pub fn scene(self) -> bool {
-        matches!(self, Category::Cities | Category::Nights | Category::Wilds)
+        matches!(self, Category::Cities | Category::Nights | Category::Wilds | Category::Cyberpunk)
     }
 
     /// The lowercase name used in JSON and URLs.
@@ -79,6 +83,7 @@ impl Category {
             Category::Cities => "cities",
             Category::Nights => "nights",
             Category::Wilds => "wilds",
+            Category::Cyberpunk => "cyberpunk",
             Category::Shapes => "shapes",
             Category::Space => "space",
             Category::Physics => "physics",

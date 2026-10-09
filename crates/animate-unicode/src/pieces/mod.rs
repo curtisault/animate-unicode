@@ -21,6 +21,8 @@ pub mod cities;
 pub mod companies;
 #[cfg(feature = "creatures")]
 pub mod creatures;
+#[cfg(feature = "cyberpunk")]
+pub mod cyberpunk;
 #[cfg(feature = "data")]
 pub mod data;
 #[cfg(feature = "distros")]
@@ -58,6 +60,8 @@ pub static CATEGORIES: &[(Category, &[Entry])] = &[
     (Category::Nights, nights::REGISTRY),
     #[cfg(feature = "wilds")]
     (Category::Wilds, wilds::REGISTRY),
+    #[cfg(feature = "cyberpunk")]
+    (Category::Cyberpunk, cyberpunk::REGISTRY),
     #[cfg(feature = "ui")]
     (Category::Ui, ui::REGISTRY),
     #[cfg(feature = "data")]

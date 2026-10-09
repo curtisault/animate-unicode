@@ -64,6 +64,7 @@ Do not relitigate these; the owner chose them with the trade-offs in view.
 | Tooling | `mise.toml` with `[tasks]` as the single entry point | `mise run check` is what CI runs. |
 | One wasm module per category | Yes, since 2026-10-09 (it was one module for all pieces) | One module reached 249 KB gz with 79 pieces, on course for some 720 KB. Each category is a Cargo feature, and `build:wasm` builds a module for each into `web/pkg/<category>`, with `web/pkg/modules.js` listing every piece and importing each module on first use. A page loads only the categories it shows, and a tag loads nothing until it comes near the screen. Each module is 41–91 KB gz, gated at 150 KB. The cost: every module repeats the ~33 KB base, so a page showing every category loads 539 KB in all, not 249. A piece may use only its own category's code. The dev build stays one module, `all`. |
 | Scenes in three categories, gated higher | Yes, since 2026-10-09 | The 15 scenes made one 202 KB gz module (tokyo-rain alone is 51 KB of code). Scenes are now three categories, cities, nights and wilds, five scenes each, so three modules of 84–120 KB gz; the site groups them as art. `Category::scene()` is true for the three, which the contract holds to a scene's sizes and budgets. A scenes category is gated at 225 KB gz, the rest at 150. |
+| Scenes of our own | Yes, since 2026-10-09 | Five cyberpunk scenes not from ascii.rest (arcology, holo-koi, maglev, noodle-bar, undercity), drawn as the ported scenes are, in a fourth scenes category, `cyberpunk`, its own module under art. |
 | Licence | MIT | `Cargo.toml` says so; `LICENSE` file not yet written (owner's name). Code ported from ascii.rest keeps its MIT attribution comment. |
 
 ## What the scaffold contains
@@ -667,6 +668,7 @@ Measured 2026-10-08 on this machine. TS minified with esbuild 0.25; Rust 1.97, `
 | One small piece alone (geometric-tiles): the base every module repeats | 74.2 KB | 33.4 KB |
 | **Split by category** (2026-10-09): effects (2 pieces) to physics (15) | 86.5–202.3 KB | **40.8–91.1 KB** a module, 539.0 KB in all |
 | After wave 3 (2026-10-09): 11 modules, 134 pieces | 137.9–216.4 KB | 62.4–95.8 KB a module, 886.0 KB in all |
+| With the cyberpunk scenes (2026-10-09): 18 modules, 216 pieces | 139.4–316.1 KB | cyberpunk 126.9 KB; 1 478.0 KB in all |
 | After wave 5 (2026-10-09): 17 modules, 211 pieces; the scenes in three | 139.4–316.1 KB | 43.3 KB (companies) to 120.3 KB (cities); 1 350.6 KB in all |
 | After wave 4 (2026-10-09): 14 modules, 194 pieces; the 60 logos are data for one shared `logo` module | 138.8–315.8 KB | 43.2 KB (companies), 55.9 KB (distros), 61.8 KB (logos); 1 028.5 KB in all |
 

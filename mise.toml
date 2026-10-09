@@ -175,7 +175,7 @@ run = "cargo run --release -q -p animate-unicode --example bench --"
 # what a page showing every category loads. WASM_GZ_LIMIT overrides the limit
 # (in bytes).
 [tasks.size]
-description = "Raw and gzipped size of each release wasm module, and the total; fails when a module passes 150 KB gzipped (225 KB for a scenes category)"
+description = "Raw and gzipped size of each release wasm module, and the total; fails when a module passes 150 KB gzipped (225 KB for a scenes category: cities, nights, wilds, cyberpunk)"
 depends = ["build:wasm"]
 run = """
 limit=${WASM_GZ_LIMIT:-153600}
@@ -190,7 +190,7 @@ for f in web/pkg/*/animate_unicode_bg.wasm; do
   line="wasm $m: $raw bytes raw, $gz bytes gzipped"
   echo "$line"
   if [ -n "$GITHUB_STEP_SUMMARY" ]; then echo "$line" >> "$GITHUB_STEP_SUMMARY"; fi
-  case $m in cities|nights|wilds) max=$scene_limit ;; *) max=$limit ;; esac
+  case $m in cities|nights|wilds|cyberpunk) max=$scene_limit ;; *) max=$limit ;; esac
   if [ "$gz" -gt "$max" ]; then over="$over $m"; fi
 done
 line="wasm, every module: $total bytes gzipped (limit $limit a module, $scene_limit a scenes category)"
