@@ -193,7 +193,7 @@ and one line in `pieces/mod.rs` `REGISTRY`. `tests/contract.rs` enforces, for ev
 | charset | every cell's code point is allowed by `meta.charset` (see Unicode); `WIDE_TAIL` only in `Charset::Wide` pieces and only directly after a non-tail cell |
 | colours | every colour index `< palette.len()`, and every back colour too (or `NO_BACK`); no back colour without a palette |
 | first frame | not nearly empty (frame 0 is used as the still) |
-| motion | fps > 0 ⇒ ≥ 3 distinct frames over 6 s; fps = 0 ⇒ frames identical (unless `clock`) |
+| motion | fps > 0 ⇒ ≥ 3 distinct frames over 6 s (in glyphs or colours); fps = 0 ⇒ frames identical (unless `clock`) |
 | determinism | two fresh instances produce identical frames and colours at the same `t` (unless `clock`) |
 | paper | a frame with `Env { paper: true }` is the right shape |
 | one ink | frames with `Env { mono: true }` (a `<pre>`, the CLI's `--mono`) keep the frame-shape, charset, colour and first-frame rules too |

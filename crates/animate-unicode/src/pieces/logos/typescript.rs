@@ -1,4 +1,4 @@
-//! typescript: the TypeScript logo, a blue square lettered TS, with a glint
+//! typescript: the TypeScript logo, a blue square lettered TS, with a sheen
 //! crossing it every few seconds. After ascii.rest's typescript.ts (MIT,
 //! @bas3line).
 //!
@@ -9,7 +9,7 @@
 //! it; in a `<pre>` it is one ink, from typescript-plain.svg. The logo is a
 //! trademark of its owner, shown here to name the language.
 
-use crate::logo::{self, Loop};
+use crate::logo;
 use crate::{Category, Charset, Meta, Options, Piece};
 
 /// The typescript logo's meta.
@@ -23,12 +23,12 @@ pub static META: Meta = Meta {
     fps: 30,
     charset: Charset::Extended,
     options: Some(r#"{"shine": 5}"#),
-    // The logo's 2 colours for a light page, then for a dark one; each as drawn, then twice lighter for the glint.
+    // The logo's 2 colours for a light page, then for a dark one; each as drawn, then twice lighter for the sheen.
     palette: Some(&["#007acc", "#feffff", "#59a9de", "#feffff", "#b3d7f0", "#ffffff", "#007acc", "#feffff", "#59a9de", "#feffff", "#b3d7f0", "#ffffff"]),
     ..Meta::DEFAULT
 };
 
-/// The typescript logo; `shine` is the seconds between glints, 0 to keep it still.
+/// The typescript logo; `shine` is the seconds between sheens, 0 to keep it still.
 pub fn make(options: &Options) -> Box<dyn Piece> {
-    logo::make(&META, include_str!("art/typescript.txt"), Loop::Glint, options)
+    logo::make(&META, include_str!("art/typescript.txt"), options)
 }

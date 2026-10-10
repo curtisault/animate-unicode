@@ -199,7 +199,8 @@ fn every_piece_keeps_the_contract() {
                 errors.push("first frame is nearly empty (frame 0 should be a good still)".into());
             }
         }
-        let mut distinct: Vec<&[u32]> = run.frames.iter().map(|g| g.cells()).collect();
+        // A frame differs in its glyphs or in its colours: a sheen of colour is motion too.
+        let mut distinct: Vec<(&[u32], &[u8], &[u8])> = run.frames.iter().map(|g| (g.cells(), g.colors(), g.backs())).collect();
         distinct.sort_unstable();
         distinct.dedup();
         if m.fps > 0 && distinct.len() < 3 {

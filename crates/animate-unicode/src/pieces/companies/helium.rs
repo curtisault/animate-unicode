@@ -1,4 +1,4 @@
-//! helium: the Helium logo, a six-pointed asterisk, with a glint crossing it
+//! helium: the Helium logo, a six-pointed asterisk, with a sheen crossing it
 //! every few seconds. After ascii.rest's helium.ts (MIT, @bas3line).
 //!
 //! Drawn from Simple Icons' heliumbrowser.svg (CC0) by scripts/logo.py, into
@@ -8,7 +8,7 @@
 //! `<pre>` it is one ink, from the same drawing with its white left bare. The
 //! logo is a trademark of its owner, shown here to name the company.
 
-use crate::logo::{self, Loop};
+use crate::logo;
 use crate::{Category, Charset, Meta, Options, Piece};
 
 /// The helium logo's meta.
@@ -22,12 +22,12 @@ pub static META: Meta = Meta {
     fps: 30,
     charset: Charset::Extended,
     options: Some(r#"{"shine": 5}"#),
-    // The logo's colour for a light page, then for a dark one; each as drawn, then twice lighter for the glint.
+    // The logo's colour for a light page, then for a dark one; each as drawn, then twice lighter for the sheen.
     palette: Some(&["#3450d1", "#7b8de1", "#c2cbf1", "#3854d2", "#7e90e2", "#c3ccf2"]),
     ..Meta::DEFAULT
 };
 
-/// The helium logo; `shine` is the seconds between glints, 0 to keep it still.
+/// The helium logo; `shine` is the seconds between sheens, 0 to keep it still.
 pub fn make(options: &Options) -> Box<dyn Piece> {
-    logo::make(&META, include_str!("art/helium.txt"), Loop::Glint, options)
+    logo::make(&META, include_str!("art/helium.txt"), options)
 }

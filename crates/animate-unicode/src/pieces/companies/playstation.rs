@@ -1,4 +1,4 @@
-//! playstation: the PlayStation logo, a P standing on a flat S, with a glint
+//! playstation: the PlayStation logo, a P standing on a flat S, with a sheen
 //! crossing it every few seconds. After ascii.rest's playstation.ts (MIT,
 //! @bas3line).
 //!
@@ -9,7 +9,7 @@
 //! in a `<pre>` it is one ink, from the same drawing with its white left bare.
 //! The logo is a trademark of its owner, shown here to name the company.
 
-use crate::logo::{self, Loop};
+use crate::logo;
 use crate::{Category, Charset, Meta, Options, Piece};
 
 /// The playstation logo's meta.
@@ -23,12 +23,12 @@ pub static META: Meta = Meta {
     fps: 30,
     charset: Charset::Extended,
     options: Some(r#"{"shine": 5}"#),
-    // The logo's colour for a light page, then for a dark one; each as drawn, then twice lighter for the glint.
+    // The logo's colour for a light page, then for a dark one; each as drawn, then twice lighter for the sheen.
     palette: Some(&["#0070d1", "#59a2e1", "#b3d4f1", "#0070d1", "#59a2e1", "#b3d4f1"]),
     ..Meta::DEFAULT
 };
 
-/// The playstation logo; `shine` is the seconds between glints, 0 to keep it still.
+/// The playstation logo; `shine` is the seconds between sheens, 0 to keep it still.
 pub fn make(options: &Options) -> Box<dyn Piece> {
-    logo::make(&META, include_str!("art/playstation.txt"), Loop::Glint, options)
+    logo::make(&META, include_str!("art/playstation.txt"), options)
 }

@@ -1,4 +1,4 @@
-//! apple: the Apple logo, an apple with a bite out of it, with a glint crossing
+//! apple: the Apple logo, an apple with a bite out of it, with a sheen crossing
 //! it every few seconds. After ascii.rest's apple.ts (MIT, @bas3line).
 //!
 //! Drawn from Simple Icons' apple.svg (CC0) by scripts/logo.py, into
@@ -8,7 +8,7 @@
 //! `<pre>` it is one ink, from the same drawing with its white left bare. The
 //! logo is a trademark of its owner, shown here to name the company.
 
-use crate::logo::{self, Loop};
+use crate::logo;
 use crate::{Category, Charset, Meta, Options, Piece};
 
 /// The apple logo's meta.
@@ -22,12 +22,12 @@ pub static META: Meta = Meta {
     fps: 30,
     charset: Charset::Extended,
     options: Some(r#"{"shine": 5}"#),
-    // The logo's colour for a light page, then for a dark one; each as drawn, then twice lighter for the glint.
+    // The logo's colour for a light page, then for a dark one; each as drawn, then twice lighter for the sheen.
     palette: Some(&["#000000", "#595959", "#b3b3b3", "#e8ebef", "#f0f2f5", "#f8f9fa"]),
     ..Meta::DEFAULT
 };
 
-/// The apple logo; `shine` is the seconds between glints, 0 to keep it still.
+/// The apple logo; `shine` is the seconds between sheens, 0 to keep it still.
 pub fn make(options: &Options) -> Box<dyn Piece> {
-    logo::make(&META, include_str!("art/apple.txt"), Loop::Glint, options)
+    logo::make(&META, include_str!("art/apple.txt"), options)
 }

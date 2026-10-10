@@ -1,4 +1,4 @@
-//! supabase: the Supabase logo, a lightning bolt, with a glint crossing it
+//! supabase: the Supabase logo, a lightning bolt, with a sheen crossing it
 //! every few seconds. After ascii.rest's supabase.ts (MIT, @bas3line).
 //!
 //! Drawn from Simple Icons' supabase.svg (CC0) by scripts/logo.py, into
@@ -9,7 +9,7 @@
 //! its white left bare. The logo is a trademark of its owner, shown here to
 //! name the company.
 
-use crate::logo::{self, Loop};
+use crate::logo;
 use crate::{Category, Charset, Meta, Options, Piece};
 
 /// The supabase logo's meta.
@@ -23,12 +23,12 @@ pub static META: Meta = Meta {
     fps: 30,
     charset: Charset::Extended,
     options: Some(r#"{"shine": 5}"#),
-    // The logo's colour for a light page, then for a dark one; each as drawn, then twice lighter for the glint.
+    // The logo's colour for a light page, then for a dark one; each as drawn, then twice lighter for the sheen.
     palette: Some(&["#2aa76e", "#75c6a1", "#bfe5d4", "#3fcf8e", "#82e0b6", "#c5f1dd"]),
     ..Meta::DEFAULT
 };
 
-/// The supabase logo; `shine` is the seconds between glints, 0 to keep it still.
+/// The supabase logo; `shine` is the seconds between sheens, 0 to keep it still.
 pub fn make(options: &Options) -> Box<dyn Piece> {
-    logo::make(&META, include_str!("art/supabase.txt"), Loop::Glint, options)
+    logo::make(&META, include_str!("art/supabase.txt"), options)
 }

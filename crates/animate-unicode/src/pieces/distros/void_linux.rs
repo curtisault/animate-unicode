@@ -1,6 +1,5 @@
-//! void linux: the Void Linux logo, a ring cut through, with a scan line
-//! running down it every few seconds that scrambles what it passes. After
-//! ascii.rest's void-linux.ts (MIT, @bas3line).
+//! void linux: the Void Linux logo, a ring cut through, with a sheen crossing
+//! it every few seconds. After ascii.rest's void-linux.ts (MIT, @bas3line).
 //!
 //! Drawn from Simple Icons' voidlinux.svg (CC0) by scripts/logo.py, into
 //! art/void-linux.txt: each cell holds the octant, or the wedge where an edge
@@ -10,7 +9,7 @@
 //! bare. The logo is a trademark of its owner, shown here to name the
 //! distribution.
 
-use crate::logo::{self, Loop};
+use crate::logo;
 use crate::{Category, Charset, Meta, Options, Piece};
 
 /// The void linux logo's meta.
@@ -18,18 +17,18 @@ pub static META: Meta = Meta {
     name: "void linux",
     slug: "void-linux",
     category: Category::Distros,
-    note: "the green ring, cut through, scanned now and then",
+    note: "the green ring, cut through, glinting now and then",
     cols: 56,
     rows: 28,
     fps: 30,
     charset: Charset::Extended,
-    options: Some(r#"{"scan": 5}"#),
-    // The logo's colour for a light page, then for a dark one; each as drawn, then twice lighter for the scan.
+    options: Some(r#"{"shine": 5}"#),
+    // The logo's colour for a light page, then for a dark one; each as drawn, then twice lighter for the sheen.
     palette: Some(&["#478061", "#87ac98", "#c8d9d0", "#478061", "#87ac98", "#c8d9d0"]),
     ..Meta::DEFAULT
 };
 
-/// The void linux logo; `scan` is the seconds between scans, 0 to keep it still.
+/// The void linux logo; `shine` is the seconds between sheens, 0 to keep it still.
 pub fn make(options: &Options) -> Box<dyn Piece> {
-    logo::make(&META, include_str!("art/void-linux.txt"), Loop::Scan, options)
+    logo::make(&META, include_str!("art/void-linux.txt"), options)
 }

@@ -1,4 +1,4 @@
-//! erlang: the Erlang logo, an e between brackets, with a glint crossing it
+//! erlang: the Erlang logo, an e between brackets, with a sheen crossing it
 //! every few seconds. After ascii.rest's erlang.ts (MIT, @bas3line).
 //!
 //! Drawn from devicon's erlang-original.svg (MIT) by scripts/logo.py, into
@@ -8,7 +8,7 @@
 //! a `<pre>` it is one ink, from erlang-plain.svg. The logo is a trademark of
 //! its owner, shown here to name the language.
 
-use crate::logo::{self, Loop};
+use crate::logo;
 use crate::{Category, Charset, Meta, Options, Piece};
 
 /// The erlang logo's meta.
@@ -22,12 +22,12 @@ pub static META: Meta = Meta {
     fps: 30,
     charset: Charset::Extended,
     options: Some(r#"{"shine": 5}"#),
-    // The logo's colour for a light page, then for a dark one; each as drawn, then twice lighter for the glint.
+    // The logo's colour for a light page, then for a dark one; each as drawn, then twice lighter for the sheen.
     palette: Some(&["#ad0534", "#ca5d7b", "#e6b4c2", "#bc0538", "#d35d7e", "#ebb4c3"]),
     ..Meta::DEFAULT
 };
 
-/// The erlang logo; `shine` is the seconds between glints, 0 to keep it still.
+/// The erlang logo; `shine` is the seconds between sheens, 0 to keep it still.
 pub fn make(options: &Options) -> Box<dyn Piece> {
-    logo::make(&META, include_str!("art/erlang.txt"), Loop::Glint, options)
+    logo::make(&META, include_str!("art/erlang.txt"), options)
 }

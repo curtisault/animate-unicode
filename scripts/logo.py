@@ -9,13 +9,15 @@ row of margin), and sampled at SS × SS points a dot. Each cell then takes
 the octant (U+1CD00, with the blocks and quadrants that stand in for some) or
 the wedge (U+1FB3C–1FB67) that covers its samples best, and the colour most of
 its samples have: the nearest of the logo's colours, which are the first sixth
-of the piece's `META.palette` (the colours as drawn on a light page). In one
-ink white parts are holes, and a logo with a plain variant (c-plain.svg) is
-drawn from that instead, as in ascii.rest.
+of the piece's `META.palette` (the colours as drawn on a light page). Where
+the logo fills a cell and two colours meet in it, the cell is the lesser
+colour's octant or wedge over the greater as its back colour. In one ink
+white parts are holes, and a logo with a plain variant (c-plain.svg) is drawn
+from that instead, as in ascii.rest.
 
 The output, crates/animate-unicode/src/pieces/<category>/art/<slug>.txt, is
-checked in: the colour drawing, the colour of each cell (base 36), and the
-one-ink drawing, `rows` lines each. src/logo.rs reads it. The SVGs are
+checked in: the colour drawing, the colour of each cell and the colour behind
+it (base 36, a space for none), and the one-ink drawing, `rows` lines each. src/logo.rs reads it. The SVGs are
 downloaded once into target/logos/.
 """
 
@@ -39,6 +41,7 @@ DEVICON = "https://cdn.jsdelivr.net/gh/devicons/devicon@v{version}/icons/{dir}/{
 SIMPLE = "https://cdn.jsdelivr.net/npm/simple-icons@16.34.0/icons/{name}.svg"
 SS = 8  # samples a dot, each way
 WEDGE = 0.7  # a wedge must miss less than this share of what the best octant misses
+LIT = 0.4  # the share of a dot the logo must cover to light it: under a half, so strokes a dot thin hold together
 CONTRAST = 0.3  # parts further apart than this in lightness (0 to 1) don't share a cell
 WHITE = 0xF0  # a colour lighter than this in every channel is a hole in one ink
 
@@ -340,7 +343,7 @@ def cells(lab: np.ndarray, cols: int, rows: int, octs: list[str], wed: list) -> 
     on = cell >= 0
     # The best octant: each dot lit where most of its samples are.
     dots = on.reshape(rows, cols, 4, SS, 2, SS).sum((3, 5))  # rows, cols, 4, 2
-    lit = dots * 2 > SS * SS
+    lit = dots > LIT * SS * SS
     mask = (lit.reshape(rows, cols, 8).astype(np.int32) << np.arange(8)).sum(-1)
     miss = np.where(lit, SS * SS - dots, dots).sum((2, 3))
     shapes = np.array([g for _, g in wed]).reshape(len(wed), h, w)
@@ -361,11 +364,60 @@ def cells(lab: np.ndarray, cols: int, rows: int, octs: list[str], wed: list) -> 
                 inkline += " "
             else:
                 counts = np.bincount(cell[y, x][on[y, x]])
-                inkline += "0123456789abcdefghijklmnopqrstuvwxyz"[int(counts.argmax())]
+                inkline += DIGITS[int(counts.argmax())]
             line += glyph
         art.append(line.rstrip())
         ink.append(inkline.rstrip())
     return art, ink
+
+
+DIGITS = "0123456789abcdefghijklmnopqrstuvwxyz"
+
+
+def two_colours(lab: np.ndarray, colours: list, cols: int, rows: int, octs: list[str], wed: list, art: list[str], ink: list[str]) -> tuple[list[str], list[str], list[str]]:
+    """Where the logo covers a cell and two colours meet in it, the cell is
+    redrawn as the lesser colour's octant or wedge over the greater as its back
+    colour (a third colour joins whichever of the two it is nearer), so a part a
+    dot thin keeps its colour and a boundary between colours its slant. Returns
+    the art, the ink and the back colour of each cell (space for none)."""
+    h, w = 4 * SS, 2 * SS
+    cell = lab.reshape(rows, h, cols, w).transpose(0, 2, 1, 3)
+    shapes = np.array([g for _, g in wed]).reshape(len(wed), h, w)
+    near = lambda a, b: sum((p - q) ** 2 for p, q in zip(colours[a], colours[b]))  # noqa: E731
+    art = [list(line.ljust(cols)) for line in art]
+    ink = [list(line.ljust(cols)) for line in ink]
+    back = [[" "] * cols for _ in range(rows)]
+    for y in range(rows):
+        for x in range(cols):
+            c = cell[y, x]
+            on = c >= 0
+            if on.mean() <= 0.9:
+                continue
+            counts = np.bincount(c[on], minlength=len(colours))
+            order = [int(k) for k in np.argsort(-counts, kind="stable") if counts[k] > 0]
+            if len(order) < 2:
+                continue
+            under, over = order[0], order[1]
+            fg = np.zeros((h, w), bool)
+            for k in order[1:]:
+                if k == over or near(k, over) < near(k, under):
+                    fg |= c == k
+            dots = fg.reshape(4, SS, 2, SS).sum((1, 3))
+            lit = dots > LIT * SS * SS
+            m = int((lit.reshape(8).astype(np.int32) << np.arange(8)).sum())
+            if m == 0:
+                art[y][x], ink[y][x] = "█", DIGITS[under]
+                continue
+            if m == 255:
+                art[y][x], ink[y][x] = "█", DIGITS[over]
+                continue
+            glyph = octs[m]
+            miss = np.where(lit, SS * SS - dots, dots).sum()
+            wmiss = (fg[None] != shapes).sum((1, 2))
+            if wmiss.min() < WEDGE * miss:
+                glyph = wed[int(wmiss.argmin())][0]
+            art[y][x], ink[y][x], back[y][x] = glyph, DIGITS[over], DIGITS[under]
+    return ["".join(line).rstrip() for line in art], ["".join(line).rstrip() for line in ink], ["".join(line).rstrip() for line in back]
 
 
 def main() -> None:
@@ -386,6 +438,7 @@ def main() -> None:
         if slug in GAPS:
             lab = gaps(lab)
         art, ink = cells(bare_contrast(lab, colours, cols, rows), cols, rows, octs, wed)
+        art, ink, back = two_colours(lab, colours, cols, rows, octs, wed, art, ink)
         if mono_src:
             msvg = fetch(mono_src, pin)
             digests[mono_src] = hashlib.sha256(msvg).hexdigest()
@@ -398,7 +451,7 @@ def main() -> None:
         out = PIECES / category / "art" / f"{slug}.txt"
         out.parent.mkdir(exist_ok=True)
         head = f"# {slug}: {colour_src}" + (f", {mono_src} in one ink" if mono_src else "") + ". Made by scripts/logo.py: don't edit.\n"
-        out.write_text(head + "# colour\n" + "\n".join(art) + "\n# ink\n" + "\n".join(ink) + "\n# one ink\n" + "\n".join(mono) + "\n")
+        out.write_text(head + "# colour\n" + "\n".join(art) + "\n# ink\n" + "\n".join(ink) + "\n# back\n" + "\n".join(back) + "\n# one ink\n" + "\n".join(mono) + "\n")
         print(f"{slug}: {sum(c != ' ' for line in art for c in line)} cells", file=sys.stderr)
     if pin:
         print("SHA256 = {")

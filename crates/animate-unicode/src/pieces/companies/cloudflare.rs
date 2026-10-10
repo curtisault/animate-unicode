@@ -1,4 +1,4 @@
-//! cloudflare: the Cloudflare logo, an orange cloud, with a glint crossing it
+//! cloudflare: the Cloudflare logo, an orange cloud, with a sheen crossing it
 //! every few seconds. After ascii.rest's cloudflare.ts (MIT, @bas3line).
 //!
 //! Drawn from Simple Icons' cloudflare.svg (CC0) by scripts/logo.py, into
@@ -8,7 +8,7 @@
 //! in a `<pre>` it is one ink, from the same drawing with its white left bare.
 //! The logo is a trademark of its owner, shown here to name the company.
 
-use crate::logo::{self, Loop};
+use crate::logo;
 use crate::{Category, Charset, Meta, Options, Piece};
 
 /// The cloudflare logo's meta.
@@ -22,12 +22,12 @@ pub static META: Meta = Meta {
     fps: 30,
     charset: Charset::Extended,
     options: Some(r#"{"shine": 5}"#),
-    // The logo's colour for a light page, then for a dark one; each as drawn, then twice lighter for the glint.
+    // The logo's colour for a light page, then for a dark one; each as drawn, then twice lighter for the sheen.
     palette: Some(&["#f38020", "#f7ac6e", "#fbd9bc", "#f38020", "#f7ac6e", "#fbd9bc"]),
     ..Meta::DEFAULT
 };
 
-/// The cloudflare logo; `shine` is the seconds between glints, 0 to keep it still.
+/// The cloudflare logo; `shine` is the seconds between sheens, 0 to keep it still.
 pub fn make(options: &Options) -> Box<dyn Piece> {
-    logo::make(&META, include_str!("art/cloudflare.txt"), Loop::Glint, options)
+    logo::make(&META, include_str!("art/cloudflare.txt"), options)
 }

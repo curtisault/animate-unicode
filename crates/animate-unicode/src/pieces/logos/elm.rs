@@ -1,4 +1,4 @@
-//! elm: the Elm logo, a tangram of seven pieces, with a glint crossing it every
+//! elm: the Elm logo, a tangram of seven pieces, with a sheen crossing it every
 //! few seconds. After ascii.rest's elm.ts (MIT, @bas3line).
 //!
 //! Drawn from devicon's elm-original.svg (MIT) by scripts/logo.py, into
@@ -9,7 +9,7 @@
 //! it is one ink, from the same drawing with its white left bare. The logo is a
 //! trademark of its owner, shown here to name the language.
 
-use crate::logo::{self, Loop};
+use crate::logo;
 use crate::{Category, Charset, Meta, Options, Piece};
 
 /// The elm logo's meta.
@@ -23,7 +23,7 @@ pub static META: Meta = Meta {
     fps: 30,
     charset: Charset::Extended,
     options: Some(r#"{"shine": 5}"#),
-    // The logo's 4 colours for a light page, then for a dark one; each as drawn, then twice lighter for the glint.
+    // The logo's 4 colours for a light page, then for a dark one; each as drawn, then twice lighter for the sheen.
     palette: Some(&[
         "#efa500", "#8dd737", "#60b5cc", "#34495e", "#f5c559", "#b5e57d", "#98cfde", "#7b8996", "#fae4b3", "#ddf3c3", "#cfe9f0", "#c2c8cf", "#efa500",
         "#8dd737", "#60b5cc", "#45617d", "#f5c559", "#b5e57d", "#98cfde", "#8698ab", "#fae4b3", "#ddf3c3", "#cfe9f0", "#c7d0d8",
@@ -31,7 +31,7 @@ pub static META: Meta = Meta {
     ..Meta::DEFAULT
 };
 
-/// The elm logo; `shine` is the seconds between glints, 0 to keep it still.
+/// The elm logo; `shine` is the seconds between sheens, 0 to keep it still.
 pub fn make(options: &Options) -> Box<dyn Piece> {
-    logo::make(&META, include_str!("art/elm.txt"), Loop::Glint, options)
+    logo::make(&META, include_str!("art/elm.txt"), options)
 }

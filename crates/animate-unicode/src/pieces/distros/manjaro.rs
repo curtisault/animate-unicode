@@ -1,6 +1,5 @@
-//! manjaro: the Manjaro logo, three green blocks, with a scan line running down
-//! it every few seconds that scrambles what it passes. After ascii.rest's
-//! manjaro.ts (MIT, @bas3line).
+//! manjaro: the Manjaro logo, three green blocks, with a sheen crossing it
+//! every few seconds. After ascii.rest's manjaro.ts (MIT, @bas3line).
 //!
 //! Drawn from Simple Icons' manjaro.svg (CC0) by scripts/logo.py, into
 //! art/manjaro.txt: each cell holds the octant, or the wedge where an edge cuts
@@ -9,7 +8,7 @@
 //! a `<pre>` it is one ink, from the same drawing with its white left bare. The
 //! logo is a trademark of its owner, shown here to name the distribution.
 
-use crate::logo::{self, Loop};
+use crate::logo;
 use crate::{Category, Charset, Meta, Options, Piece};
 
 /// The manjaro logo's meta.
@@ -17,18 +16,18 @@ pub static META: Meta = Meta {
     name: "manjaro",
     slug: "manjaro",
     category: Category::Distros,
-    note: "three green blocks, scanned now and then",
+    note: "three green blocks, glinting now and then",
     cols: 56,
     rows: 28,
     fps: 30,
     charset: Charset::Extended,
-    options: Some(r#"{"scan": 5}"#),
-    // The logo's colour for a light page, then for a dark one; each as drawn, then twice lighter for the scan.
+    options: Some(r#"{"shine": 5}"#),
+    // The logo's colour for a light page, then for a dark one; each as drawn, then twice lighter for the sheen.
     palette: Some(&["#35bfa4", "#7cd5c4", "#c2ece4", "#35bfa4", "#7cd5c4", "#c2ece4"]),
     ..Meta::DEFAULT
 };
 
-/// The manjaro logo; `scan` is the seconds between scans, 0 to keep it still.
+/// The manjaro logo; `shine` is the seconds between sheens, 0 to keep it still.
 pub fn make(options: &Options) -> Box<dyn Piece> {
-    logo::make(&META, include_str!("art/manjaro.txt"), Loop::Scan, options)
+    logo::make(&META, include_str!("art/manjaro.txt"), options)
 }
