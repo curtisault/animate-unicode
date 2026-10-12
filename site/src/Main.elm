@@ -65,6 +65,9 @@ type alias Model =
     -- A download being made: its kind, and how far along it is (0 to 1).
     , making : Maybe ( String, Float )
     , failed : Maybe String
+
+    -- The way to use it shown under "use it": html, react, astro, typescript or terminal.
+    , tab : String
     }
 
 
@@ -80,6 +83,7 @@ init flags url key =
       , held = Nothing
       , making = Nothing
       , failed = Nothing
+      , tab = "html"
       }
     , tidy key url
     )
@@ -142,6 +146,7 @@ type Msg
     | Play
     | Scrub String
     | Download String
+    | SetTab String
     | Answer D.Value
     | NoOp
 
@@ -224,6 +229,9 @@ update msg model =
 
                 _ ->
                     ( model, Cmd.none )
+
+        SetTab name ->
+            ( { model | tab = name }, Cmd.none )
 
         Answer value ->
             let
@@ -751,16 +759,16 @@ optionField edits ( name, default ) =
 usage : Model -> Meta -> Maybe String -> Html Msg
 usage model m overrides =
     let
-        tag =
-            "<unicel-art piece=\""
-                ++ m.slug
-                ++ "\""
-                ++ (if model.mono then
-                        " mono"
+        mono =
+            model.mono
 
-                    else
-                        ""
-                   )
+        attrs =
+            (if mono then
+                " mono"
+
+             else
+                ""
+            )
                 ++ (case overrides of
                         Just json ->
                             " options='" ++ String.replace "'" "&#39;" json ++ "'"
@@ -768,7 +776,46 @@ usage model m overrides =
                         Nothing ->
                             ""
                    )
-                ++ "></unicel-art>"
+
+        tag =
+            "<unicel-art piece=\"" ++ m.slug ++ "\"" ++ attrs ++ "></unicel-art>"
+
+        jsx =
+            "<unicel-art piece=\""
+                ++ m.slug
+                ++ "\""
+                ++ (if mono then
+                        " mono=\"\""
+
+                    else
+                        ""
+                   )
+                ++ (case overrides of
+                        Just json ->
+                            " options={" ++ quoted json ++ "}"
+
+                        Nothing ->
+                            ""
+                   )
+                ++ " />"
+
+        canvas =
+            m.palette /= Nothing && not mono
+
+        flags =
+            (if mono && m.palette /= Nothing then
+                " --mono"
+
+             else
+                ""
+            )
+                ++ (case overrides of
+                        Just json ->
+                            " --options '" ++ json ++ "'"
+
+                        Nothing ->
+                            ""
+                   )
 
         snippet id caption content =
             div [ class "snippet" ]
@@ -786,13 +833,95 @@ usage model m overrides =
                     ]
                 , pre [] [ text content ]
                 ]
+
+        panel =
+            case model.tab of
+                "react" ->
+                    [ snippet "install" "install" "npm install unicel"
+                    , snippet "react" "a component (React 19 passes attributes to custom elements as they are)" ("import \"unicel/element\";\n\nexport function Art() {\n  return " ++ jsx ++ ";\n}")
+                    ]
+
+                "astro" ->
+                    [ snippet "install" "install" "npm install unicel"
+                    , snippet "astro" "in a page or component" (tag ++ "\n\n<script>\n  import \"unicel/element\";\n</script>")
+                    ]
+
+                "typescript" ->
+                    [ snippet "install" "install" "npm install unicel"
+                    , snippet "typescript"
+                        "without the tag: play it in an element of your own"
+                        ("import { mount, player } from \"unicel\";\n\n"
+                            ++ "const { player: piece, exports } = await player(\""
+                            ++ m.slug
+                            ++ "\""
+                            ++ (case overrides of
+                                    Just json ->
+                                        ", " ++ quoted json
+
+                                    Nothing ->
+                                        ""
+                               )
+                            ++ ");\n"
+                            ++ (if canvas then
+                                    "const el = document.createElement(\"canvas\"); // in its colours\n"
+
+                                else
+                                    "const el = document.createElement(\"pre\"); // as text, in the page's ink\n"
+                               )
+                            ++ "document.body.append(el);\n"
+                            ++ "const playback = mount(el, exports, piece);\n"
+                            ++ "// playback.hold(2.5) shows the frame at 2.5 s, hold(null) plays on;\n"
+                            ++ "// playback.stop() and piece.free() when you are done with it."
+                        )
+                    ]
+
+                "terminal" ->
+                    [ snippet "cargo" "install the player" "cargo install unicel-cli"
+                    , snippet "terminal" "play it until you press a key (--seconds 5 stops on its own; unicel list names every piece)" ("unicel " ++ m.slug ++ flags)
+                    ]
+
+                _ ->
+                    [ snippet "install" "install" "npm install unicel"
+                    , snippet "import" "once, in your page's script" "import \"unicel/element\";"
+                    , snippet "tag" "where it goes" tag
+                    ]
+
+        tabButton name =
+            button
+                [ class "button"
+                , classList [ ( "current", model.tab == name ) ]
+                , A.type_ "button"
+                , attribute "role" "tab"
+                , attribute "aria-selected"
+                    (if model.tab == name then
+                        "true"
+
+                     else
+                        "false"
+                    )
+                , onClick (SetTab name)
+                ]
+                [ text
+                    (if model.tab == name then
+                        "[" ++ name ++ "]"
+
+                     else
+                        name
+                    )
+                ]
     in
     section [ class "block" ]
         [ div [ class "head" ] [ h2 [] [ text "use it" ] ]
-        , snippet "install" "install" "npm install unicel"
-        , snippet "import" "once, in your page's script" "import \"unicel/element\";"
-        , snippet "tag" "where it goes" tag
+        , div [ class "tabs", attribute "role" "tablist", attribute "aria-label" "Ways to use it" ] (List.map tabButton [ "html", "react", "astro", "typescript", "terminal" ])
+        , div [ attribute "role" "tabpanel" ] panel
         ]
+
+
+{-| A string as a JavaScript string literal.
+-}
+quoted : String -> String
+quoted s =
+    E.encode 0 (E.string s)
 
 
 pager : List Meta -> Meta -> Html Msg
