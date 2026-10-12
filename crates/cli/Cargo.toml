@@ -1,5 +1,5 @@
 [package]
-name = "animate-unicode-cli"
+name = "unicel-cli"
 description = "Plays a piece in the terminal"
 version.workspace = true
 edition.workspace = true
@@ -8,11 +8,11 @@ repository.workspace = true
 publish = false
 
 [[bin]]
-name = "animate-unicode"
+name = "unicel"
 path = "src/main.rs"
 
 [dependencies]
-animate-unicode = { path = "../animate-unicode" }
+unicel = { path = "../unicel" }
 crossterm = "0.29"
 # The local zone's offset from UTC, for pieces that show the time.
 chrono = { version = "0.4", default-features = false, features = ["clock"] }

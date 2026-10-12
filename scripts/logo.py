@@ -15,7 +15,7 @@ colour's octant or wedge over the greater as its back colour. In one ink
 white parts are holes, and a logo with a plain variant (c-plain.svg) is drawn
 from that instead, as in ascii.rest.
 
-The output, crates/animate-unicode/src/pieces/<category>/art/<slug>.txt, is
+The output, crates/unicel/src/pieces/<category>/art/<slug>.txt, is
 checked in: the colour drawing, the colour of each cell and the colour behind
 it (base 36, a space for none), and the one-ink drawing, `rows` lines each. src/logo.rs reads it. The SVGs are
 downloaded once into target/logos/.
@@ -35,7 +35,7 @@ import resvg_py
 from PIL import Image, ImageFilter
 
 ROOT = Path(__file__).resolve().parent.parent
-PIECES = ROOT / "crates/animate-unicode/src/pieces"
+PIECES = ROOT / "crates/unicel/src/pieces"
 CACHE = ROOT / "target/logos"
 DEVICON = "https://cdn.jsdelivr.net/gh/devicons/devicon@v{version}/icons/{dir}/{name}.svg"
 SIMPLE = "https://cdn.jsdelivr.net/npm/simple-icons@16.34.0/icons/{name}.svg"

@@ -15,13 +15,13 @@ Instructions for coding agents working in this repository.
 ## The project
 
 Animated Unicode art: pieces written in Rust, compiled to WebAssembly, played
-in the browser by a `<unicode-art>` custom element and in the terminal by a
+in the browser by a `<unicel-art>` custom element and in the terminal by a
 CLI. It follows [ascii.rest](https://ascii.rest) (`../ascii`, MIT, @bas3line),
 with Unicode where ascii.rest uses ASCII.
 
 | Path | What |
 |---|---|
-| `crates/animate-unicode` | The core: `Grid`, sub-cell canvases (braille, sextants, quadrants, octants), palettes, the piece registry, the contract test |
+| `crates/unicel` | The core: `Grid`, sub-cell canvases (braille, sextants, quadrants, octants), palettes, the piece registry, the contract test |
 | `crates/wasm` | The wasm-bindgen `Player` |
 | `crates/cli` | The terminal player |
 | `web/` | The TypeScript shell: the custom element and the canvas renderer; the npm package |
@@ -49,7 +49,7 @@ mise is the only entry point (`mise tasks` lists them all):
 ## Conventions
 
 - **A new piece:** one file in its category's folder,
-  `crates/animate-unicode/src/pieces/<category>/`, one registry line in that
+  `crates/unicel/src/pieces/<category>/`, one registry line in that
   folder's `mod.rs`, then `mise run test`. It must be deterministic in `t`
   (seeded PRNG, no clock unless `meta.clock`), and it must keep within the
   contract's size and time budgets. Each category is its own wasm module, so

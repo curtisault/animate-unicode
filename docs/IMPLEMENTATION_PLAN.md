@@ -1,4 +1,4 @@
-# animate-unicode: implementation plan
+# unicel: implementation plan
 
 For the session that builds this out. Read it top to bottom once; then work
 phase by phase. Every phase ends with acceptance criteria that `mise run check`
@@ -44,7 +44,7 @@ and Astro wrappers, CLI), but:
    geometric shapes, arrows, box drawing and blocks, and, as a later tier,
    double-width CJK and emoji.
 3. **An Elm site** to show every piece, with one page per piece.
-4. One HTML tag, `<unicode-art piece="…">`, that works with no build step.
+4. One HTML tag, `<unicel-art piece="…">`, that works with no build step.
 
 Non-goals for now: React/Astro wrappers (add after the tag is solid), third
 party pieces loaded by URL (`src=` in ascii.rest), per-piece lazy loading.
@@ -60,7 +60,7 @@ Do not relitigate these; the owner chose them with the trade-offs in view.
 | Frame buffer | `u32` code point + `u8` colour per cell, read by JS as typed-array views over wasm memory | No string building or decoding per frame; astral glyphs are one cell. |
 | Wide glyphs | A `WIDE_TAIL` (0) sentinel in the cell after a double-width glyph | Keeps "every frame is `cols × rows` cells" true; renderers skip tails. |
 | Browser renderer | TypeScript shell (`web/`) porting ascii.rest's atlas renderer, not `web-sys` canvas calls from Rust | Each `drawImage` from Rust would cross the JS boundary anyway; the TS is 200 lines and already proven. |
-| Site | Elm 0.19.1, Vite + `vite-plugin-elm` | Owner's choice. Elm renders `<unicode-art>` as an ordinary tag; it never touches wasm memory. |
+| Site | Elm 0.19.1, Vite + `vite-plugin-elm` | Owner's choice. Elm renders `<unicel-art>` as an ordinary tag; it never touches wasm memory. |
 | Tooling | `mise.toml` with `[tasks]` as the single entry point | `mise run check` is what CI runs. |
 | One wasm module per category | Yes, since 2026-10-09 (it was one module for all pieces) | One module reached 249 KB gz with 79 pieces, on course for some 720 KB. Each category is a Cargo feature, and `build:wasm` builds a module for each into `web/pkg/<category>`, with `web/pkg/modules.js` listing every piece and importing each module on first use. A page loads only the categories it shows, and a tag loads nothing until it comes near the screen. Each module is 41–91 KB gz, gated at 150 KB. The cost: every module repeats the ~33 KB base, so a page showing every category loads 539 KB in all, not 249. A piece may use only its own category's code. The dev build stays one module, `all`. |
 | Scenes in three categories, gated higher | Yes, since 2026-10-09 | The 15 scenes made one 202 KB gz module (tokyo-rain alone is 51 KB of code). Scenes are now three categories, cities, nights and wilds, five scenes each, so three modules of 84–120 KB gz; the site groups them as art. `Category::scene()` is true for the three, which the contract holds to a scene's sizes and budgets. A scenes category is gated at 225 KB gz, the rest at 150. |
@@ -76,7 +76,7 @@ mise.toml                     tools + tasks (build:wasm, build:site, dev, test, 
 rust-toolchain.toml           1.97, wasm32 target, rustfmt, clippy
 Cargo.toml                    workspace; release profile opt-level=s, lto, panic=abort, strip
 package.json                  npm workspaces: web, site
-crates/animate-unicode/       the core crate                                  ✅ cargo test --release: 12 pass
+crates/unicel/       the core crate                                  ✅ cargo test --release: 12 pass
   src/grid.rs                 Grid, BLANK, NO_BACK, WIDE_TAIL, text()
   src/pixels.rs               Pixels: square pixels two a cell, as ▀ over a back colour
   src/noise.rs                ascii.rest's scene hash, noise and fbm
@@ -94,11 +94,11 @@ crates/wasm/                  Player (new/frame/cells_ptr/colors_ptr/text/meta_j
                                                                               ✅ wasm-pack build ok; Node smoke test: views == text()
 crates/cli/src/main.rs        stub: ANSI loop, `list`, --seconds/--paper/--options    ⚠️ untested
 web/src/mount.ts              atlas renderer reading Uint32Array/Uint8Array views; wide cells; rAF/IO/visibility/reduced-motion
-web/src/element.ts            <unicode-art> custom element                     ⚠️ tsc passes; NOT yet run in a browser
+web/src/element.ts            <unicel-art> custom element                     ⚠️ tsc passes; NOT yet run in a browser
 web/src/wasm.ts               shared init()                                    
 web/src/index.ts              exports
 site/                         Vite + vite-plugin-elm + Browser.application     ✅ elm make ok; vite build ok (dist/ 36 KB wasm + 16 KB js gz)
-site/src/Main.elm             sidebar by category, / and /:slug routes, renders <unicode-art>
+site/src/Main.elm             sidebar by category, / and /:slug routes, renders <unicel-art>
 site/src/main.ts              awaits wasm(), reads metas_json(), starts Elm with flags
 .github/workflows/ci.yml      jdx/mise-action → npm ci → mise run lint/test/build/size
 README.md
@@ -106,7 +106,7 @@ README.md
 
 Known loose ends, in order of urgency (they are Phase 0's task list):
 
-1. `site` `tsc -p tsconfig.json` reports two errors: `Cannot find module 'animate-unicode'`
+1. `site` `tsc -p tsconfig.json` reports two errors: `Cannot find module 'unicel'`
    in `src/main.ts` (the Vite alias resolves it at build time but tsc does not
    know the alias; add `paths` to `site/tsconfig.json` or point at
    `../web/src/*`) and `Cannot find module 'node:url'` in `vite.config.ts`
@@ -123,7 +123,7 @@ Known loose ends, in order of urgency (they are Phase 0's task list):
 
 ```
                          ┌──────────────────────────────────────────────┐
-                         │ crates/animate-unicode  (pure Rust, no DOM)  │
+                         │ crates/unicel  (pure Rust, no DOM)  │
                          │  Piece::frame(t, &Env, &mut Grid)            │
                          │  Grid: Vec<u32> cells, Vec<u8> colors        │
                          │  registry: slug → (&Meta, make)              │
@@ -142,13 +142,13 @@ Known loose ends, in order of urgency (they are Phase 0's task list):
                   │ web/src  (TypeScript shell, the npm package)      │
                   │  wasm.ts     a module per category, on first use  │
                   │  mount.ts    <pre> text, or <canvas> glyph atlas  │
-                  │  element.ts  <unicode-art piece options fps mono> │
+                  │  element.ts  <unicel-art piece options fps mono> │
                   └──────────────┬────────────────────────────────────┘
                                  │ Vite alias → ../web/src (no web build needed in dev)
                   ┌──────────────▼────────────────────────────────────┐
                   │ site/  (Elm)                                      │
                   │  main.ts: flags = pieces, from pkg/modules.js     │
-                  │  Main.elm: routes, sidebar, node "unicode-art"    │
+                  │  Main.elm: routes, sidebar, node "unicel-art"    │
                   └───────────────────────────────────────────────────┘
 ```
 
@@ -166,11 +166,11 @@ For a `<pre>`: `player.text()` → `el.textContent`. One string allocation per f
 
 - A `Player` is a Rust struct owned by JS via wasm-bindgen; **`player.free()` must be called** when the element disconnects or the piece changes (element.ts does this in `#teardown`). Leaking Players leaks their grids and z-buffers.
 - One wasm instance per page (`wasm.ts` memoises `init()`), shared by every tag.
-- `WIDE_TAIL` is exported from both Rust (`animate_unicode::WIDE_TAIL`) and TS (`mount.ts`); they must stay equal (0). Consider reading `wide_tail()` from wasm once at init instead of duplicating (minor).
+- `WIDE_TAIL` is exported from both Rust (`unicel::WIDE_TAIL`) and TS (`mount.ts`); they must stay equal (0). Consider reading `wide_tail()` from wasm once at init instead of duplicating (minor).
 
 ## The piece contract
 
-A piece is a module in `crates/animate-unicode/src/pieces/` exporting:
+A piece is a module in `crates/unicel/src/pieces/` exporting:
 
 ```rust
 pub static META: Meta = Meta { name, slug, category, note, cols, rows, fps, charset, options, clock, palette, ground, cell, ..Meta::DEFAULT };
@@ -352,7 +352,7 @@ Safari and on Android is the owner's (record it with the page's copy button).
   `--no-pack` and delete it; `web/test/package.test.mjs` dry-runs `npm pack`
   and checks every export and the wasm are in the tarball. `prepublishOnly`
   runs `mise run build:web`. The name is still the placeholder: on 2026-10-08
-  `animate-unicode`, `unicode-art` and `unicode-art-element` were all free on npm.
+  `unicel`, `unicel-art` and `unicel-art-element` were all free on npm.
 - Checked headless (Lightpanda): every case mounts the right element, swaps
   and re-adds restart cleanly, memory stays flat, the console is clean apart
   from the expected bad-slug warning. Pixels, DPR seams and fonts need the
@@ -366,9 +366,9 @@ Tasks:
 3. **`mono` attribute** on a coloured piece: `<pre>` path, text in one ink.
 4. **Attribute changes**: change `piece` at runtime (the Elm site does this when navigating); ensure the old player is freed (`#teardown`), no leaked rAF (`stop` called), no stale IntersectionObserver.
 5. **Reduced motion**: with `prefers-reduced-motion: reduce`, first frame only unless `motion` is set. Expose `motion` as an attribute (`element.ts` currently only passes `fps`; add `motion`).
-6. **Font loading**: `STYLE` in element.ts declares `@font-face "animate-unicode mono"` at `/fonts/animate-unicode-mono.woff2`, which does not exist yet (Phase 5). Until then the browser silently falls back; fine.
-7. **First-frame flash**: a `<unicode-art>` with server-rendered children keeps them until the player is ready (`replaceChildren` happens after `await wasm()`). Verify; this is what the site's stills rely on (Phase 4 #5).
-8. **npm package**: `web/package.json` exports `.`, `./element`, `./wasm`. `files` includes `pkg`, so `mise run build:wasm` must run before `npm publish`. Add a `prepublishOnly` that runs both. Decide the public name (`animate-unicode` is the placeholder; check npm availability).
+6. **Font loading**: `STYLE` in element.ts declares `@font-face "unicel mono"` at `/fonts/unicel-mono.woff2`, which does not exist yet (Phase 5). Until then the browser silently falls back; fine.
+7. **First-frame flash**: a `<unicel-art>` with server-rendered children keeps them until the player is ready (`replaceChildren` happens after `await wasm()`). Verify; this is what the site's stills rely on (Phase 4 #5).
+8. **npm package**: `web/package.json` exports `.`, `./element`, `./wasm`. `files` includes `pkg`, so `mise run build:wasm` must run before `npm publish`. Add a `prepublishOnly` that runs both. Decide the public name (`unicel` is the placeholder; check npm availability).
 9. **Keep `mount.ts` and `../ascii/src/mount.ts` diffable**: same structure, same names, so fixes upstream can be carried over. The attribution comment stays.
 
 Acceptance: a checklist page `site/public/test.html` (plain HTML, no Elm) with one tag per case above, and a manual pass recorded in the PR; no console warnings; Chrome and Safari; one Android device or emulator for the font fallback.
@@ -412,10 +412,10 @@ Acceptance: a checklist page `site/public/test.html` (plain HTML, no Elm) with o
 
 Tasks:
 1. **Layout** after ascii.rest: sidebar grouped (`art` = the scenes: cities, nights, wilds; `components` = ui, data, type, logos, companies, distros; `more` = the rest), piece page with name, note, size, fps, charset, the live piece, and copy-able snippets (HTML tag; later React/Astro). Keep one monospace face and `prefers-color-scheme`. `site/src/site.css` has the tokens.
-2. **Options UI**: for a piece with `Meta.options`, render inputs from the JSON defaults (number → range or number input, bool → checkbox, string → text) and pass the merged JSON as the `options` attribute. Elm owns the state; the element restarts the piece on attribute change. Use `Html.Keyed` around `<unicode-art>` keyed by slug so navigating between pieces replaces the node rather than mutating it (either works; keyed is cleaner for freeing).
+2. **Options UI**: for a piece with `Meta.options`, render inputs from the JSON defaults (number → range or number input, bool → checkbox, string → text) and pass the merged JSON as the `options` attribute. Elm owns the state; the element restarts the piece on attribute change. Use `Html.Keyed` around `<unicel-art>` keyed by slug so navigating between pieces replaces the node rather than mutating it (either works; keyed is cleaner for freeing).
 3. **Flags**: `main.ts` passes every `Meta` as JSON. Elm's decoder (`metaDecoder`) currently reads 9 fields; add `options`, `ground`, `cell`, `clock` as they become needed. Decoder failures currently fall back to an empty list silently: surface them (show the error) during development.
 4. **mono / paper toggles** on the piece page, like ascii.rest's "one ink" switch.
-5. **Stills without script**: Elm's `Browser.application` takes over `<body>`, so server-rendered content is replaced on init. Options: (a) accept a client-only site (simplest; the wasm is 36 KB gz and loads fast); (b) a prerender script in Node that runs the wasm, writes `site/public/still/<slug>.txt`, and a static `index.html` per slug containing the still inside `<unicode-art>` with Elm initialising on a child node rather than `<body>` (`Browser.element` on `#app` with the sidebar outside Elm). Recommend (a) for now; note (b) in the backlog. For OG images (ascii.rest renders PNGs with `sharp`): later.
+5. **Stills without script**: Elm's `Browser.application` takes over `<body>`, so server-rendered content is replaced on init. Options: (a) accept a client-only site (simplest; the wasm is 36 KB gz and loads fast); (b) a prerender script in Node that runs the wasm, writes `site/public/still/<slug>.txt`, and a static `index.html` per slug containing the still inside `<unicel-art>` with Elm initialising on a child node rather than `<body>` (`Browser.element` on `#app` with the sidebar outside Elm). Recommend (a) for now; note (b) in the backlog. For OG images (ascii.rest renders PNGs with `sharp`): later.
 6. **Routing details**: trailing slash tolerance, 404 page, `<title>` per piece (done), `_redirects` for SPA fallback on the host.
 7. **elm-test**: at least `route` and `metaDecoder` tests in `site/tests/`. `mise run test` should include `elm-test` (add to the task).
 8. **elm-review** (optional): add `npm:elm-review` to mise and a default config.
@@ -443,9 +443,9 @@ Windows, Android) is the owner's, on test.html's new "every range" section.
   rebuilds its glyph atlas when fonts finish loading.
 - **Build:** `scripts/font.py`, run by `mise run build:font` through `uvx` with
   fonttools 4.60.1 pinned (uv is in mise): downloads the unhinted release once
-  into target/font, checks its SHA-256, subsets, renames to "animate-unicode
+  into target/font, checks its SHA-256, subsets, renames to "unicel
   mono", checks widths, coverage and that element.ts declares the same
-  unicode-range. Output checked in: `web/fonts/animate-unicode-mono.woff2`,
+  unicode-range. Output checked in: `web/fonts/unicel-mono.woff2`,
   17.9 KB (target was < 20 KB), with `web/fonts/OFL.txt`.
 - **Location:** next to the shell, found with
   `new URL("../fonts/…", import.meta.url)`, so it ships in the npm package
@@ -459,7 +459,7 @@ Windows, Android) is the owner's, on test.html's new "every range" section.
 
 Tasks:
 1. Pick an OFL monospace with the `Extended` ranges. Candidates **(coverage unverified, check with `pyftsubset --unicodes=… --verbose` or `fc-query`)**: Cascadia Mono (added Symbols for Legacy Computing in the 2404 release), Iosevka (has U+1FB00 block), JetBrains Mono (braille yes, legacy computing no), GNU Unifont (everything, bitmap look). Recommend Cascadia Mono or Iosevka Fixed.
-2. Subset with fonttools: `pyftsubset Font.ttf --unicodes="U+00B0,U+00B7,U+2022,U+2190-21FF,U+2500-25FF,U+2800-28FF,U+1FB00-1FBFF" --flavor=woff2 --output-file=site/public/fonts/animate-unicode-mono.woff2`. Target < 20 KB. Add `python` + `pip:fonttools[woff]` to mise if the subsetting is to be reproducible (or vendor the output and a script).
+2. Subset with fonttools: `pyftsubset Font.ttf --unicodes="U+00B0,U+00B7,U+2022,U+2190-21FF,U+2500-25FF,U+2800-28FF,U+1FB00-1FBFF" --flavor=woff2 --output-file=site/public/fonts/unicel-mono.woff2`. Target < 20 KB. Add `python` + `pip:fonttools[woff]` to mise if the subsetting is to be reproducible (or vendor the output and a script).
 3. Put the `@font-face` back at the front of `STYLE` in `element.ts`: the rule is in the comment above it (taken out in Phase 3 so the missing file logged nothing). The `unicode-range` must match the subset. On the site, also declare it in `site.css` so `<pre>` stills (if any) use it.
 4. Verify in `<pre>`: a braille piece keeps every row the same pixel width (measure with `getBoundingClientRect` on each row in a test page); same for sextants. Verify the canvas path is unaffected (it clips per cell).
 5. Android: system monospace there has no box drawing at all; this font must carry U+2500–259F too (it does in the ranges above).
@@ -554,7 +554,7 @@ Tasks:
 5. `list` output grouped by category, like ascii.rest's.
 6. Frame pacing: sleep until the next frame boundary rather than a fixed sleep (drift otherwise).
 
-Acceptance: `cargo run -p animate-unicode-cli --release -- donut` plays and exits cleanly on `q`; `--seconds 2` exits on time; terminal is restored after Ctrl-C; `list` prints every piece.
+Acceptance: `cargo run -p unicel-cli --release -- donut` plays and exits cleanly on `q`; `--seconds 2` exits on time; terminal is restored after Ctrl-C; `list` prints every piece.
 
 <a id="phase-8"></a>
 ### Phase 8 · Packaging, deploy, CI (1 day)
@@ -593,7 +593,7 @@ Debug builds skip the timing budgets (`cfg!(debug_assertions)`); always run `mis
 5. **A module per category** (2026-10-09): loading is per category, not per piece as in ascii.rest, and every module repeats the ~33 KB base, so a page showing every category pays about twice what one module would. wasm-bindgen does not split one module, so the split is by Cargo feature, one build per category; CI's wasm step grows with the number of categories. If the repeated base starts to matter, the next step is fewer, larger groups of categories.
 6. **mise `npm:` backend** resolved `elm-test@latest` to 0.19.0 and then refused its `fsevents`. Pinned to `0.19.1-revision17`. Watch for the same with `elm-format` (pinned 0.8.8) and `elm-review`.
 7. **`rust = { version = "1.97", targets = "wasm32-unknown-unknown" }`**: the `targets` option worked on this machine (`cargo check --target wasm32-unknown-unknown` passed) but the target had also been added by hand earlier; confirm on a clean CI runner.
-8. **Name**: `animate-unicode` is a placeholder for the crate, npm package and tag (`<unicode-art>`). Decide before publishing anything.
+8. **Name**: `unicel` is a placeholder for the crate, npm package and tag (`<unicel-art>`). Decide before publishing anything.
 9. **Timing budgets in CI** can flake on slow runners; if so, raise the worst-frame budget in CI via an env var rather than loosening locally. **Settled 2026-10-11:** they failed on GitHub's runners (3–5× slower than the owner's machine), so CI runs locally instead: `mise run signoff` checks each open pull request's head and posts a `signoff` status.
 
 <a id="appendix-a"></a>
@@ -621,7 +621,7 @@ node --input-type=module -e '
 import { writeFileSync } from "node:fs";
 const m = await import("./src/pieces/donut.ts"); const f = m.default();
 const out = [0, 1.3, 7.7].map(t => `t=${t}\n${f(t)}`).join("\n\n");
-writeFileSync("../animate-unicode/crates/animate-unicode/tests/fixtures/donut.txt", out + "\n");'
+writeFileSync("../unicel/crates/unicel/tests/fixtures/donut.txt", out + "\n");'
 ```
 
 For a coloured piece, also capture `env.color` (pass `{ color: new Uint8Array(cols*rows) }` and dump it) and compare `grid.colors()`.
@@ -631,8 +631,8 @@ Node smoke test of the wasm boundary (what was run during scaffolding; put it un
 ```js
 import { readFileSync } from "node:fs";
 const pkg = new URL("../pkg/", import.meta.url);
-const mod = await import(new URL("animate_unicode.js", pkg));
-const wasm = await mod.default({ module_or_path: readFileSync(new URL("animate_unicode_bg.wasm", pkg)) });
+const mod = await import(new URL("unicel.js", pkg));
+const wasm = await mod.default({ module_or_path: readFileSync(new URL("unicel_bg.wasm", pkg)) });
 const p = new mod.Player("donut", "");
 p.frame(1.3, false);
 const n = p.cols() * p.rows();
@@ -660,7 +660,7 @@ Measured 2026-10-08 on this machine. TS minified with esbuild 0.25; Rust 1.97, `
 | Rust donut, `no_std` + libm | 7.3 KB | 3.9 KB |
 | Rust donut, `no_std`, sin/cos from JS | 2.1 KB | 1.5 KB |
 | **This scaffold**: 2 pieces + serde_json + wasm-bindgen, wasm-pack release | **77.6 KB** | **35.8 KB** |
-| Scaffold's wasm-bindgen JS glue (`animate_unicode.js`) | 12.9 KB | — |
+| Scaffold's wasm-bindgen JS glue (`unicel.js`) | 12.9 KB | — |
 | Site bundle (Elm + shell + glue) | 43.8 KB | 16.1 KB |
 | After Phase 3: 3 pieces (quadrant-fire added) | 90.5 KB | 42.3 KB |
 | **After Phase 6: 11 pieces** (2026-10-08) | **139.6 KB** | **64.6 KB** |

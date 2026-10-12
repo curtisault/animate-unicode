@@ -1,5 +1,5 @@
 {
-  "name": "animate-unicode-site",
+  "name": "unicel-site",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,7 +10,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "animate-unicode": "*"
+    "unicel": "*"
   },
   "devDependencies": {
     "@types/node": "^24.19.1",

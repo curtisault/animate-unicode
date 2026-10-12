@@ -22,7 +22,7 @@
 //!
 //! Catching panics per piece would need unwinding, which costs size and is
 //! impossible with `abort`. The guard is the contract test
-//! (crates/animate-unicode/tests/contract.rs), which plays every registered
+//! (crates/unicel/tests/contract.rs), which plays every registered
 //! piece over six seconds, with `paper` on and off, before anything ships.
 //! Pieces draw with the grid's clipping methods and keep raw indexing for
 //! proven hot loops.
@@ -36,7 +36,7 @@
 //! calling it again every frame, and the element frees a stuck player inside a
 //! `try`: freeing it throws too.
 
-use animate_unicode::{registry, Env, Grid, Meta, Piece, Wall};
+use unicel::{registry, Env, Grid, Meta, Piece, Wall};
 use wasm_bindgen::prelude::*;
 
 /// Runs once when the module is instantiated: in a debug build, routes panics
@@ -156,5 +156,5 @@ pub fn metas_json() -> String {
 /// The right half of a double-width glyph in `cells`; the shell skips these cells.
 #[wasm_bindgen]
 pub fn wide_tail() -> u32 {
-    animate_unicode::WIDE_TAIL
+    unicel::WIDE_TAIL
 }

@@ -1,4 +1,4 @@
-# Tooling for animate-unicode. `mise install` puts every tool below on the path;
+# Tooling for unicel. `mise install` puts every tool below on the path;
 # `mise run <task>` is the one entry point for building, checking and serving.
 #
 #   mise install          the toolchain
@@ -38,9 +38,9 @@ wasm-tools = "latest"
 watchexec = "latest"
 
 # The wasm is a module per category, so a page loads only the categories it
-# shows: web/pkg/<category>/animate_unicode{.js,_bg.wasm}, each built with that
+# shows: web/pkg/<category>/unicel{.js,_bg.wasm}, each built with that
 # category's feature alone, and web/pkg/modules.js, which lists every piece and
-# imports each module on first use (crates/animate-unicode/examples/manifest.rs).
+# imports each module on first use (crates/unicel/examples/manifest.rs).
 # The dev build is one module, web/pkg/all, with every piece and the debug ones:
 # one build rather than one per category keeps the edit loop quick.
 #
@@ -57,11 +57,11 @@ description = "Build crates/wasm into web/pkg: a module per category (wasm-bindg
 run = """
 set -e
 rm -rf web/pkg
-for c in $(cargo run -q --release -p animate-unicode --example manifest -- categories); do
-  wasm-pack --quiet build crates/wasm --target web --release --no-pack --out-dir ../../web/pkg/$c --out-name animate_unicode -- --no-default-features --features $c
+for c in $(cargo run -q --release -p unicel --example manifest -- categories); do
+  wasm-pack --quiet build crates/wasm --target web --release --no-pack --out-dir ../../web/pkg/$c --out-name unicel -- --no-default-features --features $c
   rm -f web/pkg/$c/.gitignore
 done
-cargo run -q --release -p animate-unicode --example manifest -- write web/pkg
+cargo run -q --release -p unicel --example manifest -- write web/pkg
 """
 
 # Its own cargo target dir: the feature set differs, and sharing one would make
@@ -73,15 +73,15 @@ env = { CARGO_TARGET_DIR = "{{config_root}}/target/wasm-debug" }
 run = """
 set -e
 rm -rf web/pkg
-wasm-pack build crates/wasm --target web --release --no-pack --out-dir ../../web/pkg/all --out-name animate_unicode -- --features debug
+wasm-pack build crates/wasm --target web --release --no-pack --out-dir ../../web/pkg/all --out-name unicel -- --features debug
 rm -f web/pkg/all/.gitignore
-CARGO_TARGET_DIR={{config_root}}/target cargo run -q --release -p animate-unicode --example manifest -- write web/pkg --one all
+CARGO_TARGET_DIR={{config_root}}/target cargo run -q --release -p unicel --example manifest -- write web/pkg --one all
 """
 
 # The font's output is checked in (web/fonts); run this only to change its ranges
 # or the Iosevka version. Downloads the release once into target/font.
 [tasks."build:font"]
-description = "Subset Iosevka Fixed Extended into web/fonts/animate-unicode-mono.woff2 (scripts/font.py)"
+description = "Subset Iosevka Fixed Extended into web/fonts/unicel-mono.woff2 (scripts/font.py)"
 run = "uvx --from 'fonttools[woff]==4.60.1' python -I scripts/font.py"
 
 # The logos' output is checked in (pieces/<category>/art); run this only to add a
@@ -139,8 +139,8 @@ env = { CARGO_TARGET_DIR = "{{config_root}}/target/wasm-debug" }
 run = [
   "node --test 'web/test/*.test.mjs'",
   "rm -rf target/wasm-debug-pkg",
-  "wasm-pack --quiet build crates/wasm --target web --release --no-pack --out-dir ../../target/wasm-debug-pkg/all --out-name animate_unicode -- --features debug",
-  "CARGO_TARGET_DIR={{config_root}}/target cargo run -q --release -p animate-unicode --example manifest -- write target/wasm-debug-pkg --one all",
+  "wasm-pack --quiet build crates/wasm --target web --release --no-pack --out-dir ../../target/wasm-debug-pkg/all --out-name unicel -- --features debug",
+  "CARGO_TARGET_DIR={{config_root}}/target cargo run -q --release -p unicel --example manifest -- write target/wasm-debug-pkg --one all",
   "WASM_PKG=target/wasm-debug-pkg WASM_DEBUG=1 node --test 'web/test/*.test.mjs'",
 ]
 
@@ -159,9 +159,9 @@ depends = ["build:wasm"]
 run = [
   "cargo fmt --all --check",
   "cargo clippy --workspace --all-targets -- -D warnings",
-  "RUSTDOCFLAGS='-D warnings' cargo doc --no-deps -p animate-unicode",
-  "cargo clippy -p animate-unicode-wasm --target wasm32-unknown-unknown -- -D warnings",
-  "cargo clippy -p animate-unicode-wasm --target wasm32-unknown-unknown --features debug -- -D warnings",
+  "RUSTDOCFLAGS='-D warnings' cargo doc --no-deps -p unicel",
+  "cargo clippy -p unicel-wasm --target wasm32-unknown-unknown -- -D warnings",
+  "cargo clippy -p unicel-wasm --target wasm32-unknown-unknown --features debug -- -D warnings",
   "elm-format site/src site/tests --validate",
   "npm --prefix web run typecheck",
   "npm --prefix site run typecheck",
@@ -169,15 +169,15 @@ run = [
 
 [tasks.play]
 description = "Play a piece in this terminal: `mise run play donut --seconds 5` (any key stops it)"
-run = "cargo run --release -q -p animate-unicode-cli --"
+run = "cargo run --release -q -p unicel-cli --"
 
 [tasks.show]
 description = "Print a piece's frames at t = 0, 1, 2.5, 5 in a box: `mise run show donut` (no slug = every piece)"
-run = "cargo run --release -q -p animate-unicode --example show --"
+run = "cargo run --release -q -p unicel --example show --"
 
 [tasks.bench]
 description = "Time 60 frames of each piece and print a table: `mise run bench [slug ...]`"
-run = "cargo run --release -q -p animate-unicode --example bench --"
+run = "cargo run --release -q -p unicel --example bench --"
 
 # Fails when any module passes 150 KB gzipped: a page showing one piece loads
 # that piece's category, so that is the size a reader pays for. The total is
@@ -191,7 +191,7 @@ limit=${WASM_GZ_LIMIT:-153600}
 scene_limit=${WASM_GZ_SCENE_LIMIT:-230400}
 total=0
 over=""
-for f in web/pkg/*/animate_unicode_bg.wasm; do
+for f in web/pkg/*/unicel_bg.wasm; do
   m=$(basename $(dirname $f))
   raw=$(wc -c < $f | tr -d ' ')
   gz=$(gzip -9c $f | wc -c | tr -d ' ')

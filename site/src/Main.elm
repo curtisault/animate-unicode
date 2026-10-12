@@ -3,7 +3,7 @@ port module Main exposing (main)
 {-| The site: every piece, grouped as in ascii.rest, with one page per piece.
 
 The pieces come in as flags (their `Meta` as JSON, read from the wasm module
-by main.ts before Elm starts) and are drawn by the `<unicode-art>` custom
+by main.ts before Elm starts) and are drawn by the `<unicel-art>` custom
 element, which Elm treats as any other tag. Elm never touches a canvas or
 wasm memory itself: the shell in web/ does that. Changing a tag's attributes
 (options, mono) makes the element restart its piece.
@@ -188,7 +188,7 @@ view : Model -> Browser.Document Msg
 view model =
     case model.pieces of
         Err error ->
-            { title = "error · animate-unicode"
+            { title = "error · unicel"
             , body =
                 [ main_ [ class "broken" ]
                     [ h1 [] [ text "the piece list did not decode" ]
@@ -212,18 +212,18 @@ page : Model -> List Meta -> ( String, List (Html Msg) )
 page model pieces =
     case model.route of
         Route.Index ->
-            ( "animate-unicode: animated unicode art for web pages", index pieces )
+            ( "unicel: animated unicode art for web pages", index pieces )
 
         Route.Piece slug ->
             case find slug pieces of
                 Just m ->
-                    ( m.name ++ " · animate-unicode", piecePage model pieces m )
+                    ( m.name ++ " · unicel", piecePage model pieces m )
 
                 Nothing ->
-                    ( "not found · animate-unicode", notFound (Just slug) )
+                    ( "not found · unicel", notFound (Just slug) )
 
         Route.NotFound ->
-            ( "not found · animate-unicode", notFound Nothing )
+            ( "not found · unicel", notFound Nothing )
 
 
 find : String -> List Meta -> Maybe Meta
@@ -265,7 +265,7 @@ sidebar route pieces =
                     [ section [] (h2 [] [ text g.label ] :: items) ]
     in
     nav [ class "sidebar", attribute "aria-label" "Pieces" ]
-        (p [ class "site" ] [ a [ href "/" ] [ text "animate-unicode" ] ] :: List.concatMap group Meta.groups)
+        (p [ class "site" ] [ a [ href "/" ] [ text "unicel" ] ] :: List.concatMap group Meta.groups)
 
 
 index : List Meta -> List (Html Msg)
@@ -344,7 +344,7 @@ well m look =
                    )
     in
     div (classList [ ( "well", True ), ( "big", look.big ), ( "scene", scene ), ( "paper", look.paper ) ] :: ground)
-        [ Keyed.node "div" [ class "art" ] [ ( m.slug, node "unicode-art" attrs [] ) ] ]
+        [ Keyed.node "div" [ class "art" ] [ ( m.slug, node "unicel-art" attrs [] ) ] ]
 
 
 piecePage : Model -> List Meta -> Meta -> List (Html Msg)
@@ -537,7 +537,7 @@ usage : Model -> Meta -> Maybe String -> Html Msg
 usage model m overrides =
     let
         tag =
-            "<unicode-art piece=\""
+            "<unicel-art piece=\""
                 ++ m.slug
                 ++ "\""
                 ++ (if model.mono then
@@ -553,7 +553,7 @@ usage model m overrides =
                         Nothing ->
                             ""
                    )
-                ++ "></unicode-art>"
+                ++ "></unicel-art>"
 
         snippet id caption content =
             div [ class "snippet" ]
@@ -574,8 +574,8 @@ usage model m overrides =
     in
     section [ class "block" ]
         [ div [ class "head" ] [ h2 [] [ text "use it" ] ]
-        , snippet "install" "install" "npm install animate-unicode"
-        , snippet "import" "once, in your page's script" "import \"animate-unicode/element\";"
+        , snippet "install" "install" "npm install unicel"
+        , snippet "import" "once, in your page's script" "import \"unicel/element\";"
         , snippet "tag" "where it goes" tag
         ]
 

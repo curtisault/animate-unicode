@@ -1,9 +1,9 @@
 /*
- * <unicode-art>: any piece in the library, as one tag. Importing this module
+ * <unicel-art>: any piece in the library, as one tag. Importing this module
  * defines the tag; on a server, where there is no DOM, it does nothing.
  *
  *   <script type="module" src="/element.js"></script>
- *   <unicode-art piece="donut"></unicode-art>
+ *   <unicel-art piece="donut"></unicel-art>
  *
  * Attributes:
  *   piece    a piece's slug: "donut", "braille-wave"
@@ -31,17 +31,17 @@ import { player as make, type InitOutput, type Player } from "./wasm.ts";
 // stack so a piece's every glyph comes from one face with one width, and rows line up on any platform; wide glyphs
 // (CJK, emoji) are outside its range and come from the system. Located next to this module, so it travels with the
 // npm package and a bundler copies it like any other asset. The range must match scripts/font.py's RANGES.
-const FONT_URL = new URL("../fonts/animate-unicode-mono.woff2", import.meta.url).href;
+const FONT_URL = new URL("../fonts/unicel-mono.woff2", import.meta.url).href;
 const UNICODE_RANGE = "U+0020-007E,U+00B0,U+00B7,U+2022,U+2190-21FF,U+2500-25FF,U+2800-28FF,U+1CD00-1CDE5,U+1CEA0-1CEAF,U+1FB00-1FBFF";
 
 // :where gives these no specificity, so any rule of the page's own wins.
 const STYLE =
-  `@font-face{font-family:"animate-unicode mono";src:url(${FONT_URL}) format("woff2");unicode-range:${UNICODE_RANGE};font-display:swap}` +
-  ':where(unicode-art){display:block}:where(unicode-art>pre){margin:0;font:inherit;font-family:"animate-unicode mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;line-height:1.2;letter-spacing:0;white-space:pre;font-variant-ligatures:none}';
+  `@font-face{font-family:"unicel mono";src:url(${FONT_URL}) format("woff2");unicode-range:${UNICODE_RANGE};font-display:swap}` +
+  ':where(unicel-art){display:block}:where(unicel-art>pre){margin:0;font:inherit;font-family:"unicel mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;line-height:1.2;letter-spacing:0;white-space:pre;font-variant-ligatures:none}';
 
 const Base = (typeof HTMLElement === "undefined" ? class {} : HTMLElement) as typeof HTMLElement;
 
-export class UnicodeArt extends Base {
+export class UnicelArt extends Base {
   static observedAttributes = ["piece", "fps", "options", "label", "mono", "motion"];
   #stop: (() => void) | null = null;
   #player: Player | null = null;
@@ -83,7 +83,7 @@ export class UnicodeArt extends Base {
       if (run !== this.#run) return;
       ({ player, exports } = await make(slug, this.getAttribute("options") ?? ""));
     } catch (error) {
-      console.warn(`<unicode-art> could not load ${slug}:`, error);
+      console.warn(`<unicel-art> could not load ${slug}:`, error);
       // A piece that was playing is not the one asked for any more: stop it and
       // clear its drawing. With nothing playing yet, whatever the element held
       // (a server-rendered still) stays as the fallback.
@@ -111,7 +111,7 @@ export class UnicodeArt extends Base {
     try {
       this.#stop = mount(el, exports, player, options);
     } catch (error) {
-      console.error(`<unicode-art> ${slug} stopped on its first frame:`, error);
+      console.error(`<unicel-art> ${slug} stopped on its first frame:`, error);
     }
   }
 }
@@ -132,19 +132,19 @@ function near(el: Element): Promise<void> {
   });
 }
 
-/** Defines the tag, once. Importing this module calls it for "unicode-art". */
-export function define(tag = "unicode-art") {
+/** Defines the tag, once. Importing this module calls it for "unicel-art". */
+export function define(tag = "unicel-art") {
   if (typeof customElements === "undefined" || customElements.get(tag)) return;
   const style = document.createElement("style");
-  style.textContent = tag === "unicode-art" ? STYLE : STYLE.replaceAll("unicode-art", tag);
+  style.textContent = tag === "unicel-art" ? STYLE : STYLE.replaceAll("unicel-art", tag);
   document.head.append(style);
-  customElements.define(tag, tag === "unicode-art" ? UnicodeArt : class extends UnicodeArt {});
+  customElements.define(tag, tag === "unicel-art" ? UnicelArt : class extends UnicelArt {});
 }
 
 define();
 
 declare global {
   interface HTMLElementTagNameMap {
-    "unicode-art": UnicodeArt;
+    "unicel-art": UnicelArt;
   }
 }

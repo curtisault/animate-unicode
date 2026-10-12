@@ -71,7 +71,7 @@ for (const meta of metas) {
 test("the wasm donut draws the same frames as the native one", () => {
   // The fixture is ascii.rest's TS donut, which the native port matches in
   // tests/contract.rs; matching it here shows wasm floats agree too.
-  const fixture = readFileSync(resolve(root, "crates/animate-unicode/tests/fixtures/donut.txt"), "utf8");
+  const fixture = readFileSync(resolve(root, "crates/unicel/tests/fixtures/donut.txt"), "utf8");
   const p = new (of("donut").mod.Player)("donut", "");
   for (const block of fixture.split("\n\n")) {
     const [head, ...body] = block.split("\n");

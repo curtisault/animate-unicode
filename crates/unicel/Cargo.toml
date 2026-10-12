@@ -1,5 +1,5 @@
 [package]
-name = "animate-unicode"
+name = "unicel"
 description = "Animated unicode art: pieces that draw a grid of code points, frame by frame"
 version.workspace = true
 edition.workspace = true
@@ -7,7 +7,7 @@ license.workspace = true
 repository.workspace = true
 
 [lib]
-name = "animate_unicode"
+name = "unicel"
 
 [dependencies]
 serde = { workspace = true }

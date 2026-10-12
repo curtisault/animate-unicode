@@ -1,4 +1,4 @@
-"""Prints the octant lookup table for crates/animate-unicode/src/subcell.rs.
+"""Prints the octant lookup table for crates/unicel/src/subcell.rs.
 
     python3 scripts/octants.py path/to/UnicodeData.txt
 

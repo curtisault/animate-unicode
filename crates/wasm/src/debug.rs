@@ -2,8 +2,8 @@
 //! `Player::new` accepts their slugs; the registry never lists them, so no
 //! release page can play one. web/test and site/test.html use them.
 
-use animate_unicode::registry::Entry;
-use animate_unicode::{Category, Charset, Env, Grid, Meta, Options, Piece};
+use unicel::registry::Entry;
+use unicel::{Category, Charset, Env, Grid, Meta, Options, Piece};
 
 /// Every debug piece, by slug.
 pub static PIECES: &[Entry] = &[Entry { meta: &PANICS, make: |_: &Options| Box::new(Panics) }, Entry { meta: &WIDE, make: |_: &Options| Box::new(Wide) }];

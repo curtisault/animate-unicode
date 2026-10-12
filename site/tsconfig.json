@@ -18,10 +18,10 @@
       "node"
     ],
     "paths": {
-      "animate-unicode": [
+      "unicel": [
         "../web/src/index.ts"
       ],
-      "animate-unicode/element": [
+      "unicel/element": [
         "../web/src/element.ts"
       ]
     }

@@ -1,4 +1,7 @@
-# animate-unicode
+# unicel
+
+**Uni**code and **cel**: every glyph is one cell, and a cel is a frame of drawn
+animation.
 
 Animated unicode art for web pages. The pieces are Rust, compiled to
 WebAssembly; a small TypeScript shell draws them in a `<pre>` or on a
@@ -6,7 +9,7 @@ WebAssembly; a small TypeScript shell draws them in a `<pre>` or on a
 
 ```html
 <script type="module" src="/element.js"></script>
-<unicode-art piece="braille-wave"></unicode-art>
+<unicel-art piece="braille-wave"></unicel-art>
 ```
 
 A successor to the idea in [ascii.rest](https://ascii.rest) (TypeScript, ASCII
@@ -15,16 +18,16 @@ units, so braille, sextants, geometric shapes and double-width glyphs are each
 one cell like any other.
 
 **Status: early.** Two hundred and sixteen pieces, the contract test, the wasm boundary, the
-`<unicode-art>` tag and an Elm site that lists them. The plan for building it
+`<unicel-art>` tag and an Elm site that lists them. The plan for building it
 out is in [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md).
 
 ## Layout
 
 ```
-crates/animate-unicode   the pieces, the Grid, Meta, the Piece trait, the registry (pure Rust, no DOM)
+crates/unicel   the pieces, the Grid, Meta, the Piece trait, the registry (pure Rust, no DOM)
 crates/wasm              wasm-bindgen Player: a piece whose grid JS reads out of wasm memory
 crates/cli               plays a piece in a terminal
-web/                     the TS shell: mount (atlas renderer), <unicode-art>, the npm package
+web/                     the TS shell: mount (atlas renderer), <unicel-art>, the npm package
 site/                    the Elm site (Vite + vite-plugin-elm)
 docs/                    the implementation plan
 ```
@@ -65,7 +68,7 @@ one with CJK.
 
 ## Adding a piece
 
-A file in its category's folder, `crates/animate-unicode/src/pieces/<category>/`,
+A file in its category's folder, `crates/unicel/src/pieces/<category>/`,
 a `pub mod` and one line in `REGISTRY` in that folder's `mod.rs`. `mise run test`
 holds it to the contract: a `cols × rows` grid every frame, deterministic in
 `t`, only the glyphs its `charset` allows, under its time budget.

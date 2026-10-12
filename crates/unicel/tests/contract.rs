@@ -14,8 +14,8 @@
 //!
 //! `PIECE` takes a slug or a comma-separated list.
 
-use animate_unicode::{registry, Charset, Env, Grid, Options, Piece, NO_BACK, WIDE_TAIL};
 use std::time::Instant;
+use unicel::{registry, Charset, Env, Grid, Options, Piece, NO_BACK, WIDE_TAIL};
 use unicode_width::UnicodeWidthChar;
 
 const SAMPLE_AT: [f64; 6] = [0.0, 1.0, 2.0, 3.0, 4.0, 6.0];

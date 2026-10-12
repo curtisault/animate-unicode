@@ -17,7 +17,7 @@ flags =
 ]}"""
 
 
-{-| `Category::ALL` in crates/animate-unicode/src/meta.rs.
+{-| `Category::ALL` in crates/unicel/src/meta.rs.
 -}
 rustCategories : List String
 rustCategories =

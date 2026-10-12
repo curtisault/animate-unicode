@@ -1,4 +1,4 @@
-//! animate-unicode: animated unicode art, as pure functions of time.
+//! unicel: animated unicode art, as pure functions of time.
 //!
 //! A piece is a value that, asked for the picture at `t` seconds, writes one
 //! code point and one palette index per cell into a [`Grid`]. Nothing here
@@ -6,7 +6,7 @@
 //! to a small TypeScript shell that draws it, and the CLI prints it.
 //!
 //! ```
-//! use animate_unicode::{registry, Env, Grid, Options};
+//! use unicel::{registry, Env, Grid, Options};
 //!
 //! let entry = registry::find("donut").unwrap();
 //! let mut piece = (entry.make)(&Options::default());

@@ -6,8 +6,8 @@
 //! a wide glyph is one cell and a `WIDE_TAIL`, and the terminal is trusted to
 //! draw it two columns wide.
 
-use animate_unicode::{Grid, Meta, NO_BACK, WIDE_TAIL};
 use std::fmt::Write;
+use unicel::{Grid, Meta, NO_BACK, WIDE_TAIL};
 
 /// A colour as 0xrrggbb.
 pub type Rgb = u32;
@@ -269,7 +269,7 @@ impl Screen {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use animate_unicode::Meta;
+    use unicel::Meta;
 
     fn meta(cols: usize, rows: usize, palette: Option<&'static [&'static str]>, ground: Option<&'static str>) -> Meta {
         Meta { name: "t", slug: "t", note: "t", cols, rows, palette, ground, ..Meta::DEFAULT }

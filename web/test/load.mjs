@@ -15,8 +15,8 @@ export const { pieces, modules, imports, fallback } = await import(pathToFileURL
 
 /** One module by name: its bindings and its instantiated wasm exports (for `memory`). Instantiated once; later calls get the same instance. */
 export async function load(name) {
-  const mod = await import(pathToFileURL(resolve(dir, name, "animate_unicode.js")).href);
-  const wasm = await mod.default({ module_or_path: readFileSync(resolve(dir, name, "animate_unicode_bg.wasm")) });
+  const mod = await import(pathToFileURL(resolve(dir, name, "unicel.js")).href);
+  const wasm = await mod.default({ module_or_path: readFileSync(resolve(dir, name, "unicel_bg.wasm")) });
   return { mod, wasm };
 }
 
