@@ -19,6 +19,7 @@ import Html.Attributes as A exposing (attribute, class, classList, href)
 import Html.Events exposing (onCheck, onClick, onInput)
 import Html.Keyed as Keyed
 import Json.Decode as D
+import Json.Encode as E
 import Meta exposing (Meta)
 import Options
 import Process
@@ -30,6 +31,17 @@ import Url exposing (Url)
 {-| Text for the clipboard; main.ts hands it to `navigator.clipboard`.
 -}
 port copy : String -> Cmd msg
+
+
+{-| Asks main.ts for something only the page's script can do: `{ ask: "time" }`
+reads the big piece's play time.
+-}
+port request : E.Value -> Cmd msg
+
+
+{-| main.ts's answers: `{ time: seconds }`.
+-}
+port answer : (D.Value -> msg) -> Sub msg
 
 
 
@@ -44,6 +56,9 @@ type alias Model =
     , mono : Bool
     , paper : Bool
     , copied : Maybe String
+
+    -- The big piece held on one frame, at this many seconds; Nothing while it plays.
+    , held : Maybe Float
     }
 
 
@@ -56,6 +71,7 @@ init flags url key =
       , mono = False
       , paper = False
       , copied = Nothing
+      , held = Nothing
       }
     , tidy key url
     )
@@ -114,6 +130,10 @@ type Msg
     | SetPaper Bool
     | Copy String String
     | ClearCopied String
+    | Pause
+    | Play
+    | Scrub String
+    | Answer D.Value
     | NoOp
 
 
@@ -136,7 +156,7 @@ update msg model =
                         model
 
                     else
-                        { model | route = route, edits = Dict.empty, mono = False, paper = False }
+                        { model | route = route, edits = Dict.empty, mono = False, paper = False, held = Nothing }
             in
             ( fresh, Cmd.batch [ tidy model.key url, scrollTo url.fragment ] )
 
@@ -161,6 +181,28 @@ update msg model =
 
             else
                 ( model, Cmd.none )
+
+        Pause ->
+            ( model, request (E.object [ ( "ask", E.string "time" ) ]) )
+
+        Play ->
+            ( { model | held = Nothing }, Cmd.none )
+
+        Scrub value ->
+            case String.toFloat value of
+                Just t ->
+                    ( { model | held = Just t }, Cmd.none )
+
+                Nothing ->
+                    ( model, Cmd.none )
+
+        Answer value ->
+            case D.decodeValue (D.field "time" D.float) value of
+                Ok t ->
+                    ( { model | held = Just t }, Cmd.none )
+
+                Err _ ->
+                    ( model, Cmd.none )
 
         NoOp ->
             ( model, Cmd.none )
@@ -285,7 +327,7 @@ index pieces =
 
         card m =
             a [ class "card", href ("/" ++ m.slug) ]
-                [ well m { big = False, mono = False, paper = False, options = Nothing }
+                [ well m { big = False, mono = False, paper = False, options = Nothing, held = Nothing }
                 , span [ class "name" ] [ text m.name ]
                 , span [ class "note" ] [ text m.note ]
                 ]
@@ -307,6 +349,7 @@ type alias Look =
     , mono : Bool
     , paper : Bool
     , options : Maybe String
+    , held : Maybe Float
     }
 
 
@@ -342,6 +385,13 @@ well m look =
                         Nothing ->
                             []
                    )
+                ++ (case look.held of
+                        Just t ->
+                            [ attribute "time" (String.fromFloat t) ]
+
+                        Nothing ->
+                            []
+                   )
     in
     div (classList [ ( "well", True ), ( "big", look.big ), ( "scene", scene ), ( "paper", look.paper ) ] :: ground)
         [ Keyed.node "div" [ class "art" ] [ ( m.slug, node "unicel-art" attrs [] ) ] ]
@@ -367,7 +417,8 @@ piecePage model pieces m =
         , p [ class "facts" ] (facts m)
         ]
     , div [ class "toggles" ] (toggles model m)
-    , well m { big = True, mono = model.mono, paper = model.paper, options = overrides }
+    , well m { big = True, mono = model.mono, paper = model.paper, options = overrides, held = model.held }
+    , playback model m
     ]
         ++ optionsBlock model fields
         ++ [ usage model m overrides, pager pieces m ]
@@ -428,6 +479,51 @@ toggles model m =
           else
             Nothing
         ]
+
+
+{-| Under the piece: pause it, and while paused, scrub through its first
+minute (any frame can be drawn at once: pieces are deterministic in time).
+-}
+playback : Model -> Meta -> Html Msg
+playback model m =
+    if m.fps == 0 then
+        text ""
+
+    else
+        div [ class "playback" ]
+            (case model.held of
+                Nothing ->
+                    [ button [ class "button", A.type_ "button", onClick Pause ] [ text "[pause]" ] ]
+
+                Just t ->
+                    [ button [ class "button", A.type_ "button", onClick Play ] [ text "[play]" ]
+                    , input
+                        [ A.type_ "range"
+                        , A.min "0"
+                        , A.max (String.fromFloat (max 60 (toFloat (ceiling t))))
+                        , A.step (String.fromFloat (1 / toFloat m.fps))
+                        , A.value (String.fromFloat t)
+                        , onInput Scrub
+                        , attribute "aria-label" "time"
+                        ]
+                        []
+                    , span [ class "time" ] [ text (seconds t) ]
+                    ]
+            )
+
+
+{-| Seconds to two places: "3.07 s".
+-}
+seconds : Float -> String
+seconds t =
+    let
+        hundredths =
+            round (t * 100)
+
+        frac =
+            String.padLeft 2 '0' (String.fromInt (modBy 100 hundredths))
+    in
+    String.fromInt (hundredths // 100) ++ "." ++ frac ++ " s"
 
 
 checkbox : String -> String -> Bool -> (Bool -> Msg) -> Html Msg
@@ -660,7 +756,7 @@ main =
         { init = init
         , view = view
         , update = update
-        , subscriptions = \_ -> Sub.none
+        , subscriptions = \_ -> answer Answer
         , onUrlRequest = LinkClicked
         , onUrlChange = UrlChanged
         }

@@ -5,5 +5,5 @@
  * module (loading that module the first time), `mount` draws one in an
  * element. The <unicel-art> tag is in "unicel/element".
  */
-export { mount, WIDE_TAIL, type Meta, type MountOptions } from "./mount.ts";
+export { mount, WIDE_TAIL, type Meta, type MountOptions, type Playback } from "./mount.ts";
 export { moduleOf, pieces, player, wasm, type Bindings, type InitOutput, type Module, type Player } from "./wasm.ts";

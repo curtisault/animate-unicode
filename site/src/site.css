@@ -281,6 +281,27 @@ header h1 {
   min-height: 1.5em;
 }
 
+/* Under the piece: pause, and scrub while paused. */
+
+.playback {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  color: var(--muted);
+}
+
+.playback input[type="range"] {
+  flex: 1;
+  max-width: 28rem;
+  accent-color: var(--ink);
+}
+
+.playback .time {
+  min-width: 6ch;
+  font-variant-numeric: tabular-nums;
+}
+
 .toggle {
   display: inline-flex;
   align-items: center;

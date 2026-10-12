@@ -13,6 +13,10 @@
  *   mono     draws a coloured piece as text in one ink, like any other
  *   motion   plays even when the reader prefers reduced motion; only for a
  *            page that gives the reader its own way to stop it
+ *   time     holds the piece, paused, on the frame at this many seconds;
+ *            changing it seeks without reloading, removing it plays on from there
+ *
+ * `currentTime` is the play time of the frame shown, in seconds.
  *
  * Text pieces draw into a <pre> in the element's colour and font size; the
  * coloured ones draw onto a <canvas> as wide as the element. Whatever the
@@ -23,7 +27,7 @@
  * then loads its piece's category (one wasm module each), so a page of many
  * pieces fetches each category only as its pieces come near.
  */
-import { mount, type Meta, type MountOptions } from "./mount.ts";
+import { mount, type Meta, type MountOptions, type Playback } from "./mount.ts";
 import { player as make, type InitOutput, type Player } from "./wasm.ts";
 
 // The bundled font (web/fonts, built by scripts/font.py from Iosevka Fixed Extended, SIL OFL 1.1): ASCII, box
@@ -42,8 +46,8 @@ const STYLE =
 const Base = (typeof HTMLElement === "undefined" ? class {} : HTMLElement) as typeof HTMLElement;
 
 export class UnicelArt extends Base {
-  static observedAttributes = ["piece", "fps", "options", "label", "mono", "motion"];
-  #stop: (() => void) | null = null;
+  static observedAttributes = ["piece", "fps", "options", "label", "mono", "motion", "time"];
+  #playback: Playback | null = null;
   #player: Player | null = null;
   #run = 0;
   #near: Promise<void> | null = null;
@@ -57,13 +61,30 @@ export class UnicelArt extends Base {
     this.#teardown();
   }
 
-  attributeChangedCallback() {
-    if (this.isConnected) void this.#start();
+  attributeChangedCallback(name: string) {
+    if (!this.isConnected) return;
+    // A new time only seeks: the piece is already made.
+    if (name === "time" && this.#playback) this.#hold();
+    else void this.#start();
+  }
+
+  /** The play time of the frame shown, in seconds. */
+  get currentTime(): number {
+    return this.#playback?.time() ?? 0;
+  }
+
+  #hold() {
+    const time = this.getAttribute("time");
+    try {
+      this.#playback?.hold(time === null || time === "" || Number.isNaN(+time) ? null : Math.max(0, +time));
+    } catch (error) {
+      console.error(`<unicel-art> ${this.getAttribute("piece")} stopped:`, error);
+    }
   }
 
   #teardown() {
-    this.#stop?.();
-    this.#stop = null;
+    this.#playback?.stop();
+    this.#playback = null;
     const player = this.#player;
     this.#player = null;
     try {
@@ -109,10 +130,12 @@ export class UnicelArt extends Base {
     this.replaceChildren(el);
     this.#player = player;
     try {
-      this.#stop = mount(el, exports, player, options);
+      this.#playback = mount(el, exports, player, options);
     } catch (error) {
       console.error(`<unicel-art> ${slug} stopped on its first frame:`, error);
+      return;
     }
+    if (this.hasAttribute("time")) this.#hold();
   }
 }
 

@@ -18,6 +18,14 @@ app.ports.copy?.subscribe((text) => {
   navigator.clipboard?.writeText(String(text)).catch(() => {});
 });
 
+/** The piece the page is about: the big one in its well. */
+const big = () => document.querySelector<HTMLElement & { currentTime?: number }>(".well.big unicel-art");
+
+// What Elm asks of the page: the big piece's play time, to pause it there.
+app.ports.request?.subscribe((ask) => {
+  if ((ask as { ask?: string }).ask === "time") app.ports.answer?.send({ time: big()?.currentTime ?? 0 });
+});
+
 // Dev only (Vite drops this from production builds): `debugPanic()` in the
 // browser console adds a <unicel-art> playing a deliberately broken piece. It
 // draws for a second, then panics; the debug wasm build that `mise run dev`

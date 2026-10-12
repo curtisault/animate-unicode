@@ -17,7 +17,8 @@
  *
  * Play time only advances while the element is on screen and the tab is open,
  * and prefers-reduced-motion keeps the first frame unless `motion` is set.
- * Returns a stop function.
+ * Returns a Playback: stop it, read its time, or hold it on any frame (pieces
+ * are deterministic in time, so any frame can be drawn at once).
  */
 import type { InitOutput, Player } from "../pkg/modules.js";
 import { shapeOf } from "./blocks.ts";
@@ -45,6 +46,16 @@ export interface MountOptions {
   motion?: boolean;
 }
 
+/** A mounted piece: stop it, read its play time, or hold it on one frame. */
+export interface Playback {
+  /** Stops playing and lets go of the element's observers. The player is the caller's to free. */
+  stop(): void;
+  /** Seconds of play time so far: the time of the frame shown. */
+  time(): number;
+  /** Holds the piece on the frame at `t` seconds, paused; `null` plays on from there. */
+  hold(t: number | null): void;
+}
+
 /** The right half of a double-width glyph, in the cells buffer. Must match unicel::WIDE_TAIL. */
 export const WIDE_TAIL = 0;
 /** No colour behind a cell, in the backs buffer. Must match unicel::NO_BACK. */
@@ -53,7 +64,7 @@ export const NO_BACK = 255;
 // The bundled font first, as in element.ts's STYLE: one face, one width, for every glyph it has.
 const FONT = '"unicel mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
 
-export function mount(el: HTMLElement, wasm: InitOutput, player: Player, options: MountOptions = {}): () => void {
+export function mount(el: HTMLElement, wasm: InitOutput, player: Player, options: MountOptions = {}): Playback {
   const meta = JSON.parse(player.meta_json()) as Meta;
   const { cols, rows, palette, ground, cell } = meta;
   const fps = options.fps ?? meta.fps;
@@ -82,6 +93,7 @@ export function mount(el: HTMLElement, wasm: InitOutput, player: Player, options
   };
 
   let t = 0;
+  let held: number | null = null;
   let draw = () => {
     frame();
     el.textContent = player.text();
@@ -298,9 +310,17 @@ export function mount(el: HTMLElement, wasm: InitOutput, player: Player, options
     throw error;
   }
   if (!fps)
-    return () => {
-      ro?.disconnect();
-      unfont();
+    return {
+      stop: () => {
+        ro?.disconnect();
+        unfont();
+      },
+      time: () => t,
+      hold: (at) => {
+        if (at === null) return;
+        t = at;
+        draw();
+      },
     };
 
   const still = matchMedia("(prefers-reduced-motion: reduce)");
@@ -325,7 +345,7 @@ export function mount(el: HTMLElement, wasm: InitOutput, player: Player, options
     }
   };
   const run = () => {
-    const go = !broken && seen && !document.hidden && (motion || !still.matches);
+    const go = held === null && !broken && seen && !document.hidden && (motion || !still.matches);
     if (go && !raf) {
       lastNow = performance.now();
       raf = requestAnimationFrame(tick);
@@ -342,13 +362,29 @@ export function mount(el: HTMLElement, wasm: InitOutput, player: Player, options
   document.addEventListener("visibilitychange", run);
   still.addEventListener("change", run);
 
-  return () => {
-    io.disconnect();
-    ro?.disconnect();
-    unfont();
-    cancelAnimationFrame(raf);
-    raf = 0;
-    document.removeEventListener("visibilitychange", run);
-    still.removeEventListener("change", run);
+  return {
+    stop: () => {
+      io.disconnect();
+      ro?.disconnect();
+      unfont();
+      cancelAnimationFrame(raf);
+      raf = 0;
+      document.removeEventListener("visibilitychange", run);
+      still.removeEventListener("change", run);
+    },
+    time: () => t,
+    hold: (at) => {
+      held = at;
+      if (at !== null && !broken) {
+        t = at;
+        try {
+          draw();
+        } catch (error) {
+          broken = true;
+          throw error;
+        }
+      }
+      run();
+    },
   };
 }
