@@ -44,7 +44,10 @@ while read -r number branch sha; do
   status "$sha" pending "local CI running on $host"
   scratch=$(mktemp -d)
   git archive "$sha" | tar -x -C "$scratch"
-  rsync -a --delete --exclude /target --exclude node_modules --exclude elm-stuff "$scratch/" "$tree/"
+  # By content, not times: git archive dates every file to its commit, older
+  # than the last branch's build, so cargo would keep that build. A file that
+  # changed is written now and rebuilt; one that didn't keeps its time and cache.
+  rsync -rlpD --checksum --delete --exclude /target --exclude node_modules --exclude elm-stuff "$scratch/" "$tree/"
   rm -rf "$scratch"
   if (
     cd "$tree" &&
