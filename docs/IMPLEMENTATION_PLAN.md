@@ -594,7 +594,7 @@ Debug builds skip the timing budgets (`cfg!(debug_assertions)`); always run `mis
 6. **mise `npm:` backend** resolved `elm-test@latest` to 0.19.0 and then refused its `fsevents`. Pinned to `0.19.1-revision17`. Watch for the same with `elm-format` (pinned 0.8.8) and `elm-review`.
 7. **`rust = { version = "1.97", targets = "wasm32-unknown-unknown" }`**: the `targets` option worked on this machine (`cargo check --target wasm32-unknown-unknown` passed) but the target had also been added by hand earlier; confirm on a clean CI runner.
 8. **Name**: `animate-unicode` is a placeholder for the crate, npm package and tag (`<unicode-art>`). Decide before publishing anything.
-9. **Timing budgets in CI** can flake on slow runners; if so, raise the worst-frame budget in CI via an env var rather than loosening locally.
+9. **Timing budgets in CI** can flake on slow runners; if so, raise the worst-frame budget in CI via an env var rather than loosening locally. **Settled 2026-10-11:** they failed on GitHub's runners (3–5× slower than the owner's machine), so CI runs locally instead: `mise run signoff` checks each open pull request's head and posts a `signoff` status.
 
 <a id="appendix-a"></a>
 ## Appendix A: what to borrow from ../ascii

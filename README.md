@@ -36,7 +36,8 @@ mise install          # rust (+wasm32 target), node, elm, wasm-pack, elm-format,
 mise run install      # npm install for web/ and site/
 mise run test         # Rust tests and the piece contract, then the wasm from Node
 mise run dev          # a debug wasm build, then the site at http://localhost:5173
-mise run check        # what CI runs: lint, test, build
+mise run check        # lint, test, build
+mise run signoff      # CI, locally: checks each open PR's head and signs it off on GitHub
 ```
 
 With `mise run dev` up, http://localhost:5173/test.html is the shell's checklist

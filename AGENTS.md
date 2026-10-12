@@ -35,7 +35,11 @@ with Unicode where ascii.rest uses ASCII.
 
 mise is the only entry point (`mise tasks` lists them all):
 
-- `mise run check`: what CI runs (lint, test, build). Green before every commit.
+- `mise run check`: lint, test, build. Green before every commit.
+- `mise run signoff`: the CI, run locally: `npm ci`, lint, test, build and
+  size on each open pull request's head commit, posting a `signoff` status to
+  it on GitHub (`mise run signoff 18` for one). There is no CI on GitHub: the
+  contract's time budgets assume a fast machine.
 - `mise run test`, `mise run lint`, `mise run fmt`
 - `mise run show <slug>`: a piece's frames as text. `mise run play <slug>`: in the terminal.
 - `mise run dev`: the site, on a debug wasm build.
