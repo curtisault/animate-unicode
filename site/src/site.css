@@ -281,6 +281,25 @@ header h1 {
   min-height: 1.5em;
 }
 
+/* Rows of links under the piece: download, share. */
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 1rem;
+  margin-top: 0.5rem;
+}
+
+.links .label {
+  min-width: 6rem;
+  color: var(--muted);
+}
+
+.button:disabled {
+  cursor: progress;
+}
+
 /* Under the piece: pause, and scrub while paused. */
 
 .playback {

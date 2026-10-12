@@ -34,12 +34,14 @@ port copy : String -> Cmd msg
 
 
 {-| Asks main.ts for something only the page's script can do: `{ ask: "time" }`
-reads the big piece's play time.
+reads the big piece's play time; `{ ask: "download", kind, slug, options, mono,
+paper, time }` makes a file of the piece and saves it.
 -}
 port request : E.Value -> Cmd msg
 
 
-{-| main.ts's answers: `{ time: seconds }`.
+{-| main.ts's answers: `{ time: seconds }`, and while a download is made
+`{ making: kind, done: 0 to 1 }`, then `{ made: kind }` or `{ failed: kind }`.
 -}
 port answer : (D.Value -> msg) -> Sub msg
 
@@ -59,6 +61,10 @@ type alias Model =
 
     -- The big piece held on one frame, at this many seconds; Nothing while it plays.
     , held : Maybe Float
+
+    -- A download being made: its kind, and how far along it is (0 to 1).
+    , making : Maybe ( String, Float )
+    , failed : Maybe String
     }
 
 
@@ -72,6 +78,8 @@ init flags url key =
       , paper = False
       , copied = Nothing
       , held = Nothing
+      , making = Nothing
+      , failed = Nothing
       }
     , tidy key url
     )
@@ -133,6 +141,7 @@ type Msg
     | Pause
     | Play
     | Scrub String
+    | Download String
     | Answer D.Value
     | NoOp
 
@@ -156,7 +165,7 @@ update msg model =
                         model
 
                     else
-                        { model | route = route, edits = Dict.empty, mono = False, paper = False, held = Nothing }
+                        { model | route = route, edits = Dict.empty, mono = False, paper = False, held = Nothing, failed = Nothing }
             in
             ( fresh, Cmd.batch [ tidy model.key url, scrollTo url.fragment ] )
 
@@ -196,16 +205,55 @@ update msg model =
                 Nothing ->
                     ( model, Cmd.none )
 
-        Answer value ->
-            case D.decodeValue (D.field "time" D.float) value of
-                Ok t ->
-                    ( { model | held = Just t }, Cmd.none )
+        Download kind ->
+            case ( model.making, model.route, model.pieces ) of
+                ( Nothing, Route.Piece slug, Ok pieces ) ->
+                    ( { model | making = Just ( kind, 0 ), failed = Nothing }
+                    , request
+                        (E.object
+                            [ ( "ask", E.string "download" )
+                            , ( "kind", E.string kind )
+                            , ( "slug", E.string slug )
+                            , ( "options", E.string (find slug pieces |> Maybe.andThen (overridesOf model) |> Maybe.withDefault "") )
+                            , ( "mono", E.bool model.mono )
+                            , ( "paper", E.bool model.paper )
+                            , ( "time", model.held |> Maybe.map E.float |> Maybe.withDefault E.null )
+                            ]
+                        )
+                    )
 
-                Err _ ->
+                _ ->
                     ( model, Cmd.none )
+
+        Answer value ->
+            ( D.decodeValue answerDecoder value |> Result.map (\f -> f model) |> Result.withDefault model, Cmd.none )
 
         NoOp ->
             ( model, Cmd.none )
+
+
+{-| What main.ts answered, as a change to the model.
+-}
+answerDecoder : D.Decoder (Model -> Model)
+answerDecoder =
+    D.oneOf
+        [ D.field "time" D.float |> D.map (\t m -> { m | held = Just t })
+        , D.map2 (\kind done m -> { m | making = Just ( kind, done ) }) (D.field "making" D.string) (D.field "done" D.float)
+        , D.field "made" D.string |> D.map (\_ m -> { m | making = Nothing })
+        , D.field "failed" D.string |> D.map (\kind m -> { m | making = Nothing, failed = Just kind })
+        ]
+
+
+{-| The JSON a piece's option edits make, if any.
+-}
+overridesOf : Model -> Meta -> Maybe String
+overridesOf model m =
+    case Maybe.map Options.defaults m.options of
+        Just (Ok fs) ->
+            Options.overrides fs model.edits
+
+        _ ->
+            Nothing
 
 
 {-| After a page change: to the fragment's element, or the top.
@@ -419,6 +467,7 @@ piecePage model pieces m =
     , div [ class "toggles" ] (toggles model m)
     , well m { big = True, mono = model.mono, paper = model.paper, options = overrides, held = model.held }
     , playback model m
+    , downloads model
     ]
         ++ optionsBlock model fields
         ++ [ usage model m overrides, pager pieces m ]
@@ -510,6 +559,35 @@ playback model m =
                     , span [ class "time" ] [ text (seconds t) ]
                     ]
             )
+
+
+{-| A file of the piece: one frame as a PNG, or a loop as video or a GIF, of
+what the page shows (its options, one ink, paper), from the frame on screen.
+-}
+downloads : Model -> Html Msg
+downloads model =
+    let
+        kind name =
+            button [ class "button", A.type_ "button", onClick (Download name), A.disabled (model.making /= Nothing) ]
+                [ text
+                    (case model.making of
+                        Just ( k, done ) ->
+                            if k == name then
+                                "[" ++ name ++ " " ++ String.fromInt (round (done * 100)) ++ "%]"
+
+                            else
+                                "[" ++ name ++ "]"
+
+                        Nothing ->
+                            if model.failed == Just name then
+                                "[" ++ name ++ ": failed]"
+
+                            else
+                                "[" ++ name ++ "]"
+                    )
+                ]
+    in
+    div [ class "links" ] [ span [ class "label" ] [ text "download" ], kind "png", kind "video", kind "gif" ]
 
 
 {-| Seconds to two places: "3.07 s".

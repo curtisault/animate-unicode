@@ -7,6 +7,7 @@
 import "unicel/element";
 import { pieces } from "unicel";
 import { Elm } from "./Main.elm";
+import { gif, png, save, video, type Take } from "./exports";
 
 const app = Elm.Main.init({
   node: document.getElementById("app"),
@@ -21,10 +22,51 @@ app.ports.copy?.subscribe((text) => {
 /** The piece the page is about: the big one in its well. */
 const big = () => document.querySelector<HTMLElement & { currentTime?: number }>(".well.big unicel-art");
 
-// What Elm asks of the page: the big piece's play time, to pause it there.
-app.ports.request?.subscribe((ask) => {
-  if ((ask as { ask?: string }).ask === "time") app.ports.answer?.send({ time: big()?.currentTime ?? 0 });
+interface Ask {
+  ask: "time" | "download";
+  kind?: "png" | "video" | "gif";
+  slug?: string;
+  options?: string;
+  mono?: boolean;
+  paper?: boolean;
+  time?: number | null;
+}
+
+// What Elm asks of the page: the big piece's play time, to pause it there,
+// and a file of it.
+app.ports.request?.subscribe((value) => {
+  const ask = value as Ask;
+  if (ask.ask === "time") app.ports.answer?.send({ time: big()?.currentTime ?? 0 });
+  if (ask.ask === "download") void download(ask);
 });
+
+async function download(ask: Ask) {
+  const kind = ask.kind!;
+  const well = document.querySelector(".well.big");
+  const style = well ? getComputedStyle(well) : null;
+  const take: Take = {
+    slug: ask.slug!,
+    options: ask.options ?? "",
+    mono: ask.mono ?? false,
+    paper: ask.paper ?? false,
+    ink: getComputedStyle(big() ?? document.body).color,
+    well: style?.backgroundColor ?? "#fff",
+    time: ask.time ?? big()?.currentTime ?? 0,
+  };
+  const part = (done: number) => app.ports.answer?.send({ making: kind, done });
+  try {
+    if (kind === "png") save(await png(take), `${take.slug}.png`);
+    if (kind === "gif") save(await gif(take, part), `${take.slug}.gif`);
+    if (kind === "video") {
+      const { blob, ext } = await video(take, part);
+      save(blob, `${take.slug}.${ext}`);
+    }
+    app.ports.answer?.send({ made: kind });
+  } catch (error) {
+    console.error(`could not make the ${kind} of ${take.slug}:`, error);
+    app.ports.answer?.send({ failed: kind });
+  }
+}
 
 // Dev only (Vite drops this from production builds): `debugPanic()` in the
 // browser console adds a <unicel-art> playing a deliberately broken piece. It

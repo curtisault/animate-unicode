@@ -10,6 +10,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "gifenc": "1.0.3",
+    "mp4-muxer": "5.2.2",
     "unicel": "*"
   },
   "devDependencies": {
