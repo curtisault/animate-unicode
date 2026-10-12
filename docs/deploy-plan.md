@@ -23,7 +23,7 @@ Already in the repository:
 | Tarball check | `web/test/package.test.mjs` | Dry-runs `npm pack` and fails if an export target, the wasm, the font or its licence is missing. |
 | wasm-pack output fit to ship | `build:wasm` in `mise.toml` | `--no-pack`, and the `*` .gitignore wasm-pack writes is deleted (npm honoured it and left the wasm out). |
 | Size gate | `mise run size` | Fails past 500 KB gzipped (`WASM_GZ_LIMIT` overrides) and writes the line to the GitHub step summary. 64.6 KB gz with 11 pieces. |
-| CI workflow | `.github/workflows/ci.yml` | `npm ci`, then `mise run lint`, `test`, `build`, `size`. `test` already covers the Node wasm tests (release and debug builds) and elm-test, so the plan's CI additions are in. |
+| CI | `scripts/signoff.sh` (`mise run signoff`) | Local, since 2026-10-11: GitHub's runners are 3–5× slower than the owner's machine, so the contract's time budgets failed there. For each open pull request's head commit: `npm ci`, then `mise run lint`, `test`, `build`, `size`, and a `signoff` commit status on GitHub. `.github/workflows/ci.yml` is gone and the workflow disabled. |
 | Font | `web/fonts/` | Found next to the shell with `new URL("../fonts/…", import.meta.url)`, so bundlers copy it. Rebuilt only by `mise run build:font`, never in CI. |
 
 Still open:
@@ -43,9 +43,8 @@ Still open:
 3. **The rest of the first CI run**: the npm backend for elm-test (risk 6),
    uv for the font script (not run in CI), and Node's tests against both wasm
    builds.
-4. **Timing budgets in CI** may flake on slow runners (risk 9): raise the
-   worst-frame budget through an environment variable there rather than
-   loosening it locally.
+4. **Timing budgets in CI** may flake on slow runners (risk 9). Settled
+   2026-10-11: they failed on every run, so CI is local (`mise run signoff`).
 
 ## Decisions to make first
 

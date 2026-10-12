@@ -8,3 +8,5 @@ node_modules/
 # elm
 elm-stuff/
 .DS_Store
+# git worktrees Claude Code makes for its agents
+/.claude/worktrees/

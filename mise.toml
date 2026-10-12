@@ -4,7 +4,8 @@
 #   mise install          the toolchain
 #   mise run install      npm install for web/ and site/
 #   mise run dev          the site, live, with the wasm built first
-#   mise run check        everything CI runs
+#   mise run check        lint, test and build: what sign-off runs, with size
+#   mise run signoff      the checks on each open pull request, signed off on GitHub
 
 [tools]
 # The pieces, the wasm module and the CLI. `targets` adds the wasm32 target
@@ -85,6 +86,14 @@ run = "uvx --from 'fonttools[woff]==4.60.1' python -I scripts/font.py"
 
 # The logos' output is checked in (pieces/<category>/art); run this only to add a
 # logo or redraw one. Downloads the SVGs once into target/logos.
+# Local CI: there is no CI on GitHub. This runs npm ci and lint, test, build and
+# size on each open pull request's head commit, in target/ci/tree, and posts a
+# `signoff` status to the commit. Arguments narrow it to pull request numbers
+# or branch names.
+[tasks.signoff]
+description = "Check each open pull request's head commit locally and post a signoff status to it (scripts/signoff.sh)"
+run = "scripts/signoff.sh"
+
 [tasks."build:logos"]
 description = "Draw the logos, companies and distros from their SVGs as octant art (scripts/logo.py)"
 run = "uvx --python 3.14 --from 'resvg-py==0.5.0' --with 'pillow==12.3.0' --with 'numpy==2.5.3' python -I scripts/logo.py"
