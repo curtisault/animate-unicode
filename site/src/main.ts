@@ -9,9 +9,33 @@ import { pieces } from "unicel";
 import { Elm } from "./Main.elm";
 import { ansi, gif, png, save, svg, text, video, type Take } from "./exports";
 
+// Each category module's gzipped size, from `mise run build:wasm`; none in a dev build.
+const sizes = Object.values(import.meta.glob<Record<string, number>>("../../web/pkg/sizes.json", { eager: true, import: "default" }))[0] ?? {};
+
+// The theme: the reader's choice, kept, or the system's.
+const chosen = (() => {
+  try {
+    return localStorage.getItem("theme");
+  } catch {
+    return null;
+  }
+})();
+if (chosen === "light" || chosen === "dark") document.documentElement.dataset.theme = chosen;
+const dark = chosen ? chosen === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+
 const app = Elm.Main.init({
   node: document.getElementById("app"),
-  flags: { pieces },
+  flags: { pieces, sizes, dark },
+});
+
+app.ports.theme?.subscribe((value) => {
+  const theme = String(value);
+  document.documentElement.dataset.theme = theme;
+  try {
+    localStorage.setItem("theme", theme);
+  } catch {
+    // a private window: the choice lasts the visit
+  }
 });
 
 // The copy buttons: Elm has no clipboard of its own.

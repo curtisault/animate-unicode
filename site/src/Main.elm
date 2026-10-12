@@ -33,6 +33,11 @@ import Url exposing (Url)
 port copy : String -> Cmd msg
 
 
+{-| The page's theme, "light" or "dark": main.ts sets it on <html> and keeps it.
+-}
+port theme : String -> Cmd msg
+
+
 {-| Asks main.ts for something only the page's script can do: `{ ask: "time" }`
 reads the big piece's play time; `{ ask: "download", kind, slug, options, mono,
 paper, time }` makes a file of the piece and saves it.
@@ -68,6 +73,10 @@ type alias Model =
 
     -- The way to use it shown under "use it": html, react, astro, typescript or terminal.
     , tab : String
+
+    -- Each category module's gzipped size in bytes (none in a dev build), and the theme.
+    , sizes : Dict.Dict String Int
+    , dark : Bool
     }
 
 
@@ -84,6 +93,8 @@ init flags url key =
       , making = Nothing
       , failed = Nothing
       , tab = "html"
+      , sizes = D.decodeValue (D.field "sizes" (D.dict D.int)) flags |> Result.withDefault Dict.empty
+      , dark = D.decodeValue (D.field "dark" D.bool) flags |> Result.withDefault False
       }
     , tidy key url
     )
@@ -147,6 +158,7 @@ type Msg
     | Scrub String
     | Download String
     | SetTab String
+    | ToggleTheme
     | Answer D.Value
     | NoOp
 
@@ -232,6 +244,17 @@ update msg model =
 
         SetTab name ->
             ( { model | tab = name }, Cmd.none )
+
+        ToggleTheme ->
+            ( { model | dark = not model.dark }
+            , theme
+                (if model.dark then
+                    "light"
+
+                 else
+                    "dark"
+                )
+            )
 
         Answer value ->
             let
@@ -324,7 +347,7 @@ view model =
                     page model pieces
             in
             { title = title
-            , body = [ div [ class "layout" ] [ sidebar model.route pieces, main_ [ class "main" ] content ] ]
+            , body = [ div [ class "layout" ] [ sidebar model.route pieces, main_ [ class "main" ] (topbar model :: content) ] ]
             }
 
 
@@ -344,6 +367,32 @@ page model pieces =
 
         Route.NotFound ->
             ( "not found · unicel", notFound Nothing )
+
+
+{-| The repository, where the docs (its README) and the issues are.
+-}
+repository : String
+repository =
+    "https://github.com/curtisault/animate-unicode"
+
+
+{-| Along the top of every page: the docs, the code, and the theme.
+-}
+topbar : Model -> Html Msg
+topbar model =
+    nav [ class "topbar", attribute "aria-label" "Site" ]
+        [ a [ href (repository ++ "#readme") ] [ text "[docs]" ]
+        , a [ href repository ] [ text "[github]" ]
+        , button [ class "button", A.type_ "button", onClick ToggleTheme, A.title "the page's colours" ]
+            [ text
+                (if model.dark then
+                    "[light]"
+
+                 else
+                    "[dark]"
+                )
+            ]
+        ]
 
 
 find : String -> List Meta -> Maybe Meta
@@ -492,7 +541,7 @@ piecePage model pieces m =
     [ header []
         [ h1 [] [ text m.name ]
         , p [ class "lede" ] [ text m.note ]
-        , p [ class "facts" ] (facts m)
+        , p [ class "facts" ] (facts model m)
         ]
     , div [ class "toggles" ] (toggles model m)
     , well m { big = True, mono = model.mono, paper = model.paper, options = overrides, held = model.held }
@@ -503,8 +552,8 @@ piecePage model pieces m =
         ++ [ usage model m overrides, pager pieces m ]
 
 
-facts : Meta -> List (Html Msg)
-facts m =
+facts : Model -> Meta -> List (Html Msg)
+facts model m =
     List.filterMap identity
         [ Just (a [ href ("/#" ++ m.category) ] [ text m.category ])
         , Just (span [] [ text (String.fromInt m.cols ++ "×" ++ String.fromInt m.rows) ])
@@ -541,7 +590,32 @@ facts m =
 
           else
             Nothing
+        , Dict.get m.category model.sizes
+            |> Maybe.map (\bytes -> span [ A.title ("the " ++ m.category ++ " wasm module, gzipped: what loads for this piece") ] [ text (kilobytes bytes) ])
+        , Just
+            (a
+                [ href
+                    (repository
+                        ++ "/issues/new?title="
+                        ++ Url.percentEncode (m.slug ++ ": ")
+                        ++ "&body="
+                        ++ Url.percentEncode ("Piece: " ++ m.slug ++ "\nBrowser:\n\nWhat happened:\n")
+                    )
+                ]
+                [ text "[report a bug]" ]
+            )
         ]
+
+
+{-| Bytes as kilobytes to one place: "64.2 kB".
+-}
+kilobytes : Int -> String
+kilobytes bytes =
+    let
+        tenths =
+            round (toFloat bytes / 102.4)
+    in
+    String.fromInt (tenths // 10) ++ "." ++ String.fromInt (modBy 10 tenths) ++ " kB"
 
 
 toggles : Model -> Meta -> List (Html Msg)

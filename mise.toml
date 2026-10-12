@@ -53,7 +53,7 @@ watchexec = "latest"
 # npm would honour it and leave the wasm out of the tarball. The root
 # .gitignore already keeps web/pkg out of git.
 [tasks."build:wasm"]
-description = "Build crates/wasm into web/pkg: a module per category (wasm-bindgen, --target web, release), and modules.js"
+description = "Build crates/wasm into web/pkg: a module per category (wasm-bindgen, --target web, release), modules.js and sizes.json"
 run = """
 set -e
 rm -rf web/pkg
@@ -62,6 +62,8 @@ for c in $(cargo run -q --release -p unicel --example manifest -- categories); d
   rm -f web/pkg/$c/.gitignore
 done
 cargo run -q --release -p unicel --example manifest -- write web/pkg
+# Each module's gzipped size, which the site shows on a piece's page.
+{ printf '{'; sep=''; for f in web/pkg/*/unicel_bg.wasm; do printf '%s"%s":%s' "$sep" "$(basename "$(dirname "$f")")" "$(gzip -9c "$f" | wc -c | tr -d ' ')"; sep=','; done; printf '}\\n'; } > web/pkg/sizes.json
 """
 
 # Its own cargo target dir: the feature set differs, and sharing one would make

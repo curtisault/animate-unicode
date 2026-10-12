@@ -16,8 +16,9 @@
   color-scheme: light;
 }
 
+/* Dark: the system's choice unless the reader chose light, or the reader's. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #131518;
     --ink: #e8ebef;
     --text: #c3c9d1;
@@ -27,6 +28,17 @@
     --bad: #f2867c;
     color-scheme: dark;
   }
+}
+
+:root[data-theme="dark"] {
+  --bg: #131518;
+  --ink: #e8ebef;
+  --text: #c3c9d1;
+  --muted: #8c95a1;
+  --well: #1a1d21;
+  --rule: #262a2f;
+  --bad: #f2867c;
+  color-scheme: dark;
 }
 
 *,
@@ -279,6 +291,23 @@ header h1 {
   gap: 1.25rem;
   margin-top: 1.25rem;
   min-height: 1.5em;
+}
+
+/* Along the top of every page: docs, github, the theme. */
+
+.topbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1.25rem;
+  margin: -0.5rem 0 1.5rem;
+}
+
+.topbar a {
+  text-decoration: none;
+}
+
+.topbar .button {
+  color: var(--ink);
 }
 
 /* Rows of links under the piece: download, share. */
