@@ -1,6 +1,7 @@
 /*
  * A piece's downloads, made in the browser: a PNG of one frame, a video and a
- * GIF. After ascii.rest's (MIT, @bas3line), with one difference: a piece here
+ * GIF, and the frame as text: plain, for the clipboard or a .txt, or with
+ * 24-bit colour escapes, an .ans a terminal shows in colour. After ascii.rest's (MIT, @bas3line), with one difference: a piece here
  * is deterministic in time, so every frame is drawn on demand off screen and
  * encoded as fast as it is drawn, rather than recorded in real time. Video is
  * an MP4 through the browser's VideoEncoder (WebCodecs) and mp4-muxer, or a
@@ -9,7 +10,7 @@
  * A scene fills its picture edge to edge, 1280 px wide; anything else sits on
  * the page's well with a margin round it, its cells up to 16 px wide.
  */
-import { paint, player as make, type Meta } from "unicel";
+import { NO_BACK, paint, player as make, WIDE_TAIL, type Meta } from "unicel";
 
 /** What a download is of: the piece as the page shows it. */
 export interface Take {
@@ -199,6 +200,58 @@ export async function video(take: Take, part: (done: number) => void): Promise<{
     return { blob: new Blob(chunks, { type }), ext: type.startsWith("video/mp4") ? "mp4" : "webm" };
   } finally {
     s.player.free();
+  }
+}
+
+/** The frame shown, as text: the piece in one ink, as a <pre> shows it. */
+export async function text(take: Take): Promise<string> {
+  const s = await setup({ ...take, mono: true });
+  try {
+    if (s.meta.clock) s.player.set_clock(Date.now(), -new Date().getTimezoneOffset());
+    s.player.frame(take.time, take.paper);
+    return s.player.text() + "\n";
+  } finally {
+    s.player.free();
+  }
+}
+
+/**
+ * The frame shown as text with 24-bit colour escapes (ESC [38;2;r;g;b m for a
+ * cell's ink, 48;2 for what is behind it): `cat piece.ans` in a terminal shows
+ * it in colour. A piece without a palette, or in one ink, is plain text.
+ */
+export async function ansi(take: Take): Promise<string> {
+  const { player, exports } = await make(take.slug, take.options);
+  try {
+    const meta = JSON.parse(player.meta_json()) as Meta;
+    const { cols, rows, palette } = meta;
+    const colour = palette !== null && !take.mono;
+    player.set_mono(!colour);
+    if (meta.clock) player.set_clock(Date.now(), -new Date().getTimezoneOffset());
+    player.frame(take.time, colour && meta.ground ? !dark(meta.ground) : take.paper);
+    if (!colour) return player.text() + "\n";
+    const n = cols * rows;
+    const cells = new Uint32Array(exports.memory.buffer, player.cells_ptr(), n);
+    const colors = new Uint8Array(exports.memory.buffer, player.colors_ptr(), n);
+    const backs = new Uint8Array(exports.memory.buffer, player.backs_ptr(), n);
+    const sgr = (layer: 38 | 48, hex: string) => `\x1b[${layer};2;${[1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(";")}m`;
+    let out = "";
+    for (let r = 0; r < rows; r++) {
+      let fg = "", bg = "";
+      for (let c = 0; c < cols; c++) {
+        const i = r * cols + c;
+        if (cells[i] === WIDE_TAIL) continue;
+        const back = backs[i] !== NO_BACK ? palette![backs[i]!]! : (meta.ground ?? "");
+        const ink = palette![colors[i]!] ?? palette![0]!;
+        if (back && back !== bg) (out += sgr(48, back)), (bg = back);
+        if (cells[i] !== 0x20 && ink !== fg) (out += sgr(38, ink)), (fg = ink);
+        out += String.fromCodePoint(cells[i]!);
+      }
+      out += "\x1b[0m\n";
+    }
+    return out;
+  } finally {
+    player.free();
   }
 }
 

@@ -226,7 +226,17 @@ update msg model =
                     ( model, Cmd.none )
 
         Answer value ->
-            ( D.decodeValue answerDecoder value |> Result.map (\f -> f model) |> Result.withDefault model, Cmd.none )
+            let
+                next =
+                    D.decodeValue answerDecoder value |> Result.map (\f -> f model) |> Result.withDefault model
+            in
+            ( next
+            , if next.copied == Just "text" && model.copied /= Just "text" then
+                Process.sleep 1500 |> Task.perform (\_ -> ClearCopied "text")
+
+              else
+                Cmd.none
+            )
 
         NoOp ->
             ( model, Cmd.none )
@@ -239,7 +249,19 @@ answerDecoder =
     D.oneOf
         [ D.field "time" D.float |> D.map (\t m -> { m | held = Just t })
         , D.map2 (\kind done m -> { m | making = Just ( kind, done ) }) (D.field "making" D.string) (D.field "done" D.float)
-        , D.field "made" D.string |> D.map (\_ m -> { m | making = Nothing })
+        , D.field "made" D.string
+            |> D.map
+                (\kind m ->
+                    { m
+                        | making = Nothing
+                        , copied =
+                            if kind == "text" then
+                                Just "text"
+
+                            else
+                                m.copied
+                    }
+                )
         , D.field "failed" D.string |> D.map (\kind m -> { m | making = Nothing, failed = Just kind })
         ]
 
@@ -561,8 +583,10 @@ playback model m =
             )
 
 
-{-| A file of the piece: one frame as a PNG, or a loop as video or a GIF, of
-what the page shows (its options, one ink, paper), from the frame on screen.
+{-| A file of the piece: one frame as a PNG, as text (.txt) or as text in
+colour for a terminal (.ans), or a loop as video or a GIF, of what the page
+shows (its options, one ink, paper), from the frame on screen. And the frame
+as text, copied.
 -}
 downloads : Model -> Html Msg
 downloads model =
@@ -587,7 +611,24 @@ downloads model =
                     )
                 ]
     in
-    div [ class "links" ] [ span [ class "label" ] [ text "download" ], kind "png", kind "video", kind "gif" ]
+    div []
+        [ div [ class "links" ] [ span [ class "label" ] [ text "download" ], kind "png", kind "video", kind "gif", kind "txt", kind "ansi" ]
+        , div [ class "links" ]
+            [ span [ class "label" ] [ text "copy" ]
+            , button [ class "button", A.type_ "button", onClick (Download "text"), A.disabled (model.making /= Nothing) ]
+                [ text
+                    (if model.making == Just ( "text", 0 ) then
+                        "[copying]"
+
+                     else if model.copied == Just "text" then
+                        "[copied]"
+
+                     else
+                        "[text]"
+                    )
+                ]
+            ]
+        ]
 
 
 {-| Seconds to two places: "3.07 s".
