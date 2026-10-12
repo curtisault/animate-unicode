@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/cards.mjs",
     "preview": "vite preview",
     "test": "elm-test",
     "typecheck": "tsc -p tsconfig.json --noEmit"
@@ -15,6 +15,7 @@
     "unicel": "*"
   },
   "devDependencies": {
+    "@napi-rs/canvas": "1.0.11",
     "@types/node": "^24.19.1",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",

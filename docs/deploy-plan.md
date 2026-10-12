@@ -25,6 +25,7 @@ Already in the repository:
 | Size gate | `mise run size` | Fails past 500 KB gzipped (`WASM_GZ_LIMIT` overrides) and writes the line to the GitHub step summary. 64.6 KB gz with 11 pieces. |
 | CI | `scripts/signoff.sh` (`mise run signoff`) | Local, since 2026-10-11: GitHub's runners are 3–5× slower than the owner's machine, so the contract's time budgets failed there. For each open pull request's head commit: `npm ci`, then `mise run lint`, `test`, `build`, `size`, and a `signoff` commit status on GitHub. `.github/workflows/ci.yml` is gone and the workflow disabled. |
 | Font | `web/fonts/` | Found next to the shell with `new URL("../fonts/…", import.meta.url)`, so bundlers copy it. Rebuilt only by `mise run build:font`, never in CI. |
+| Share cards | `site/scripts/cards.mjs`, run by `npm run build` in site/ | A 1200×630 PNG a piece in `dist/og/` and a `<slug>.html` carrying its Open Graph and Twitter tags (previewers read those without running the Elm app). Drawn in Node from web/pkg with the shell's `paint()` on @napi-rs/canvas, about 7 s for every piece. **Set `SITE_URL`** (the site's address) at build: the cards' links must be absolute for previewers, and are relative without it. |
 
 Still open:
 
