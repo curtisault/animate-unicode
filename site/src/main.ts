@@ -25,7 +25,7 @@ const dark = chosen ? chosen === "dark" : matchMedia("(prefers-color-scheme: dar
 
 const app = Elm.Main.init({
   node: document.getElementById("app"),
-  flags: { pieces, sizes, dark },
+  flags: { pieces, sizes, dark, origin: location.origin },
 });
 
 app.ports.theme?.subscribe((value) => {

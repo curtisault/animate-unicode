@@ -77,6 +77,9 @@ type alias Model =
     -- Each category module's gzipped size in bytes (none in a dev build), and the theme.
     , sizes : Dict.Dict String Int
     , dark : Bool
+
+    -- Where the site is served from, for links to share: "https://unicel.example".
+    , origin : String
     }
 
 
@@ -95,6 +98,7 @@ init flags url key =
       , tab = "html"
       , sizes = D.decodeValue (D.field "sizes" (D.dict D.int)) flags |> Result.withDefault Dict.empty
       , dark = D.decodeValue (D.field "dark" D.bool) flags |> Result.withDefault False
+      , origin = D.decodeValue (D.field "origin" D.string) flags |> Result.withDefault ""
       }
     , tidy key url
     )
@@ -547,6 +551,7 @@ piecePage model pieces m =
     , well m { big = True, mono = model.mono, paper = model.paper, options = overrides, held = model.held }
     , playback model m
     , downloads model
+    , share model m
     ]
         ++ optionsBlock model fields
         ++ [ usage model m overrides, pager pieces m ]
@@ -709,6 +714,34 @@ downloads model =
                         "[text]"
                     )
                 ]
+            ]
+        ]
+
+
+{-| Links to post the piece's page, after ascii.rest's: X and LinkedIn's
+share pages (which read the page's card), and the link itself, copied.
+-}
+share : Model -> Meta -> Html Msg
+share model m =
+    let
+        link =
+            model.origin ++ "/" ++ m.slug
+
+        words =
+            m.name ++ ": " ++ m.note
+    in
+    div [ class "links" ]
+        [ span [ class "label" ] [ text "share" ]
+        , a [ href ("https://x.com/intent/post?text=" ++ Url.percentEncode words ++ "&url=" ++ Url.percentEncode link), A.target "_blank", A.rel "noopener" ] [ text "[post on x]" ]
+        , a [ href ("https://www.linkedin.com/sharing/share-offsite/?url=" ++ Url.percentEncode link), A.target "_blank", A.rel "noopener" ] [ text "[post on linkedin]" ]
+        , button [ class "button", A.type_ "button", onClick (Copy "link" link) ]
+            [ text
+                (if model.copied == Just "link" then
+                    "[copied]"
+
+                 else
+                    "[copy link]"
+                )
             ]
         ]
 
