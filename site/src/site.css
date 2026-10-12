@@ -16,8 +16,9 @@
   color-scheme: light;
 }
 
+/* Dark: the system's choice unless the reader chose light, or the reader's. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #131518;
     --ink: #e8ebef;
     --text: #c3c9d1;
@@ -27,6 +28,17 @@
     --bad: #f2867c;
     color-scheme: dark;
   }
+}
+
+:root[data-theme="dark"] {
+  --bg: #131518;
+  --ink: #e8ebef;
+  --text: #c3c9d1;
+  --muted: #8c95a1;
+  --well: #1a1d21;
+  --rule: #262a2f;
+  --bad: #f2867c;
+  color-scheme: dark;
 }
 
 *,
@@ -279,6 +291,85 @@ header h1 {
   gap: 1.25rem;
   margin-top: 1.25rem;
   min-height: 1.5em;
+}
+
+/* Along the top of every page: docs, github, the theme. */
+
+.topbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1.25rem;
+  margin: -0.5rem 0 1.5rem;
+}
+
+.topbar a {
+  text-decoration: none;
+}
+
+.topbar .button {
+  color: var(--ink);
+}
+
+/* Rows of links under the piece: download, share. */
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 1rem;
+  margin-top: 0.5rem;
+}
+
+.links .label {
+  min-width: 6rem;
+  color: var(--muted);
+}
+
+.links a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.links a:hover {
+  color: var(--ink);
+}
+
+.button:disabled {
+  cursor: progress;
+}
+
+/* "use it": a tab for each way. */
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.5rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.tabs .current {
+  color: var(--ink);
+}
+
+/* Under the piece: pause, and scrub while paused. */
+
+.playback {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  color: var(--muted);
+}
+
+.playback input[type="range"] {
+  flex: 1;
+  max-width: 28rem;
+  accent-color: var(--ink);
+}
+
+.playback .time {
+  min-width: 6ch;
+  font-variant-numeric: tabular-nums;
 }
 
 .toggle {

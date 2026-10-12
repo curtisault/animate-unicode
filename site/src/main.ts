@@ -7,16 +7,95 @@
 import "unicel/element";
 import { pieces } from "unicel";
 import { Elm } from "./Main.elm";
+import { ansi, gif, png, save, svg, text, video, type Take } from "./exports";
+
+// Each category module's gzipped size, from `mise run build:wasm`; none in a dev build.
+const sizes = Object.values(import.meta.glob<Record<string, number>>("../../web/pkg/sizes.json", { eager: true, import: "default" }))[0] ?? {};
+
+// The theme: the reader's choice, kept, or the system's.
+const chosen = (() => {
+  try {
+    return localStorage.getItem("theme");
+  } catch {
+    return null;
+  }
+})();
+if (chosen === "light" || chosen === "dark") document.documentElement.dataset.theme = chosen;
+const dark = chosen ? chosen === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
 
 const app = Elm.Main.init({
   node: document.getElementById("app"),
-  flags: { pieces },
+  flags: { pieces, sizes, dark, origin: location.origin },
+});
+
+app.ports.theme?.subscribe((value) => {
+  const theme = String(value);
+  document.documentElement.dataset.theme = theme;
+  try {
+    localStorage.setItem("theme", theme);
+  } catch {
+    // a private window: the choice lasts the visit
+  }
 });
 
 // The copy buttons: Elm has no clipboard of its own.
 app.ports.copy?.subscribe((text) => {
   navigator.clipboard?.writeText(String(text)).catch(() => {});
 });
+
+/** The piece the page is about: the big one in its well. */
+const big = () => document.querySelector<HTMLElement & { currentTime?: number }>(".well.big unicel-art");
+
+interface Ask {
+  ask: "time" | "download";
+  kind?: "png" | "svg" | "video" | "gif" | "txt" | "ansi" | "text";
+  slug?: string;
+  options?: string;
+  mono?: boolean;
+  paper?: boolean;
+  time?: number | null;
+}
+
+// What Elm asks of the page: the big piece's play time, to pause it there,
+// and a file of it.
+app.ports.request?.subscribe((value) => {
+  const ask = value as Ask;
+  if (ask.ask === "time") app.ports.answer?.send({ time: big()?.currentTime ?? 0 });
+  if (ask.ask === "download") void download(ask);
+});
+
+async function download(ask: Ask) {
+  const kind = ask.kind!;
+  const well = document.querySelector(".well.big");
+  const style = well ? getComputedStyle(well) : null;
+  const take: Take = {
+    slug: ask.slug!,
+    options: ask.options ?? "",
+    mono: ask.mono ?? false,
+    paper: ask.paper ?? false,
+    ink: getComputedStyle(big() ?? document.body).color,
+    well: style?.backgroundColor ?? "#fff",
+    time: ask.time ?? big()?.currentTime ?? 0,
+  };
+  const part = (done: number) => app.ports.answer?.send({ making: kind, done });
+  try {
+    if (kind === "png") save(await png(take), `${take.slug}.png`);
+    if (kind === "svg") save(new Blob([await svg(take)], { type: "image/svg+xml" }), `${take.slug}.svg`);
+    if (kind === "txt") save(new Blob([await text(take)], { type: "text/plain;charset=utf-8" }), `${take.slug}.txt`);
+    if (kind === "ansi") save(new Blob([await ansi(take)], { type: "text/plain;charset=utf-8" }), `${take.slug}.ans`);
+    // "copy text": the frame to the clipboard, not a file.
+    if (kind === "text") await navigator.clipboard.writeText(await text(take));
+    if (kind === "gif") save(await gif(take, part), `${take.slug}.gif`);
+    if (kind === "video") {
+      const { blob, ext } = await video(take, part);
+      save(blob, `${take.slug}.${ext}`);
+    }
+    app.ports.answer?.send({ made: kind });
+  } catch (error) {
+    console.error(`could not make the ${kind} of ${take.slug}:`, error);
+    app.ports.answer?.send({ failed: kind });
+  }
+}
 
 // Dev only (Vite drops this from production builds): `debugPanic()` in the
 // browser console adds a <unicel-art> playing a deliberately broken piece. It

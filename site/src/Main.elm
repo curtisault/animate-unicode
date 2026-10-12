@@ -19,6 +19,7 @@ import Html.Attributes as A exposing (attribute, class, classList, href)
 import Html.Events exposing (onCheck, onClick, onInput)
 import Html.Keyed as Keyed
 import Json.Decode as D
+import Json.Encode as E
 import Meta exposing (Meta)
 import Options
 import Process
@@ -30,6 +31,24 @@ import Url exposing (Url)
 {-| Text for the clipboard; main.ts hands it to `navigator.clipboard`.
 -}
 port copy : String -> Cmd msg
+
+
+{-| The page's theme, "light" or "dark": main.ts sets it on <html> and keeps it.
+-}
+port theme : String -> Cmd msg
+
+
+{-| Asks main.ts for something only the page's script can do: `{ ask: "time" }`
+reads the big piece's play time; `{ ask: "download", kind, slug, options, mono,
+paper, time }` makes a file of the piece and saves it.
+-}
+port request : E.Value -> Cmd msg
+
+
+{-| main.ts's answers: `{ time: seconds }`, and while a download is made
+`{ making: kind, done: 0 to 1 }`, then `{ made: kind }` or `{ failed: kind }`.
+-}
+port answer : (D.Value -> msg) -> Sub msg
 
 
 
@@ -44,6 +63,23 @@ type alias Model =
     , mono : Bool
     , paper : Bool
     , copied : Maybe String
+
+    -- The big piece held on one frame, at this many seconds; Nothing while it plays.
+    , held : Maybe Float
+
+    -- A download being made: its kind, and how far along it is (0 to 1).
+    , making : Maybe ( String, Float )
+    , failed : Maybe String
+
+    -- The way to use it shown under "use it": html, react, astro, typescript or terminal.
+    , tab : String
+
+    -- Each category module's gzipped size in bytes (none in a dev build), and the theme.
+    , sizes : Dict.Dict String Int
+    , dark : Bool
+
+    -- Where the site is served from, for links to share: "https://unicel.example".
+    , origin : String
     }
 
 
@@ -56,6 +92,13 @@ init flags url key =
       , mono = False
       , paper = False
       , copied = Nothing
+      , held = Nothing
+      , making = Nothing
+      , failed = Nothing
+      , tab = "html"
+      , sizes = D.decodeValue (D.field "sizes" (D.dict D.int)) flags |> Result.withDefault Dict.empty
+      , dark = D.decodeValue (D.field "dark" D.bool) flags |> Result.withDefault False
+      , origin = D.decodeValue (D.field "origin" D.string) flags |> Result.withDefault ""
       }
     , tidy key url
     )
@@ -114,6 +157,13 @@ type Msg
     | SetPaper Bool
     | Copy String String
     | ClearCopied String
+    | Pause
+    | Play
+    | Scrub String
+    | Download String
+    | SetTab String
+    | ToggleTheme
+    | Answer D.Value
     | NoOp
 
 
@@ -136,7 +186,7 @@ update msg model =
                         model
 
                     else
-                        { model | route = route, edits = Dict.empty, mono = False, paper = False }
+                        { model | route = route, edits = Dict.empty, mono = False, paper = False, held = Nothing, failed = Nothing }
             in
             ( fresh, Cmd.batch [ tidy model.key url, scrollTo url.fragment ] )
 
@@ -162,8 +212,105 @@ update msg model =
             else
                 ( model, Cmd.none )
 
+        Pause ->
+            ( model, request (E.object [ ( "ask", E.string "time" ) ]) )
+
+        Play ->
+            ( { model | held = Nothing }, Cmd.none )
+
+        Scrub value ->
+            case String.toFloat value of
+                Just t ->
+                    ( { model | held = Just t }, Cmd.none )
+
+                Nothing ->
+                    ( model, Cmd.none )
+
+        Download kind ->
+            case ( model.making, model.route, model.pieces ) of
+                ( Nothing, Route.Piece slug, Ok pieces ) ->
+                    ( { model | making = Just ( kind, 0 ), failed = Nothing }
+                    , request
+                        (E.object
+                            [ ( "ask", E.string "download" )
+                            , ( "kind", E.string kind )
+                            , ( "slug", E.string slug )
+                            , ( "options", E.string (find slug pieces |> Maybe.andThen (overridesOf model) |> Maybe.withDefault "") )
+                            , ( "mono", E.bool model.mono )
+                            , ( "paper", E.bool model.paper )
+                            , ( "time", model.held |> Maybe.map E.float |> Maybe.withDefault E.null )
+                            ]
+                        )
+                    )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        SetTab name ->
+            ( { model | tab = name }, Cmd.none )
+
+        ToggleTheme ->
+            ( { model | dark = not model.dark }
+            , theme
+                (if model.dark then
+                    "light"
+
+                 else
+                    "dark"
+                )
+            )
+
+        Answer value ->
+            let
+                next =
+                    D.decodeValue answerDecoder value |> Result.map (\f -> f model) |> Result.withDefault model
+            in
+            ( next
+            , if next.copied == Just "text" && model.copied /= Just "text" then
+                Process.sleep 1500 |> Task.perform (\_ -> ClearCopied "text")
+
+              else
+                Cmd.none
+            )
+
         NoOp ->
             ( model, Cmd.none )
+
+
+{-| What main.ts answered, as a change to the model.
+-}
+answerDecoder : D.Decoder (Model -> Model)
+answerDecoder =
+    D.oneOf
+        [ D.field "time" D.float |> D.map (\t m -> { m | held = Just t })
+        , D.map2 (\kind done m -> { m | making = Just ( kind, done ) }) (D.field "making" D.string) (D.field "done" D.float)
+        , D.field "made" D.string
+            |> D.map
+                (\kind m ->
+                    { m
+                        | making = Nothing
+                        , copied =
+                            if kind == "text" then
+                                Just "text"
+
+                            else
+                                m.copied
+                    }
+                )
+        , D.field "failed" D.string |> D.map (\kind m -> { m | making = Nothing, failed = Just kind })
+        ]
+
+
+{-| The JSON a piece's option edits make, if any.
+-}
+overridesOf : Model -> Meta -> Maybe String
+overridesOf model m =
+    case Maybe.map Options.defaults m.options of
+        Just (Ok fs) ->
+            Options.overrides fs model.edits
+
+        _ ->
+            Nothing
 
 
 {-| After a page change: to the fragment's element, or the top.
@@ -204,7 +351,7 @@ view model =
                     page model pieces
             in
             { title = title
-            , body = [ div [ class "layout" ] [ sidebar model.route pieces, main_ [ class "main" ] content ] ]
+            , body = [ div [ class "layout" ] [ sidebar model.route pieces, main_ [ class "main" ] (topbar model :: content) ] ]
             }
 
 
@@ -224,6 +371,32 @@ page model pieces =
 
         Route.NotFound ->
             ( "not found · unicel", notFound Nothing )
+
+
+{-| The repository, where the docs (its README) and the issues are.
+-}
+repository : String
+repository =
+    "https://github.com/curtisault/animate-unicode"
+
+
+{-| Along the top of every page: the docs, the code, and the theme.
+-}
+topbar : Model -> Html Msg
+topbar model =
+    nav [ class "topbar", attribute "aria-label" "Site" ]
+        [ a [ href (repository ++ "#readme") ] [ text "[docs]" ]
+        , a [ href repository ] [ text "[github]" ]
+        , button [ class "button", A.type_ "button", onClick ToggleTheme, A.title "the page's colours" ]
+            [ text
+                (if model.dark then
+                    "[light]"
+
+                 else
+                    "[dark]"
+                )
+            ]
+        ]
 
 
 find : String -> List Meta -> Maybe Meta
@@ -285,7 +458,7 @@ index pieces =
 
         card m =
             a [ class "card", href ("/" ++ m.slug) ]
-                [ well m { big = False, mono = False, paper = False, options = Nothing }
+                [ well m { big = False, mono = False, paper = False, options = Nothing, held = Nothing }
                 , span [ class "name" ] [ text m.name ]
                 , span [ class "note" ] [ text m.note ]
                 ]
@@ -307,6 +480,7 @@ type alias Look =
     , mono : Bool
     , paper : Bool
     , options : Maybe String
+    , held : Maybe Float
     }
 
 
@@ -342,6 +516,13 @@ well m look =
                         Nothing ->
                             []
                    )
+                ++ (case look.held of
+                        Just t ->
+                            [ attribute "time" (String.fromFloat t) ]
+
+                        Nothing ->
+                            []
+                   )
     in
     div (classList [ ( "well", True ), ( "big", look.big ), ( "scene", scene ), ( "paper", look.paper ) ] :: ground)
         [ Keyed.node "div" [ class "art" ] [ ( m.slug, node "unicel-art" attrs [] ) ] ]
@@ -364,17 +545,20 @@ piecePage model pieces m =
     [ header []
         [ h1 [] [ text m.name ]
         , p [ class "lede" ] [ text m.note ]
-        , p [ class "facts" ] (facts m)
+        , p [ class "facts" ] (facts model m)
         ]
     , div [ class "toggles" ] (toggles model m)
-    , well m { big = True, mono = model.mono, paper = model.paper, options = overrides }
+    , well m { big = True, mono = model.mono, paper = model.paper, options = overrides, held = model.held }
+    , playback model m
+    , downloads model
+    , share model m
     ]
         ++ optionsBlock model fields
         ++ [ usage model m overrides, pager pieces m ]
 
 
-facts : Meta -> List (Html Msg)
-facts m =
+facts : Model -> Meta -> List (Html Msg)
+facts model m =
     List.filterMap identity
         [ Just (a [ href ("/#" ++ m.category) ] [ text m.category ])
         , Just (span [] [ text (String.fromInt m.cols ++ "×" ++ String.fromInt m.rows) ])
@@ -411,7 +595,32 @@ facts m =
 
           else
             Nothing
+        , Dict.get m.category model.sizes
+            |> Maybe.map (\bytes -> span [ A.title ("the " ++ m.category ++ " wasm module, gzipped: what loads for this piece") ] [ text (kilobytes bytes) ])
+        , Just
+            (a
+                [ href
+                    (repository
+                        ++ "/issues/new?title="
+                        ++ Url.percentEncode (m.slug ++ ": ")
+                        ++ "&body="
+                        ++ Url.percentEncode ("Piece: " ++ m.slug ++ "\nBrowser:\n\nWhat happened:\n")
+                    )
+                ]
+                [ text "[report a bug]" ]
+            )
         ]
+
+
+{-| Bytes as kilobytes to one place: "64.2 kB".
+-}
+kilobytes : Int -> String
+kilobytes bytes =
+    let
+        tenths =
+            round (toFloat bytes / 102.4)
+    in
+    String.fromInt (tenths // 10) ++ "." ++ String.fromInt (modBy 10 tenths) ++ " kB"
 
 
 toggles : Model -> Meta -> List (Html Msg)
@@ -428,6 +637,127 @@ toggles model m =
           else
             Nothing
         ]
+
+
+{-| Under the piece: pause it, and while paused, scrub through its first
+minute (any frame can be drawn at once: pieces are deterministic in time).
+-}
+playback : Model -> Meta -> Html Msg
+playback model m =
+    if m.fps == 0 then
+        text ""
+
+    else
+        div [ class "playback" ]
+            (case model.held of
+                Nothing ->
+                    [ button [ class "button", A.type_ "button", onClick Pause ] [ text "[pause]" ] ]
+
+                Just t ->
+                    [ button [ class "button", A.type_ "button", onClick Play ] [ text "[play]" ]
+                    , input
+                        [ A.type_ "range"
+                        , A.min "0"
+                        , A.max (String.fromFloat (max 60 (toFloat (ceiling t))))
+                        , A.step (String.fromFloat (1 / toFloat m.fps))
+                        , A.value (String.fromFloat t)
+                        , onInput Scrub
+                        , attribute "aria-label" "time"
+                        ]
+                        []
+                    , span [ class "time" ] [ text (seconds t) ]
+                    ]
+            )
+
+
+{-| A file of the piece: one frame as a PNG, as shapes (.svg), as text (.txt) or as text in
+colour for a terminal (.ans), or a loop as video or a GIF, of what the page
+shows (its options, one ink, paper), from the frame on screen. And the frame
+as text, copied.
+-}
+downloads : Model -> Html Msg
+downloads model =
+    let
+        kind name =
+            button [ class "button", A.type_ "button", onClick (Download name), A.disabled (model.making /= Nothing) ]
+                [ text
+                    (case model.making of
+                        Just ( k, done ) ->
+                            if k == name then
+                                "[" ++ name ++ " " ++ String.fromInt (round (done * 100)) ++ "%]"
+
+                            else
+                                "[" ++ name ++ "]"
+
+                        Nothing ->
+                            if model.failed == Just name then
+                                "[" ++ name ++ ": failed]"
+
+                            else
+                                "[" ++ name ++ "]"
+                    )
+                ]
+    in
+    div []
+        [ div [ class "links" ] [ span [ class "label" ] [ text "download" ], kind "png", kind "svg", kind "video", kind "gif", kind "txt", kind "ansi" ]
+        , div [ class "links" ]
+            [ span [ class "label" ] [ text "copy" ]
+            , button [ class "button", A.type_ "button", onClick (Download "text"), A.disabled (model.making /= Nothing) ]
+                [ text
+                    (if model.making == Just ( "text", 0 ) then
+                        "[copying]"
+
+                     else if model.copied == Just "text" then
+                        "[copied]"
+
+                     else
+                        "[text]"
+                    )
+                ]
+            ]
+        ]
+
+
+{-| Links to post the piece's page, after ascii.rest's: X and LinkedIn's
+share pages (which read the page's card), and the link itself, copied.
+-}
+share : Model -> Meta -> Html Msg
+share model m =
+    let
+        link =
+            model.origin ++ "/" ++ m.slug
+
+        words =
+            m.name ++ ": " ++ m.note
+    in
+    div [ class "links" ]
+        [ span [ class "label" ] [ text "share" ]
+        , a [ href ("https://x.com/intent/post?text=" ++ Url.percentEncode words ++ "&url=" ++ Url.percentEncode link), A.target "_blank", A.rel "noopener" ] [ text "[post on x]" ]
+        , a [ href ("https://www.linkedin.com/sharing/share-offsite/?url=" ++ Url.percentEncode link), A.target "_blank", A.rel "noopener" ] [ text "[post on linkedin]" ]
+        , button [ class "button", A.type_ "button", onClick (Copy "link" link) ]
+            [ text
+                (if model.copied == Just "link" then
+                    "[copied]"
+
+                 else
+                    "[copy link]"
+                )
+            ]
+        ]
+
+
+{-| Seconds to two places: "3.07 s".
+-}
+seconds : Float -> String
+seconds t =
+    let
+        hundredths =
+            round (t * 100)
+
+        frac =
+            String.padLeft 2 '0' (String.fromInt (modBy 100 hundredths))
+    in
+    String.fromInt (hundredths // 100) ++ "." ++ frac ++ " s"
 
 
 checkbox : String -> String -> Bool -> (Bool -> Msg) -> Html Msg
@@ -536,16 +866,16 @@ optionField edits ( name, default ) =
 usage : Model -> Meta -> Maybe String -> Html Msg
 usage model m overrides =
     let
-        tag =
-            "<unicel-art piece=\""
-                ++ m.slug
-                ++ "\""
-                ++ (if model.mono then
-                        " mono"
+        mono =
+            model.mono
 
-                    else
-                        ""
-                   )
+        attrs =
+            (if mono then
+                " mono"
+
+             else
+                ""
+            )
                 ++ (case overrides of
                         Just json ->
                             " options='" ++ String.replace "'" "&#39;" json ++ "'"
@@ -553,7 +883,46 @@ usage model m overrides =
                         Nothing ->
                             ""
                    )
-                ++ "></unicel-art>"
+
+        tag =
+            "<unicel-art piece=\"" ++ m.slug ++ "\"" ++ attrs ++ "></unicel-art>"
+
+        jsx =
+            "<unicel-art piece=\""
+                ++ m.slug
+                ++ "\""
+                ++ (if mono then
+                        " mono=\"\""
+
+                    else
+                        ""
+                   )
+                ++ (case overrides of
+                        Just json ->
+                            " options={" ++ quoted json ++ "}"
+
+                        Nothing ->
+                            ""
+                   )
+                ++ " />"
+
+        canvas =
+            m.palette /= Nothing && not mono
+
+        flags =
+            (if mono && m.palette /= Nothing then
+                " --mono"
+
+             else
+                ""
+            )
+                ++ (case overrides of
+                        Just json ->
+                            " --options '" ++ json ++ "'"
+
+                        Nothing ->
+                            ""
+                   )
 
         snippet id caption content =
             div [ class "snippet" ]
@@ -571,13 +940,95 @@ usage model m overrides =
                     ]
                 , pre [] [ text content ]
                 ]
+
+        panel =
+            case model.tab of
+                "react" ->
+                    [ snippet "install" "install" "npm install unicel"
+                    , snippet "react" "a component (React 19 passes attributes to custom elements as they are)" ("import \"unicel/element\";\n\nexport function Art() {\n  return " ++ jsx ++ ";\n}")
+                    ]
+
+                "astro" ->
+                    [ snippet "install" "install" "npm install unicel"
+                    , snippet "astro" "in a page or component" (tag ++ "\n\n<script>\n  import \"unicel/element\";\n</script>")
+                    ]
+
+                "typescript" ->
+                    [ snippet "install" "install" "npm install unicel"
+                    , snippet "typescript"
+                        "without the tag: play it in an element of your own"
+                        ("import { mount, player } from \"unicel\";\n\n"
+                            ++ "const { player: piece, exports } = await player(\""
+                            ++ m.slug
+                            ++ "\""
+                            ++ (case overrides of
+                                    Just json ->
+                                        ", " ++ quoted json
+
+                                    Nothing ->
+                                        ""
+                               )
+                            ++ ");\n"
+                            ++ (if canvas then
+                                    "const el = document.createElement(\"canvas\"); // in its colours\n"
+
+                                else
+                                    "const el = document.createElement(\"pre\"); // as text, in the page's ink\n"
+                               )
+                            ++ "document.body.append(el);\n"
+                            ++ "const playback = mount(el, exports, piece);\n"
+                            ++ "// playback.hold(2.5) shows the frame at 2.5 s, hold(null) plays on;\n"
+                            ++ "// playback.stop() and piece.free() when you are done with it."
+                        )
+                    ]
+
+                "terminal" ->
+                    [ snippet "cargo" "install the player" "cargo install unicel-cli"
+                    , snippet "terminal" "play it until you press a key (--seconds 5 stops on its own; unicel list names every piece)" ("unicel " ++ m.slug ++ flags)
+                    ]
+
+                _ ->
+                    [ snippet "install" "install" "npm install unicel"
+                    , snippet "import" "once, in your page's script" "import \"unicel/element\";"
+                    , snippet "tag" "where it goes" tag
+                    ]
+
+        tabButton name =
+            button
+                [ class "button"
+                , classList [ ( "current", model.tab == name ) ]
+                , A.type_ "button"
+                , attribute "role" "tab"
+                , attribute "aria-selected"
+                    (if model.tab == name then
+                        "true"
+
+                     else
+                        "false"
+                    )
+                , onClick (SetTab name)
+                ]
+                [ text
+                    (if model.tab == name then
+                        "[" ++ name ++ "]"
+
+                     else
+                        name
+                    )
+                ]
     in
     section [ class "block" ]
         [ div [ class "head" ] [ h2 [] [ text "use it" ] ]
-        , snippet "install" "install" "npm install unicel"
-        , snippet "import" "once, in your page's script" "import \"unicel/element\";"
-        , snippet "tag" "where it goes" tag
+        , div [ class "tabs", attribute "role" "tablist", attribute "aria-label" "Ways to use it" ] (List.map tabButton [ "html", "react", "astro", "typescript", "terminal" ])
+        , div [ attribute "role" "tabpanel" ] panel
         ]
+
+
+{-| A string as a JavaScript string literal.
+-}
+quoted : String -> String
+quoted s =
+    E.encode 0 (E.string s)
 
 
 pager : List Meta -> Meta -> Html Msg
@@ -660,7 +1111,7 @@ main =
         { init = init
         , view = view
         , update = update
-        , subscriptions = \_ -> Sub.none
+        , subscriptions = \_ -> answer Answer
         , onUrlRequest = LinkClicked
         , onUrlChange = UrlChanged
         }

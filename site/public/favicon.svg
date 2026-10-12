@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- A u in octant dots, two wide and four tall, on the dark ground. -->
+  <rect width="32" height="32" rx="6" fill="#131518"/>
+  <g fill="#e8ebef">
+    <rect x="8" y="5" width="6" height="16"/>
+    <rect x="18" y="5" width="6" height="16"/>
+    <rect x="8" y="21" width="16" height="6"/>
+  </g>
+</svg>
