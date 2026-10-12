@@ -26,7 +26,7 @@ with Unicode where ascii.rest uses ASCII.
 | `crates/cli` | The terminal player |
 | `web/` | The TypeScript shell: the custom element and the canvas renderer; the npm package |
 | `site/` | The Elm site (Vite) |
-| `scripts/` | `font.py` (the subset font) and `octants.py` (the octant table) |
+| `scripts/` | `font.py` (the subset font), `octants.py` (the octant table) and `logo.py` (the logos' octant art) |
 | `docs/IMPLEMENTATION_PLAN.md` | The plan, phase by phase, with what each one built |
 | `docs/ascii-rest-pieces.md` | Every ascii.rest piece, translated to Unicode: the progress tracker |
 | `docs/deploy-plan.md` | Packaging, hosting, npm and CI, still open |
@@ -39,14 +39,17 @@ mise is the only entry point (`mise tasks` lists them all):
 - `mise run test`, `mise run lint`, `mise run fmt`
 - `mise run show <slug>`: a piece's frames as text. `mise run play <slug>`: in the terminal.
 - `mise run dev`: the site, on a debug wasm build.
-- `mise run size`: fails past 500 KB of gzipped wasm.
+- `mise run size`: fails when a category's wasm module passes 150 KB gzipped
+  (225 KB for a scenes category: cities, nights, wilds, cyberpunk).
 
 ## Conventions
 
-- **A new piece:** one file in `crates/animate-unicode/src/pieces/`, one
-  registry line, then `mise run test`. It must be deterministic in `t`
+- **A new piece:** one file in its category's folder,
+  `crates/animate-unicode/src/pieces/<category>/`, one registry line in that
+  folder's `mod.rs`, then `mise run test`. It must be deterministic in `t`
   (seeded PRNG, no clock unless `meta.clock`), and it must keep within the
-  contract's size and time budgets.
+  contract's size and time budgets. Each category is its own wasm module, so
+  a piece may use shared code and its own folder, never another category's.
 - **Porting from ascii.rest:** keep the TS file's header comment and add
   "after ascii.rest's X (MIT, @bas3line)". Fixture-test whatever state is
   ported against the TypeScript. Track each piece's row in

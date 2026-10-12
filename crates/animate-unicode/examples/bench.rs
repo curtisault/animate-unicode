@@ -8,7 +8,7 @@
 //! and 30 ms worst a frame, or 10 and 40 for scenes. Native timings; wasm in a
 //! browser is typically slower.
 
-use animate_unicode::{registry, Category, Env, Grid, Options};
+use animate_unicode::{registry, Env, Grid, Options};
 use std::time::Instant;
 
 const FRAMES: u32 = 60;
@@ -26,7 +26,7 @@ fn main() {
     }
     println!("{:<24} {:>7} {:>6} {:>8} {:>8} {:>10}", "piece", "size", "cells", "avg ms", "worst ms", "budget");
     let mut over = 0;
-    for entry in registry::all().iter().filter(|e| want.is_empty() || want.iter().any(|w| w == e.meta.slug)) {
+    for entry in registry::all().filter(|e| want.is_empty() || want.iter().any(|w| w == e.meta.slug)) {
         let m = entry.meta;
         let mut piece = (entry.make)(&Options::default().with_defaults(m.options));
         let mut grid = Grid::new(m.cols, m.rows);
@@ -41,7 +41,7 @@ fn main() {
         }
         let avg = ms.iter().sum::<f64>() / ms.len() as f64;
         let worst = ms.iter().copied().fold(0.0, f64::max);
-        let (b_avg, b_worst) = if m.category == Category::Scenes { (10.0, 40.0) } else { (4.0, 30.0) };
+        let (b_avg, b_worst) = if m.category.scene() { (10.0, 40.0) } else { (4.0, 30.0) };
         let flag = if avg > b_avg || worst > b_worst {
             over += 1;
             "  OVER"

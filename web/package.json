@@ -17,8 +17,8 @@
       "default": "./dist/element.js"
     },
     "./wasm": {
-      "types": "./pkg/animate_unicode.d.ts",
-      "default": "./pkg/animate_unicode.js"
+      "types": "./pkg/modules.d.ts",
+      "default": "./pkg/modules.js"
     }
   },
   "files": [

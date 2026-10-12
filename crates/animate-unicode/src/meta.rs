@@ -7,8 +7,16 @@ use serde::Serialize;
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Category {
-    /// Large coloured pictures with a palette and a ground (up to 320 × 120).
-    Scenes,
+    /// Scenes of cities. The scenes, large coloured pictures with a palette and
+    /// a ground (up to 320 × 120), come in three categories so each is a wasm
+    /// module of its own size: cities, nights and wilds. See [`Category::scene`].
+    Cities,
+    /// Scenes of night skies.
+    Nights,
+    /// Scenes of wild places: mountains, forest, sea, plains, a reef.
+    Wilds,
+    /// Scenes of our own, not ascii.rest's: cyberpunk cities in neon and rain.
+    Cyberpunk,
     /// Geometry turning or morphing: the donut, a cube.
     Shapes,
     /// Planets, stars, orbits.
@@ -31,18 +39,27 @@ pub enum Category {
     Data,
     /// Lettering and text effects.
     Type,
-    /// Marks and wordmarks.
+    /// Language marks and wordmarks.
     Logos,
+    /// Company marks.
+    Companies,
+    /// Linux distributions' marks.
+    Distros,
 }
 
 impl Category {
     /// Sidebar order on the site, and the order of the README's table.
     pub const ALL: &'static [Category] = &[
-        Category::Scenes,
+        Category::Cities,
+        Category::Nights,
+        Category::Wilds,
+        Category::Cyberpunk,
         Category::Ui,
         Category::Data,
         Category::Type,
         Category::Logos,
+        Category::Companies,
+        Category::Distros,
         Category::Shapes,
         Category::Space,
         Category::Physics,
@@ -53,10 +70,20 @@ impl Category {
         Category::Effects,
     ];
 
+    /// True for the scenes' categories: the contract holds a scene to a
+    /// scene's sizes and budgets, and the site shows them first, as art.
+    /// (Cyberpunk is a scenes category too.)
+    pub fn scene(self) -> bool {
+        matches!(self, Category::Cities | Category::Nights | Category::Wilds | Category::Cyberpunk)
+    }
+
     /// The lowercase name used in JSON and URLs.
     pub fn slug(self) -> &'static str {
         match self {
-            Category::Scenes => "scenes",
+            Category::Cities => "cities",
+            Category::Nights => "nights",
+            Category::Wilds => "wilds",
+            Category::Cyberpunk => "cyberpunk",
             Category::Shapes => "shapes",
             Category::Space => "space",
             Category::Physics => "physics",
@@ -69,6 +96,8 @@ impl Category {
             Category::Data => "data",
             Category::Type => "type",
             Category::Logos => "logos",
+            Category::Companies => "companies",
+            Category::Distros => "distros",
         }
     }
 }

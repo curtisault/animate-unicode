@@ -1,4 +1,5 @@
-//! The frame buffer: `cols × rows` cells, each a code point and a palette index.
+//! The frame buffer: `cols × rows` cells, each a code point, a palette index
+//! for its ink, and optionally a palette index for the colour behind it.
 //!
 //! Cells are `u32` code points rather than a string so that an astral glyph
 //! (sextants at U+1FB00, say) is one cell like any other, and so JS can read
@@ -12,7 +13,11 @@ pub const BLANK: u32 = 0x20;
 /// glyph; renderers skip this one. Never a real code point.
 pub const WIDE_TAIL: u32 = 0;
 
-/// A frame: `cols × rows` cells, each a code point and a palette index.
+/// No colour behind a cell: the piece's ground, or the page, shows through.
+pub const NO_BACK: u8 = 255;
+
+/// A frame: `cols × rows` cells, each a code point, a palette index, and a
+/// palette index for the colour behind it ([`NO_BACK`] for none).
 ///
 /// Every drawing method clips, so shapes may overhang the edges.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -21,13 +26,14 @@ pub struct Grid {
     rows: usize,
     cells: Vec<u32>,
     colors: Vec<u8>,
+    backs: Vec<u8>,
 }
 
 impl Grid {
-    /// A grid of spaces in colour 0. Panics on a zero size.
+    /// A grid of spaces in colour 0, with nothing behind them. Panics on a zero size.
     pub fn new(cols: usize, rows: usize) -> Self {
         assert!(cols > 0 && rows > 0, "a grid needs at least one cell");
-        Self { cols, rows, cells: vec![BLANK; cols * rows], colors: vec![0; cols * rows] }
+        Self { cols, rows, cells: vec![BLANK; cols * rows], colors: vec![0; cols * rows], backs: vec![NO_BACK; cols * rows] }
     }
 
     /// Width in cells.
@@ -40,10 +46,12 @@ impl Grid {
         self.rows
     }
 
-    /// Every cell a space in colour 0. Most pieces start a frame with this.
+    /// Every cell a space in colour 0 with nothing behind it. Most pieces
+    /// start a frame with this.
     pub fn clear(&mut self) {
         self.cells.fill(BLANK);
         self.colors.fill(0);
+        self.backs.fill(NO_BACK);
     }
 
     /// Every cell the given glyph and colour: a scene's sky, say.
@@ -125,7 +133,8 @@ impl Grid {
     /// Copies `src` onto this grid with its top-left cell at `(x, y)`: a sprite.
     ///
     /// Spaces in `src` are transparent, so a sprite's background does not
-    /// erase what is behind it. A wide glyph is copied only when both of its
+    /// erase what is behind it; a cell's back colour comes with it where it
+    /// has one. A wide glyph is copied only when both of its
     /// cells land on this grid, and a tail is never copied without its glyph.
     pub fn blit(&mut self, src: &Grid, x: i64, y: i64) {
         for sy in 0..src.rows {
@@ -146,6 +155,9 @@ impl Grid {
                 let d = self.index(dx as usize, dy as usize);
                 self.cells[d] = cp;
                 self.colors[d] = src.colors[i];
+                if src.backs[i] != NO_BACK {
+                    self.backs[d] = src.backs[i];
+                }
                 if wide {
                     self.cells[d + 1] = WIDE_TAIL;
                     self.colors[d + 1] = src.colors[i];
@@ -162,6 +174,22 @@ impl Grid {
     /// The palette index at an on-grid cell.
     pub fn color_at(&self, x: usize, y: usize) -> u8 {
         self.colors[self.index(x, y)]
+    }
+
+    /// The palette index behind an on-grid cell, or [`NO_BACK`].
+    pub fn back_at(&self, x: usize, y: usize) -> u8 {
+        self.backs[self.index(x, y)]
+    }
+
+    /// Sets the colour behind a cell, clipped like the drawing methods: a
+    /// palette index, or [`NO_BACK`] to let the ground show. With an upper half
+    /// block in the cell's own colour (`▀`), a cell is two square pixels of
+    /// any two colours. Only a canvas or a colour terminal shows it.
+    pub fn set_back(&mut self, x: i64, y: i64, color: u8) {
+        if self.in_bounds(x, y) {
+            let i = self.index(x as usize, y as usize);
+            self.backs[i] = color;
+        }
     }
 
     /// Row-major code points, `WIDE_TAIL` included: what the wasm shell reads.
@@ -189,6 +217,17 @@ impl Grid {
     /// The palette indices for a hot loop, parallel to `cells_mut`.
     pub fn colors_mut(&mut self) -> &mut [u8] {
         &mut self.colors
+    }
+
+    /// Row-major colours behind the cells, parallel to `cells`, [`NO_BACK`]
+    /// where there is none: what the wasm shell reads.
+    pub fn backs(&self) -> &[u8] {
+        &self.backs
+    }
+
+    /// The colours behind the cells for a hot loop, parallel to `cells_mut`.
+    pub fn backs_mut(&mut self) -> &mut [u8] {
+        &mut self.backs
     }
 
     /// The frame as text: `rows` lines joined by `\n`, wide tails left out so a
@@ -236,6 +275,22 @@ pub(crate) fn bresenham(x0: i64, y0: i64, x1: i64, y1: i64, mut plot: impl FnMut
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_back_colour_clips_blits_and_clears() {
+        let mut g = Grid::new(3, 2);
+        assert!(g.backs().iter().all(|&b| b == NO_BACK));
+        g.set(1, 1, '▀', 4);
+        g.set_back(1, 1, 7);
+        g.set_back(9, 9, 7); // off the grid: ignored
+        assert_eq!((g.color_at(1, 1), g.back_at(1, 1)), (4, 7));
+        let mut h = Grid::new(3, 2);
+        h.set_back(0, 0, 2);
+        h.blit(&g, -1, -1); // g's (1, 1) lands on h's (0, 0)
+        assert_eq!((char::from_u32(h.get(0, 0)), h.back_at(0, 0)), (Some('▀'), 7));
+        h.clear();
+        assert_eq!(h.back_at(0, 0), NO_BACK);
+    }
 
     #[test]
     fn text_has_rows_lines_of_cols_glyphs() {

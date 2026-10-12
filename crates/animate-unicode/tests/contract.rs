@@ -14,7 +14,7 @@
 //!
 //! `PIECE` takes a slug or a comma-separated list.
 
-use animate_unicode::{registry, Category, Charset, Env, Grid, Options, Piece, WIDE_TAIL};
+use animate_unicode::{registry, Charset, Env, Grid, Options, Piece, NO_BACK, WIDE_TAIL};
 use std::time::Instant;
 use unicode_width::UnicodeWidthChar;
 
@@ -26,11 +26,11 @@ struct Run {
 }
 
 /// Plays a fresh instance from t = 0 in 1/fps steps, keeping the frames at the sample times.
-fn play(entry: &registry::Entry, times: &[f64], paper: bool) -> Run {
+fn play(entry: &registry::Entry, times: &[f64], paper: bool, mono: bool) -> Run {
     let meta = entry.meta;
     let mut piece: Box<dyn Piece> = (entry.make)(&Options::default().with_defaults(meta.options));
     let mut grid = Grid::new(meta.cols, meta.rows);
-    let env = Env { paper };
+    let env = Env { paper, mono, now: None };
     let step = if meta.fps > 0 { 1.0 / meta.fps as f64 } else { 0.5 };
     let end = times.iter().cloned().fold(0.0, f64::max);
     let mut frames = vec![None; times.len()];
@@ -68,11 +68,11 @@ fn allowed(charset: Charset, cp: u32) -> bool {
 
 /// The pieces to check: all of them, or those `PIECE` names.
 fn selected() -> Vec<&'static registry::Entry> {
-    let Ok(want) = std::env::var("PIECE") else { return registry::all().iter().collect() };
+    let Ok(want) = std::env::var("PIECE") else { return registry::all().collect() };
     let want: Vec<&str> = want.split(',').map(str::trim).filter(|s| !s.is_empty()).collect();
     let unknown: Vec<&&str> = want.iter().filter(|w| registry::find(w).is_none()).collect();
     assert!(unknown.is_empty(), "PIECE names no registered piece: {unknown:?} (slugs: {})", registry::slugs().join(", "));
-    registry::all().iter().filter(|e| want.contains(&e.meta.slug)).collect()
+    registry::all().filter(|e| want.contains(&e.meta.slug)).collect()
 }
 
 #[test]
@@ -96,7 +96,7 @@ fn every_piece_keeps_the_contract() {
         if m.note.is_empty() || m.note.chars().count() > 72 {
             errors.push("meta.note must be 1-72 chars".into());
         }
-        let scene = m.category == Category::Scenes;
+        let scene = m.category.scene();
         let (max_cols, max_rows) = if scene { (320, 120) } else { (80, 32) };
         if m.cols < 1 || m.cols > max_cols {
             errors.push(format!("meta.cols must be 1-{max_cols}"));
@@ -141,11 +141,13 @@ fn every_piece_keeps_the_contract() {
         }
 
         // frames
-        let run = play(entry, &SAMPLE_AT, false);
-        let run2 = play(entry, &SAMPLE_AT, false);
-        let paper = play(entry, &[0.0, 1.0], true);
-        for (k, g) in run.frames.iter().enumerate() {
-            let at = format!("t={}", SAMPLE_AT[k]);
+        let run = play(entry, &SAMPLE_AT, false, false);
+        let run2 = play(entry, &SAMPLE_AT, false, false);
+        let paper = play(entry, &[0.0, 1.0], true, false);
+        // In one ink a piece may draw something else; it is held to the same rules.
+        let mono = play(entry, &SAMPLE_AT, false, true);
+        for (k, g) in run.frames.iter().chain(&mono.frames).enumerate() {
+            let at = format!("t={}{}", SAMPLE_AT[k % SAMPLE_AT.len()], if k < SAMPLE_AT.len() { "" } else { " in one ink" });
             let text = g.text();
             if text.lines().count() != m.rows {
                 errors.push(format!("{at}: {} lines, meta.rows is {}", text.lines().count(), m.rows));
@@ -182,15 +184,23 @@ fn every_piece_keeps_the_contract() {
                 if let Some(bad) = g.colors().iter().position(|&c| c as usize >= p.len()) {
                     errors.push(format!("{at}: color[{bad}] is past the {}-colour palette", p.len()));
                 }
+                if let Some(bad) = g.backs().iter().position(|&b| b != NO_BACK && b as usize >= p.len()) {
+                    errors.push(format!("{at}: back[{bad}] is past the {}-colour palette", p.len()));
+                }
+            } else if g.backs().iter().any(|&b| b != NO_BACK) {
+                errors.push(format!("{at}: a back colour with no palette"));
             }
         }
         let f0 = &run.frames[0];
-        let ink = f0.cells().iter().filter(|&&c| c != 0x20 && c != WIDE_TAIL).count();
         let cells = (m.cols * m.rows) as f64;
-        if (ink as f64) / cells < 0.02 && ink < 3 {
-            errors.push("first frame is nearly empty (frame 0 should be a good still)".into());
+        for f in [f0, &mono.frames[0]] {
+            let ink = f.cells().iter().filter(|&&c| c != 0x20 && c != WIDE_TAIL).count();
+            if (ink as f64) / cells < 0.02 && ink < 3 {
+                errors.push("first frame is nearly empty (frame 0 should be a good still)".into());
+            }
         }
-        let mut distinct: Vec<&[u32]> = run.frames.iter().map(|g| g.cells()).collect();
+        // A frame differs in its glyphs or in its colours: a sheen of colour is motion too.
+        let mut distinct: Vec<(&[u32], &[u8], &[u8])> = run.frames.iter().map(|g| (g.cells(), g.colors(), g.backs())).collect();
         distinct.sort_unstable();
         distinct.dedup();
         if m.fps > 0 && distinct.len() < 3 {
@@ -259,4 +269,86 @@ fn box_frames_matches_the_typescript_original() {
     let mut grid = Grid::new(meta.cols, meta.rows);
     piece.frame(0.0, &Env::default(), &mut grid);
     assert_eq!(grid.text(), include_str!("fixtures/box-frames.txt").trim_end_matches('\n'));
+}
+
+/// dividers against ascii.rest's dividers.ts: `fixtures/dividers.txt` is its
+/// one frame, captured with `node --experimental-strip-types` in ../ascii.
+/// The gradient is colour only, so the text must match exactly.
+#[test]
+fn dividers_match_the_typescript_original() {
+    let (meta, mut piece) = registry::make("dividers", "").unwrap();
+    let mut grid = Grid::new(meta.cols, meta.rows);
+    piece.frame(0.0, &Env::default(), &mut grid);
+    assert_eq!(grid.text(), include_str!("fixtures/dividers.txt").trim_end_matches('\n'));
+}
+
+/// candlesticks against ascii.rest's candlesticks.ts: the same seeded prices,
+/// so the same chart, cell for cell, at t = 0, 1.3 and 7.7 (frames captured
+/// with node in ../ascii). The colours are this port's own.
+#[test]
+fn candlesticks_match_the_typescript_original() {
+    let fixture = include_str!("fixtures/candlesticks.txt");
+    let (meta, mut piece) = registry::make("candlesticks", "").unwrap();
+    let mut grid = Grid::new(meta.cols, meta.rows);
+    for block in fixture.split("\n\n") {
+        let (head, body) = block.split_once('\n').unwrap();
+        let t: f64 = head.strip_prefix("t=").unwrap().parse().unwrap();
+        piece.frame(t, &Env::default(), &mut grid);
+        assert_eq!(grid.text(), body.trim_end_matches('\n'), "candlesticks at t={t}");
+    }
+}
+
+/// equalizer against ascii.rest's equalizer.ts: the same loop and analyser,
+/// so the same bars and caps at t = 0, 1.3 and 7.7, played in that order
+/// (frames captured with node in ../ascii). The colours are this port's own.
+#[test]
+fn equalizer_matches_the_typescript_original() {
+    let fixture = include_str!("fixtures/equalizer.txt");
+    let (meta, mut piece) = registry::make("equalizer", "").unwrap();
+    let mut grid = Grid::new(meta.cols, meta.rows);
+    for block in fixture.split("\n\n") {
+        let (head, body) = block.split_once('\n').unwrap();
+        let t: f64 = head.strip_prefix("t=").unwrap().parse().unwrap();
+        piece.frame(t, &Env::default(), &mut grid);
+        assert_eq!(grid.text(), body.trim_end_matches('\n'), "equalizer at t={t}");
+    }
+}
+
+/// uptime bar against ascii.rest's uptime-bar.ts: the same seeded days and
+/// the same half-cell slide, at t = 0, 1.3 and 7.7 (frames captured with node
+/// in ../ascii). The colours are this port's own.
+#[test]
+fn uptime_bar_matches_the_typescript_original() {
+    let fixture = include_str!("fixtures/uptime-bar.txt");
+    let (meta, mut piece) = registry::make("uptime-bar", "").unwrap();
+    let mut grid = Grid::new(meta.cols, meta.rows);
+    for block in fixture.split("\n\n") {
+        let (head, body) = block.split_once('\n').unwrap();
+        let t: f64 = head.strip_prefix("t=").unwrap().parse().unwrap();
+        piece.frame(t, &Env::default(), &mut grid);
+        assert_eq!(grid.text(), body.trim_end_matches('\n'), "uptime bar at t={t}");
+    }
+}
+
+/// Pieces whose text is ascii.rest's exactly (the colour is this port's
+/// own), against frames of the TypeScript captured with node in ../ascii,
+/// played in order: `fixtures/<slug>.txt` holds `t=` blocks.
+#[test]
+fn text_ports_match_the_typescript() {
+    for (slug, fixture) in [
+        ("typewriter", include_str!("fixtures/typewriter.txt")),
+        ("wave-text", include_str!("fixtures/wave-text.txt")),
+        ("split-flap", include_str!("fixtures/split-flap.txt")),
+        ("morse", include_str!("fixtures/morse.txt")),
+        ("glitch", include_str!("fixtures/glitch.txt")),
+    ] {
+        let (meta, mut piece) = registry::make(slug, "").unwrap();
+        let mut grid = Grid::new(meta.cols, meta.rows);
+        for block in fixture.split("\n\n") {
+            let (head, body) = block.split_once('\n').unwrap();
+            let t: f64 = head.strip_prefix("t=").unwrap().parse().unwrap();
+            piece.frame(t, &Env::default(), &mut grid);
+            assert_eq!(grid.text(), body.trim_end_matches('\n'), "{slug} at t={t}");
+        }
+    }
 }

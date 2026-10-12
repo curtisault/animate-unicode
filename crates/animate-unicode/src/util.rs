@@ -1,5 +1,6 @@
 //! Small things most pieces want: a seeded PRNG (never `rand` from a clock:
-//! frames must be deterministic in `t`), a ramp lookup, braille encoding.
+//! frames must be deterministic in `t`), ascii.rest's own generator for exact
+//! ports, a ramp lookup, braille encoding, ordered dithering.
 
 /// xorshift64*, seeded. Cheap, good enough for art, the same on every platform.
 #[derive(Clone, Debug)]
@@ -37,6 +38,27 @@ impl Rng {
     }
 }
 
+/// mulberry32, the seeded generator ascii.rest's pieces use, bit for bit: a
+/// port that draws the same numbers places the same seeds, mazes and sparks.
+#[derive(Clone, Debug)]
+pub struct Mulberry32(u32);
+
+impl Mulberry32 {
+    /// A generator from a seed, as `mulberry32(seed)` in JavaScript.
+    pub fn new(seed: u32) -> Self {
+        Self(seed)
+    }
+
+    /// Uniform in [0, 1), the same sequence as the JavaScript.
+    pub fn next_f64(&mut self) -> f64 {
+        self.0 = self.0.wrapping_add(0x6D2B_79F5);
+        let a = self.0;
+        let mut t = (a ^ (a >> 15)).wrapping_mul(1 | a);
+        t = t.wrapping_add((t ^ (t >> 7)).wrapping_mul(61 | t)) ^ t;
+        f64::from(t ^ (t >> 14)) / 4_294_967_296.0
+    }
+}
+
 /// The glyph of a ramp (`" .:-=+*#%@"`, say) for a brightness in [0, 1],
 /// flipped for paper so dark cells stay dark on a light ground.
 pub fn ramp(ramp: &[char], v: f64, paper: bool) -> char {
@@ -70,6 +92,15 @@ pub fn smoothstep(x: f64) -> f64 {
     x * x * (3.0 - 2.0 * x)
 }
 
+/// A 4×4 Bayer matrix, the thresholds 0–15 of ordered dithering.
+pub const BAYER: [[u8; 4]; 4] = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
+
+/// Ordered dithering: whether the dot at `(x, y)` is on for a shade `v` in
+/// [0, 1]. A patch of shade `v` gets about `v` of its dots, spread evenly.
+pub fn dither(x: usize, y: usize, v: f64) -> bool {
+    v * 16.0 > f64::from(BAYER[y % 4][x % 4])
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -93,6 +124,26 @@ mod tests {
         assert_eq!(braille([2, 0, 0, 0]), '\u{2808}'); // dot 4
         assert_eq!(braille([0, 0, 0, 3]), '\u{28C0}'); // dots 7 and 8
         assert_eq!(braille([3, 3, 3, 3]), '\u{28FF}');
+    }
+
+    #[test]
+    fn mulberry32_matches_the_javascript() {
+        // From node: mulberry32(seed) called three times.
+        let want: [(u32, [f64; 3]); 3] = [
+            (7, [0.011704753153026104, 0.06195825757458806, 0.97690763277933]),
+            (0x5eed, [0.7100320369936526, 0.286336648510769, 0.9519026265479624]),
+            (1009, [0.6929896192159504, 0.6296630043070763, 0.4125610855408013]),
+        ];
+        for (seed, w) in want {
+            let mut r = Mulberry32::new(seed);
+            assert_eq!([r.next_f64(), r.next_f64(), r.next_f64()], w, "seed {seed}");
+        }
+    }
+
+    #[test]
+    fn dither_sets_a_share_of_dots_by_shade() {
+        let count = |v: f64| (0..4).flat_map(|y| (0..4).map(move |x| (x, y))).filter(|&(x, y)| dither(x, y, v)).count();
+        assert_eq!((count(0.0), count(0.5), count(1.0)), (0, 8, 16));
     }
 
     #[test]

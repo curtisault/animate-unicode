@@ -5,6 +5,9 @@
 //!     cargo run --release -q -p animate-unicode --example show -- donut
 //!     cargo run --release -q -p animate-unicode --example show -- braille-wave --paper --options '{"speed": 2}'
 //!
+//! It shows what a `<pre>` shows, the piece in one ink; `--colour` shows what
+//! it draws on a canvas instead.
+//!
 //! With no slugs it shows every piece. `mise run show donut` is the same.
 
 use animate_unicode::{registry, Env, Grid};
@@ -13,11 +16,12 @@ const SHOW_AT: [f64; 4] = [0.0, 1.0, 2.5, 5.0];
 
 fn main() {
     let mut slugs = vec![];
-    let (mut paper, mut options) = (false, String::new());
+    let (mut paper, mut colour, mut options) = (false, false, String::new());
     let mut args = std::env::args().skip(1);
     while let Some(a) = args.next() {
         match a.as_str() {
             "--paper" => paper = true,
+            "--colour" => colour = true,
             "--options" => options = args.next().unwrap_or_else(|| fail("--options needs a JSON object")),
             "-h" | "--help" => fail(""),
             s if s.starts_with('-') => fail(&format!("unknown flag {s}")),
@@ -25,12 +29,12 @@ fn main() {
         }
     }
     if slugs.is_empty() {
-        slugs = registry::all().iter().map(|e| e.meta.slug.to_owned()).collect();
+        slugs = registry::all().map(|e| e.meta.slug.to_owned()).collect();
     }
     for slug in &slugs {
         let (meta, mut piece) = registry::make(slug, &options).unwrap_or_else(|e| fail(&e.to_string()));
         let mut grid = Grid::new(meta.cols, meta.rows);
-        let env = Env { paper };
+        let env = Env { paper, mono: !colour, now: None };
         // Played from 0 in 1/fps steps, as a viewer would see it.
         let step = 1.0 / f64::from(meta.fps.max(1));
         let rule = format!("+{}+", "-".repeat(meta.cols));
@@ -58,6 +62,6 @@ fn fail(err: &str) -> ! {
     if !err.is_empty() {
         eprintln!("{err}\n");
     }
-    eprintln!("show [slug ...] [--paper] [--options '{{\"speed\": 2}}']   no slugs = every piece");
+    eprintln!("show [slug ...] [--paper] [--colour] [--options '{{\"speed\": 2}}']   no slugs = every piece");
     std::process::exit(if err.is_empty() { 0 } else { 2 });
 }

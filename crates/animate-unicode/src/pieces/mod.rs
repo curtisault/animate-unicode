@@ -1,34 +1,112 @@
-//! Every piece. To add one: a file here, a `pub mod`, and one line in REGISTRY.
-//! The contract test (`tests/contract.rs`) checks it against the rules in
-//! docs/IMPLEMENTATION_PLAN.md.
+//! Every piece, in a folder for each category. To add one: a file in its
+//! category's folder, a `pub mod` there, and one line in that folder's
+//! `REGISTRY`. A category new to the crate also gets a `pub mod` and a line in
+//! [`CATEGORIES`] here.
+//!
+//! Each category is a Cargo feature, all of them on by default, so the wasm
+//! can be built one category to a module and a page loads only the categories
+//! it shows. That is why a piece may use the crate's shared code and its own
+//! folder's pieces, never another category's: the module built for its
+//! category alone would not have them.
+//!
+//! The contract test (`tests/contract.rs`) checks every piece against the
+//! rules in docs/IMPLEMENTATION_PLAN.md.
 
 use crate::registry::Entry;
+use crate::Category;
 
-pub mod arrow_field;
-pub mod box_frames;
-pub mod braille_donut;
-pub mod braille_lissajous;
-pub mod braille_wave;
-pub mod donut;
-pub mod geometric_tiles;
-pub mod kanji_rain;
-pub mod octant_sphere;
-pub mod quadrant_fire;
-pub mod sextant_plasma;
+#[cfg(feature = "cities")]
+pub mod cities;
+#[cfg(feature = "companies")]
+pub mod companies;
+#[cfg(feature = "creatures")]
+pub mod creatures;
+#[cfg(feature = "cyberpunk")]
+pub mod cyberpunk;
+#[cfg(feature = "data")]
+pub mod data;
+#[cfg(feature = "distros")]
+pub mod distros;
+#[cfg(feature = "effects")]
+pub mod effects;
+#[cfg(feature = "generative")]
+pub mod generative;
+#[cfg(feature = "logos")]
+pub mod logos;
+#[cfg(feature = "nature")]
+pub mod nature;
+#[cfg(feature = "nights")]
+pub mod nights;
+#[cfg(feature = "objects")]
+pub mod objects;
+#[cfg(feature = "physics")]
+pub mod physics;
+#[cfg(feature = "shapes")]
+pub mod shapes;
+#[cfg(feature = "space")]
+pub mod space;
+#[cfg(feature = "type")]
+pub mod r#type;
+#[cfg(feature = "ui")]
+pub mod ui;
+#[cfg(feature = "wilds")]
+pub mod wilds;
 
-// One piece a line, so this stays the one place to see every piece.
-/// Every piece, in the order the site lists them within a category.
-#[rustfmt::skip]
-pub static REGISTRY: &[Entry] = &[
-    Entry { meta: &donut::META, make: donut::make },
-    Entry { meta: &braille_wave::META, make: braille_wave::make },
-    Entry { meta: &braille_lissajous::META, make: braille_lissajous::make },
-    Entry { meta: &sextant_plasma::META, make: sextant_plasma::make },
-    Entry { meta: &geometric_tiles::META, make: geometric_tiles::make },
-    Entry { meta: &arrow_field::META, make: arrow_field::make },
-    Entry { meta: &quadrant_fire::META, make: quadrant_fire::make },
-    Entry { meta: &kanji_rain::META, make: kanji_rain::make },
-    Entry { meta: &braille_donut::META, make: braille_donut::make },
-    Entry { meta: &octant_sphere::META, make: octant_sphere::make },
-    Entry { meta: &box_frames::META, make: box_frames::make },
+/// Every category built in, with its pieces, in the site's order ([`Category::ALL`]).
+pub static CATEGORIES: &[(Category, &[Entry])] = &[
+    #[cfg(feature = "cities")]
+    (Category::Cities, cities::REGISTRY),
+    #[cfg(feature = "nights")]
+    (Category::Nights, nights::REGISTRY),
+    #[cfg(feature = "wilds")]
+    (Category::Wilds, wilds::REGISTRY),
+    #[cfg(feature = "cyberpunk")]
+    (Category::Cyberpunk, cyberpunk::REGISTRY),
+    #[cfg(feature = "ui")]
+    (Category::Ui, ui::REGISTRY),
+    #[cfg(feature = "data")]
+    (Category::Data, data::REGISTRY),
+    #[cfg(feature = "type")]
+    (Category::Type, r#type::REGISTRY),
+    #[cfg(feature = "logos")]
+    (Category::Logos, logos::REGISTRY),
+    #[cfg(feature = "companies")]
+    (Category::Companies, companies::REGISTRY),
+    #[cfg(feature = "distros")]
+    (Category::Distros, distros::REGISTRY),
+    #[cfg(feature = "shapes")]
+    (Category::Shapes, shapes::REGISTRY),
+    #[cfg(feature = "space")]
+    (Category::Space, space::REGISTRY),
+    #[cfg(feature = "physics")]
+    (Category::Physics, physics::REGISTRY),
+    #[cfg(feature = "nature")]
+    (Category::Nature, nature::REGISTRY),
+    #[cfg(feature = "creatures")]
+    (Category::Creatures, creatures::REGISTRY),
+    #[cfg(feature = "objects")]
+    (Category::Objects, objects::REGISTRY),
+    #[cfg(feature = "generative")]
+    (Category::Generative, generative::REGISTRY),
+    #[cfg(feature = "effects")]
+    (Category::Effects, effects::REGISTRY),
 ];
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn every_piece_is_in_its_categorys_folder() {
+        for &(category, entries) in CATEGORIES {
+            for e in entries {
+                assert_eq!(e.meta.category, category, "{} is in the {} folder", e.meta.slug, category.slug());
+            }
+        }
+        let order: Vec<Category> = CATEGORIES.iter().map(|&(c, _)| c).collect();
+        let mut sorted = order.clone();
+        sorted.sort_by_key(|c| Category::ALL.iter().position(|a| a == c));
+        sorted.dedup();
+        assert_eq!(order, sorted, "CATEGORIES out of Category::ALL's order, or a category twice");
+    }
+}

@@ -3,8 +3,11 @@
 //! `cells_ptr()` and `colors_ptr()`. Nothing is copied or stringified per
 //! frame; `text()` exists for the server's first frame and for a `<pre>`.
 //!
-//! Built by `mise run build:wasm` into web/pkg with wasm-pack (`--target web`).
-//! The TS shell in web/src/mount.ts is the only consumer of this API.
+//! Built by `mise run build:wasm` into web/pkg with wasm-pack (`--target web`),
+//! once for each category of pieces (`--no-default-features --features
+//! <category>`), so a module holds only its category's pieces and a page loads
+//! only the categories it shows. The dev build holds every piece. The TS shell
+//! (web/src/wasm.ts and mount.ts) is the only consumer of this API.
 //!
 //! # Panics
 //!
@@ -33,7 +36,7 @@
 //! calling it again every frame, and the element frees a stuck player inside a
 //! `try`: freeing it throws too.
 
-use animate_unicode::{registry, Env, Grid, Meta, Piece};
+use animate_unicode::{registry, Env, Grid, Meta, Piece, Wall};
 use wasm_bindgen::prelude::*;
 
 /// Runs once when the module is instantiated: in a debug build, routes panics
@@ -53,6 +56,8 @@ pub struct Player {
     meta: &'static Meta,
     piece: Box<dyn Piece>,
     grid: Grid,
+    now: Option<Wall>,
+    mono: bool,
 }
 
 #[wasm_bindgen]
@@ -62,10 +67,16 @@ impl Player {
     pub fn new(slug: &str, options_json: &str) -> Result<Player, JsError> {
         #[cfg(feature = "debug")]
         if let Some(entry) = debug::find(slug) {
-            return Ok(Player { meta: entry.meta, piece: (entry.make)(&Default::default()), grid: Grid::new(entry.meta.cols, entry.meta.rows) });
+            return Ok(Player {
+                meta: entry.meta,
+                piece: (entry.make)(&Default::default()),
+                grid: Grid::new(entry.meta.cols, entry.meta.rows),
+                now: None,
+                mono: false,
+            });
         }
         let (meta, piece) = registry::make(slug, options_json).map_err(|e| JsError::new(&e.to_string()))?;
-        Ok(Player { meta, piece, grid: Grid::new(meta.cols, meta.rows) })
+        Ok(Player { meta, piece, grid: Grid::new(meta.cols, meta.rows), now: None, mono: false })
     }
 
     /// Frame width in cells.
@@ -90,7 +101,26 @@ impl Player {
 
     /// Draws the frame at `t` seconds into the grid.
     pub fn frame(&mut self, t: f64, paper: bool) {
-        self.piece.frame(t, &Env { paper }, &mut self.grid);
+        self.piece.frame(t, &Env { paper, mono: self.mono, now: self.now }, &mut self.grid);
+    }
+
+    /// The wall clock for the frames that follow, for a piece whose `meta.clock`
+    /// is set: `Date.now()` and minutes ahead of UTC (`-getTimezoneOffset()`).
+    /// Until it is called, such a piece shows a fixed moment.
+    pub fn set_clock(&mut self, unix_ms: f64, offset_minutes: i32) {
+        self.now = Some(Wall { unix: unix_ms / 1000.0, offset: offset_minutes });
+    }
+
+    /// Whether the frames that follow are shown in one ink (a `<pre>`) rather
+    /// than in the palette (a canvas). False until it is called.
+    pub fn set_mono(&mut self, mono: bool) {
+        self.mono = mono;
+    }
+
+    /// Start of the `cols × rows` palette indices behind the cells, 255 where
+    /// there is none. Re-read after every `frame`.
+    pub fn backs_ptr(&self) -> *const u8 {
+        self.grid.backs().as_ptr()
     }
 
     /// Start of the `cols × rows` code points in wasm memory. Re-read after
@@ -110,17 +140,17 @@ impl Player {
     }
 }
 
-/// Every piece's slug, sorted, as a JSON array.
+/// Every slug this module plays, sorted, as a JSON array.
 #[wasm_bindgen]
 pub fn slugs_json() -> String {
     let s = registry::slugs();
     format!("[{}]", s.iter().map(|x| format!("\"{x}\"")).collect::<Vec<_>>().join(","))
 }
 
-/// Every piece's `Meta`, in registry order, as a JSON array. What the site's Elm app gets as flags.
+/// The `Meta` of every piece this module plays, in registry order, as a JSON array.
 #[wasm_bindgen]
 pub fn metas_json() -> String {
-    format!("[{}]", registry::all().iter().map(|e| e.meta.to_json()).collect::<Vec<_>>().join(","))
+    format!("[{}]", registry::all().map(|e| e.meta.to_json()).collect::<Vec<_>>().join(","))
 }
 
 /// The right half of a double-width glyph in `cells`; the shell skips these cells.

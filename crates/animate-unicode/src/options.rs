@@ -78,6 +78,21 @@ impl Options {
         self.get(key).and_then(Value::as_array).and_then(|a| a.iter().map(Value::as_f64).collect::<Option<Vec<_>>>()).unwrap_or_else(|| default.to_vec())
     }
 
+    /// A list of strings, or `default` if missing, not a list, or holding
+    /// anything that is not a string.
+    pub fn list_str(&self, key: &str, default: &[&str]) -> Vec<String> {
+        self.get(key)
+            .and_then(Value::as_array)
+            .and_then(|a| a.iter().map(|v| v.as_str().map(str::to_owned)).collect::<Option<Vec<_>>>())
+            .unwrap_or_else(|| default.iter().map(|s| (*s).to_owned()).collect())
+    }
+
+    /// The raw JSON under `key`, for an option with structure the typed
+    /// getters do not cover (a list of datasets, say). The piece checks its shape.
+    pub fn json(&self, key: &str) -> Option<&Value> {
+        self.get(key)
+    }
+
     /// True if there are no options at all.
     pub fn is_empty(&self) -> bool {
         self.values.is_empty()
@@ -97,6 +112,14 @@ impl Options {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn string_lists_read_or_fall_back() {
+        let o = Options::from_json(r#"{"a": ["x", "y"], "b": ["x", 1]}"#).unwrap();
+        assert_eq!(o.list_str("a", &[]), ["x", "y"]);
+        assert_eq!(o.list_str("b", &["d"]), ["d"], "a non-string falls back");
+        assert_eq!(o.list_str("c", &["d"]), ["d"]);
+    }
 
     #[test]
     fn reads_typed_values_with_defaults() {

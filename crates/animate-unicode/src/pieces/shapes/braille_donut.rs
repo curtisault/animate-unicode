@@ -3,6 +3,7 @@
 //! the surface, the more of its dots are set. The same 40×22 cells as the
 //! ASCII donut hold an 80×88 picture, which is the resolution unicode buys.
 
+use crate::util::dither;
 use crate::{Category, Charset, Dots, Env, Grid, Meta, Options, Piece};
 use std::f64::consts::TAU;
 
@@ -22,9 +23,6 @@ pub static META: Meta = Meta {
 /// Steps around the tube and around the ring: fine enough to cover every dot.
 const TUBE: usize = 220;
 const RING: usize = 520;
-
-/// A 4×4 Bayer matrix: a dot is set when the shade beats its threshold.
-const BAYER: [[f64; 4]; 4] = [[0.0, 8.0, 2.0, 10.0], [12.0, 4.0, 14.0, 6.0], [3.0, 11.0, 1.0, 9.0], [15.0, 7.0, 13.0, 5.0]];
 
 /// The donut: sine tables for both circles, a z-buffer, a shade buffer and the dots.
 pub struct BrailleDonut {
@@ -91,7 +89,7 @@ impl Piece for BrailleDonut {
                 // A steeper curve than linear, so highlights stand out of the mid-tones.
                 let lit = 0.07 + 0.93 * s.powf(1.6);
                 let ink = if env.paper { 1.0 - lit + 0.1 } else { lit };
-                if ink * 16.0 > BAYER[y % 4][x % 4] {
+                if dither(x, y, ink) {
                     self.dots.set(x as i64, y as i64);
                 }
             }

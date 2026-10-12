@@ -1,17 +1,16 @@
 /*
- * Boots the site: loads the wasm module, defines <unicode-art>, then starts
- * Elm with every piece's Meta as flags. Elm renders the tags; the shell plays
- * them.
+ * Boots the site: defines <unicode-art>, then starts Elm with every piece's
+ * Meta as flags, from the shell's manifest, so no wasm loads before the page
+ * shows. Elm renders the tags; each tag loads its category's module as it
+ * comes near the screen, and plays it.
  */
 import "animate-unicode/element";
-import { metas_json, wasm } from "animate-unicode";
+import { pieces } from "animate-unicode";
 import { Elm } from "./Main.elm";
-
-await wasm();
 
 const app = Elm.Main.init({
   node: document.getElementById("app"),
-  flags: { pieces: JSON.parse(metas_json()) },
+  flags: { pieces },
 });
 
 // The copy buttons: Elm has no clipboard of its own.

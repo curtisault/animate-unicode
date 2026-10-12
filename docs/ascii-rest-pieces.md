@@ -22,22 +22,22 @@ are not tracked here.
 
 | category | pieces | todo | wip | built | done | covered |
 |---|---|---|---|---|---|---|
-| scenes | 15 | 15 | | | | |
-| shapes | 12 | 11 | | | | 1 |
-| space | 11 | 11 | | | | |
-| physics | 14 | 14 | | | | |
-| nature | 16 | 16 | | | | |
-| creatures | 10 | 10 | | | | |
-| objects | 14 | 14 | | | | |
-| generative | 13 | 13 | | | | |
-| effects | 8 | 6 | | | | 2 |
-| ui | 12 | 11 | 1 | | | |
-| data | 10 | 10 | | | | |
-| type | 9 | 9 | | | | |
-| logos | 28 | 28 | | | | |
-| companies | 14 | 14 | | | | |
-| distros | 23 | 23 | | | | |
-| **all** | **209** | **205** | **1** | | | **3** |
+| scenes | 15 | | | 15 | | |
+| shapes | 12 | | | 11 | | 1 |
+| space | 11 | | | 11 | | |
+| physics | 14 | | | 14 | | |
+| nature | 16 | | | 16 | | |
+| creatures | 10 | | | 10 | | |
+| objects | 14 | | | 14 | | |
+| generative | 13 | | | 13 | | |
+| effects | 8 | | | 6 | | 2 |
+| ui | 12 | | | 12 | | |
+| data | 10 | | | 10 | | |
+| type | 9 | | | 9 | | |
+| logos | 28 | | | 28 | | |
+| companies | 14 | 5 | | 9 | | |
+| distros | 23 | | | 23 | | |
+| **all** | **209** | **5** | | **201** | | **3** |
 
 Recount after changing rows:
 
@@ -56,9 +56,6 @@ Statuses, as the last cell of a row:
 - **covered: X**: an existing piece is already this one's Unicode version.
   ascii.rest's `donut` is also kept here as a byte-exact ASCII port; that one
   is the fixture for the core crate, not the translation.
-
-`box-frames` counts as wip: it is ported and fixture-tested, but not yet
-enhanced.
 
 ## What a row needs
 
@@ -90,13 +87,22 @@ enhanced.
 Some rows cannot start until the engine has more. Each of these is a small
 phase of its own, with its own branch.
 
+Already added, with the shapes (branch `pieces-shapes`):
+`subcell::ColorCanvas` (`ColorDots`, `ColorOctants`, …), a dot canvas with a
+palette index and a depth per dot. A cell takes its commonest colour;
+`draw_split` keeps only that colour's dots, and `dither_by` thins a lit surface
+by its shade. It also brought `util::dither` (4×4 Bayer) and `geom` (vectors
+and rotation matrices). The generative pieces added `util::Mulberry32`,
+ascii.rest's own generator bit for bit, so ports place the same seeds, mazes
+and particles (quadrant-fire now uses it too).
+
 | # | what | needed by | status |
 |---|---|---|---|
-| E1 | **Two colours a cell.** A background colour per cell beside the foreground: `Grid`, the wasm `Player`, the canvas renderer (fill the cell, then draw the glyph), and the CLI (`48;2;r;g;b`). Half blocks (`▀` over a different `▄`) then give two square pixels a cell, each in its own colour. The `<pre>` path has one ink, so a piece using this needs an octant-dither fallback there. | the 15 scenes, sunrise, landscape; a filled plasma | todo |
-| E2 | **Local time in `Env`.** `Env` has only `paper`. Clock pieces need the local wall time: from `Date` in the shell, the system clock in the CLI, and a fixed instant in the contract test so it stays deterministic. | analog-clock, calendar, digital-clock, landscape, sundial | todo |
-| E3 | **Categories.** ascii.rest has `companies` and `distros`; `Category` stops at `Logos`. Add the two, or fold them into `logos`. The site's sidebar groups and the CLI's `list` follow. | the 37 company and distro logos | todo |
-| E4 | **Logos from SVG.** A build script (`scripts/logo.py`, run with uvx like `font.py`) that renders each SVG and reduces it to an octant mask, choosing a wedge glyph (U+1FB3C–1FB67) where an edge cuts a cell at a slant, with a colour per cell. Its output is committed. One shared `logo` module draws any logo from that data and runs the glint or the scan line, so 65 logos cost data rather than 65 copies of the code. | logos, companies, distros | todo |
-| E5 | **Size.** 64.6 KB gz with 11 pieces, about 2.8 KB more for each further piece. The 205 still to build would add some 575 KB at that rate, well past the 500 KB gate. E4 makes logos cheaper. Before wave 3, decide whether to raise the gate or to split pieces into several wasm modules ([risk 5](IMPLEMENTATION_PLAN.md#risks-and-open-questions)). | everything after wave 2 | todo |
+| E1 | **Two colours a cell.** A background colour per cell beside the foreground: `Grid`, the wasm `Player`, the canvas renderer (fill the cell, then draw the glyph), and the CLI (`48;2;r;g;b`). Half blocks (`▀` over a different `▄`) then give two square pixels a cell, each in its own colour. The `<pre>` path has one ink, so a piece using this needs an octant-dither fallback there. | the 15 scenes, sunrise, landscape; a filled plasma | done (2026-10-09): `Grid` keeps a back colour a cell (`NO_BACK` for none), through the `Player` (`backs_ptr`), the canvas (a frame with back colours is one image of half cells, scaled up) and the CLI. `pixels::Pixels` paints two square pixels a cell as `▀` over a back colour, dithered to the palette, or octant dots in one ink. The canvas also draws octants, sextants and wedges as exact shapes, not from the font, so they tile without seams |
+| E2 | **Local time in `Env`.** `Env` has only `paper`. Clock pieces need the local wall time: from `Date` in the shell, the system clock in the CLI, and a fixed instant in the contract test so it stays deterministic. | analog-clock, calendar, digital-clock, landscape, sundial | done: `clock::Wall` and `Ticker`, `Env::now`, `Player::set_clock` (mount.ts calls it), chrono in the CLI |
+| E3 | **Categories.** ascii.rest has `companies` and `distros`; `Category` stops at `Logos`. Add the two, or fold them into `logos`. The site's sidebar groups and the CLI's `list` follow, and each new category gets its Cargo feature in both crates, which makes it its own wasm module. | the 37 company and distro logos | done (2026-10-09): `Category::Companies` and `Category::Distros`, a feature and a wasm module each, in the site's components group after the logos |
+| E4 | **Logos from SVG.** A build script (`scripts/logo.py`, run with uvx like `font.py`) that renders each SVG and reduces it to an octant mask, choosing a wedge glyph (U+1FB3C–1FB67) where an edge cuts a cell at a slant, with a colour per cell. Its output is committed. One shared `logo` module draws any logo from that data and runs the glint or the scan line, so 65 logos cost data rather than 65 copies of the code. | logos, companies, distros | done (2026-10-09): `scripts/logo.py` (`mise run build:logos`) renders each SVG with resvg, pinned by SHA-256, and picks the octant or wedge that best covers each cell's samples; where a part meets a much lighter or darker one the cell takes the colour most of it has and leaves the other bare, so thin parts (C#'s #) show as cuts. `crate::logo` passes a sheen over the art (2026-10-09: it replaced ascii.rest's glint and scan line, which read as damage, cut into the fill in three hard steps): a soft band and a bright line worked out a dot at a time, dithered between strengths with the back colour. A piece learns it is in one ink from `Env::mono` (`Player::set_mono`, the CLI's `--mono`), and then draws the plain variant, or the colour drawing with its white left bare, as ascii.rest does. Since E1 (2026-10-09), where two colours meet in a filled cell one is the glyph and the other its back colour, which halved the error against the SVGs (cpp 6.6% to 2.0%, ruby 11.3% to 4.9%) |
+| E5 | **Size.** 64.6 KB gz with 11 pieces, about 2.8 KB more for each further piece. After wave 1 (2026-10-09): 148.0 KB gz with 49 pieces, about 2.2 KB a piece since. After ui and data (2026-10-09): 213.7 KB gz with 70 pieces; those 21 cost about 3.1 KB each, the text pieces carrying their strings. After type (2026-10-09): 249.0 KB gz with 79 pieces; those 9 cost about 3.9 KB each, carrying fonts, stroke tables and Unicode's case tables (ASCII-only uppercasing would save 2 KB but mangle accented titles). The 137 still to build would add some 470 KB at wave 2's 3.4 KB a piece, to about 720 KB: well past the gate. Decide before wave 3. E4 makes logos cheaper. Before wave 3, decide whether to raise the gate or to split pieces into several wasm modules ([risk 5](IMPLEMENTATION_PLAN.md#risks-and-open-questions)). | everything after wave 2 | done (2026-10-09): a wasm module per category, each a Cargo feature; 41–91 KB gz each, gated at 150 KB a module ([plan](IMPLEMENTATION_PLAN.md#decisions-already-made)) |
 
 Logo licences: devicon's SVGs are MIT, and Simple Icons' are CC0 (omarchy's
 is MIT). Five companies' marks came from their own sites: command-code,
@@ -114,10 +120,21 @@ Each wave is one branch per category, stacked.
    pieces. E2 must come first for calendar and digital-clock.
 3. **Space, nature, creatures, objects, effects** (57). Creatures and some
    objects are sprites that have to be redrawn at the higher resolution, not
-   converted. E5 is decided before this wave.
+   converted. E5 is done: each category is its own wasm module. Landscape and
+   sunrise move to wave 5: their skies need E1.
+   Built 2026-10-09: 55 pieces, every category its own module, the largest
+   (objects) 96 KB gz.
 4. **Logos, companies, distros** (65), after E3 and E4.
+   Built 2026-10-09: 60 pieces, in modules of 43 (companies) to 62 KB gz
+   (logos). The five companies drawn from their own marks (command-code,
+   databuddy, greptile, orchid, polar) wait for a licence to use them.
 5. **Scenes** (15), after E1. These are the largest: tokyo-rain alone is
    1 123 lines of TS.
+   Built 2026-10-09: the 15 scenes, landscape and sunrise. A scene is 320 × 80
+   cells of two square pixels each, ascii.rest's 200 × 100 square cells at 1.6
+   times the detail and the same shape (the plan's 200 × 100 cells would have
+   stretched them twice as tall). The scenes made one 202 KB gz module, so they
+   are three categories, cities, nights and wilds, of 84–120 KB gz each.
 
 ## Pieces
 
@@ -125,8 +142,9 @@ Each wave is one branch per category, stacked.
 the size: a braille piece shows four times the rows of dots in the same
 cells.
 
-**Scenes.** Every scene is a halftone of `· • ●` in palette colours on square
-cells (`cell: 1`), 200×100. Half blocks with two colours a cell (E1), on
+**Scenes.** Here they are three categories, cities, nights and wilds (each a
+wasm module), at 320×80 cells: see wave 5 above. In ascii.rest every scene is a
+halftone of `· • ●` in palette colours on square cells (`cell: 1`), 200×100. Half blocks with two colours a cell (E1), on
 ordinary 1:2 cells at 200×100, make that 200×200 solid pixels: twice the
 vertical resolution, with no gaps between dots. The dithering then moves to
 colour, and the shapes become solid.
@@ -138,282 +156,282 @@ carry only the source.
 
 | piece | size, fps | Unicode | enhancement | status |
 |---|---|---|---|---|
-| alpine-dawn | 200×100, 15 · colour, square cells | half blocks, two colours a cell | alpenglow sliding down the faces; the lake mirror breaks up in ripples | todo |
-| aurora-fjord | 200×100, 15 · colour, square cells | half blocks, two colours a cell | curtain folds in vertical eighth-block streaks; the cabin's window flickers | todo |
-| deep-reef | 200×100, 15 · colour, square cells | half blocks, two colours a cell | caustics wandering over the sand; fish as octant sprites, not dots | todo |
-| desert-night | 200×100, 15 · colour, square cells | half blocks, two colours a cell | stars by magnitude (· • ● ✦), meteors as braille streaks | todo |
-| earthrise | 200×100, 15 · colour, square cells | half blocks, two colours a cell | the earth as an octant globe with cloud bands; craters lit by the low sun | todo |
-| kyoto-dusk | 200×100, 15 · colour, square cells | half blocks, two colours a cell | petals drifting in braille; the lantern's light flickering on the wall | todo |
-| lantern-lake | 200×100, 15 · colour, square cells | half blocks, two colours a cell | lanterns glow and dim as they climb; their reflections break on the water | todo |
-| marine-drive | 200×100, 15 · colour, square cells | half blocks, two colours a cell | traffic lights streaming along the curve; the necklace reflected and rippling | todo |
-| misty-forest | 200×100, 15 · colour, square cells | half blocks, two colours a cell | fog layers drifting at different speeds; sunbeams dithered in octants | todo |
-| night-coast | 200×100, 15 · colour, square cells | half blocks, two colours a cell | the beam as a dithered cone through cloud; moonglade on the swell | todo |
-| ocean-sunset | 200×100, 15 · colour, square cells | half blocks, two colours a cell | the sun flattening at the horizon; glitter as braille sparkles | todo |
-| storm-plains | 200×100, 15 · colour, square cells | half blocks, two colours a cell | lightning lighting the cloud from inside; wheat waving in gust fronts | todo |
-| taj-dawn | 200×100, 15 · colour, square cells | half blocks, two colours a cell | the haze lifting over the minutes; birds crossing the pool | todo |
-| tokyo-rain | 200×100, 15 · colour, square cells | half blocks, two colours a cell | rain in braille at three depths; neon smeared in the road's reflection | todo |
-| varanasi-ghats | 200×100, 15 · colour, square cells | half blocks, two colours a cell | diyas drifting on the current; smoke from the aarti in braille | todo |
+| alpine-dawn | 200×100, 15 · colour, square cells | half blocks, two colours a cell | alpenglow sliding down the faces; the lake mirror breaks up in ripples | built: in wilds |
+| aurora-fjord | 200×100, 15 · colour, square cells | half blocks, two colours a cell | curtain folds in vertical eighth-block streaks; the cabin's window flickers | built: in nights |
+| deep-reef | 200×100, 15 · colour, square cells | half blocks, two colours a cell | caustics wandering over the sand; fish as octant sprites, not dots | built: in wilds |
+| desert-night | 200×100, 15 · colour, square cells | half blocks, two colours a cell | stars by magnitude (· • ● ✦), meteors as braille streaks | built: in nights |
+| earthrise | 200×100, 15 · colour, square cells | half blocks, two colours a cell | the earth as an octant globe with cloud bands; craters lit by the low sun | built: in nights |
+| kyoto-dusk | 200×100, 15 · colour, square cells | half blocks, two colours a cell | petals drifting in braille; the lantern's light flickering on the wall | built: in cities |
+| lantern-lake | 200×100, 15 · colour, square cells | half blocks, two colours a cell | lanterns glow and dim as they climb; their reflections break on the water | built: in nights |
+| marine-drive | 200×100, 15 · colour, square cells | half blocks, two colours a cell | traffic lights streaming along the curve; the necklace reflected and rippling | built: in cities |
+| misty-forest | 200×100, 15 · colour, square cells | half blocks, two colours a cell | fog layers drifting at different speeds; sunbeams dithered in octants | built: in wilds |
+| night-coast | 200×100, 15 · colour, square cells | half blocks, two colours a cell | the beam as a dithered cone through cloud; moonglade on the swell | built: in nights |
+| ocean-sunset | 200×100, 15 · colour, square cells | half blocks, two colours a cell | the sun flattening at the horizon; glitter as braille sparkles | built: in wilds |
+| storm-plains | 200×100, 15 · colour, square cells | half blocks, two colours a cell | lightning lighting the cloud from inside; wheat waving in gust fronts | built: in wilds |
+| taj-dawn | 200×100, 15 · colour, square cells | half blocks, two colours a cell | the haze lifting over the minutes; birds crossing the pool | built: in cities |
+| tokyo-rain | 200×100, 15 · colour, square cells | half blocks, two colours a cell | rain in braille at three depths; neon smeared in the road's reflection | built: in cities |
+| varanasi-ghats | 200×100, 15 · colour, square cells | half blocks, two colours a cell | diyas drifting on the current; smoke from the aarti in braille | built: in cities |
 
 ### shapes (12)
 
 | piece | size, fps | Unicode | enhancement | status |
 |---|---|---|---|---|
-| cube | 32×18, 24 | braille wireframe, hidden edges stippled | faces flat-shaded in octant dither between the quarter turns | todo |
-| dna-helix | 64×15, 20 | braille strands, base pairs as ─ rungs | colour by base (A T C G), the far strand dimmed | todo |
+| cube | 32×18, 24 | braille: faces dithered by their light, solid edges over them | a colour per pair of faces (red, green, blue), so each quarter turn hands one colour to the next | built |
+| dna-helix | 64×15, 20 | braille: near backbone two dots thick and clearing round itself, far one a dot thick | base pairs coloured half by half (A T C G) from a seeded sequence; dims with depth | built |
 | donut | 40×22, 30 | braille, z-buffer per dot, Bayer dither | — | covered: braille-donut |
-| glxgears | 56×31, 24 | octant fill, braille rims | the red, green and blue gears of glxgears, lit faces | todo |
-| gyroscope | 60×32, 30 | braille rings, depth-sorted per dot | a colour per gimbal; the rotor's spin shown by a moving stripe | todo |
-| heart | 52×24, 30 | octant Bayer dither | red ramp with a specular highlight that rides the beat | todo |
-| icosahedron | 46×22, 30 | braille wireframe, hidden edges dotted | faces flat-shaded in octant dither, edges kept as gaps | todo |
-| mobius-strip | 58×20, 30 | braille, z-buffer per dot, dither | a colour gradient along the strip, so the one face reads as one | todo |
-| spring | 40×28, 30 | braille coil, back coils dimmer | a shaded weight in octants and a shadow that grows as it nears | todo |
-| tesseract | 54×28, 30 | braille lines, depth by dot density | edges coloured by their w coordinate | todo |
-| torus-knot | 60×28, 30 | braille tube, z-buffer per dot, dither | a palette ramp for the lit tube | todo |
-| twisted-ring | 46×21, 30 | braille, z-buffer per dot, dither | one colour running along the face, showing it is a single face | todo |
+| glxgears | 56×31, 24 | octants; a cell keeps only the dots of the part covering most of it | glxgears' red, green and blue; lit and shadowed walls; dark walls dithered for one ink | built |
+| gyroscope | 60×32, 30 | braille, z-buffered per dot, dithered by light | gold, silver and copper gimbals round a steel rotor; two-dot gaps where parts cross | built |
+| heart | 52×24, 30 | octants, ray-marched per dot, Bayer dither | a ramp of reds with a solid pink-white glint | built |
+| icosahedron | 46×22, 30 | braille wireframe, hidden edges every third dot | edges coloured by depth, ice-white in front to deep blue behind | built |
+| mobius-strip | 58×20, 30 | braille, z-buffered per dot, dithered | a rainbow running twice round the one face, so it never jumps at the twist | built |
+| spring | 40×28, 30 | braille helix at four dots a row, stretching smoothly; front coils thick, back ones thin | a steel coil and a brass drum lit from the left | built |
+| tesseract | 54×28, 30 | braille lines, far half dotted | edges coloured by w, amber toward the 4D eye and violet away | built |
+| torus-knot | 60×28, 30 | braille, z-buffered per dot, dithered; crossings cut two dots back | a sea-glass ramp with a white glint | built |
+| twisted-ring | 46×21, 30 | braille faces dithered by light, corners as solid lines | colour runs along the one face and returns after four laps | built |
 
 ### space (11)
 
 | piece | size, fps | Unicode | enhancement | status |
 |---|---|---|---|---|
-| black-hole | 64×20, 15 | octant disk, braille photon ring | temperature colours (white, orange, red), Doppler-bright side | todo |
-| earth | 60×30, 20 | octant globe | ocean, land, ice and a dimmed night side in colour; a finer map if the size allows | todo |
-| eclipse | 64×27, 20 | octant discs, braille corona rays | the corona and the diamond ring in colour | todo |
-| galaxy | 64×26, 20 | braille stars, brightness by density | a yellow core shading to blue arms, a dark dust lane | todo |
-| moon-phases | 46×23, 15 | octant dither on the disc | maria in grey; earthshine faintly on the dark side | todo |
-| planet | 64×18, 20 | octant bands, braille ring | banded colours and the ring's shadow across the globe | todo |
-| rocket | 48×28, 20 | octant body, quadrant exhaust (quadrant-fire's spread) | a coloured flame and a smoke cloud on the pad | todo |
-| saptarishi | 64×18, 12 · options | stars as · • ● ✦ by magnitude | colour by spectral class; the asterism's lines fade in, in braille | todo |
-| solar-system | 61×29, 20 · options | braille orbits as true ellipses, ● planets | a colour per planet; Kepler periods kept | todo |
-| starfield | 64×24, 30 · options | braille streaks that lengthen with speed | warm-to-cold colour shift toward the edges | todo |
-| three-body | 65×15, 30 | braille trails that thin with age | a colour per body | todo |
+| black-hole | 64×20, 15 | a ray traced through the bent space for every octant dot, dithered; a photon ring round the shadow | the gas by temperature, white-hot at the inner edge to deep red, hotter on the side coming toward us | built |
+| earth | 60×30, 20 | an octant globe, the map blended so the coasts run smooth; land dense, sea a light texture | green and desert land by latitude, polar ice, a blue sea with the sun's glint, a dim night side, a blue rim of air | built |
+| eclipse | 64×27, 20 | the sun, moon, beads and corona sampled per octant dot | a white-gold sun darkening to orange at the limb, a pearl corona cooling to blue, pink prominences, a white diamond ring with flares | built |
+| galaxy | 64×26, 20 | braille, each dot a star shown where the light beats its own random threshold | a yellow core, blue-white arms with pink knots, brown dust lanes, white orbiting stars | built |
+| moon-phases | 46×23, 15 | octant dither on the disc, a fine terminator | grey by the ground: dark maria, bright craters and rays; a faint blue earthshine; the dark side's rim | built |
+| planet | 64×18, 20 | octants, the geometry worked out once and only the clouds turning | cream zones, brown belts, a white storm, a grey-blue pole, gold rings and a dusky inner ring, shadows both ways | built |
+| rocket | 48×28, 20 | redrawn in octants: the sprite's outline at dot resolution, moving a dot at a time; a braced lattice tower | a cylinder-shaded white rocket, a flame white to red, grey smoke lit orange by it, a red beacon | built |
+| saptarishi | 64×18, 12 · options | ● and • by magnitude; dotted braille lines; braille meteors | each star its spectral class (K orange, A white, B blue); the lines draw in round the dipper, hold and fade | built |
+| solar-system | 61×29, 20 · options | braille orbits as true ellipses with the sun at a focus, each planet placed by Kepler's equation | a colour per planet, trails that stretch at perihelion, a glowing sun | built |
+| starfield | 64×24, 30 · options | braille streaks as long as the shutter, thinning to the tail | amber ahead, cooling to blue at the edges | built |
+| three-body | 65×15, 30 | a dotted braille eight; braille trails that thin with age | red, green and blue bodies | built |
 
 ### physics (14)
 
 | piece | size, fps | Unicode | enhancement | status |
 |---|---|---|---|---|
-| bouncing-balls | 64×22, 30 · options | octant balls, squash as ellipses | a colour per ball, shadows on the floor | todo |
-| chladni | 45×23, 12 | braille grains, 8 a cell | the plate changing mode, tinted per mode | todo |
-| double-pendulum | 48×25, 30 | braille arms and trail | the trail coloured by tip speed | todo |
-| falling-sand | 55×22, 20 | the sand simulated per octant dot | grains in a few sand tones | todo |
-| flag | 62×21, 30 · options | sextant cloth with a shading ramp | real stripes in colour, lit by the folds | todo |
-| fountain | 57×22, 30 | braille drops | blue water, splash crowns in the basin | todo |
-| harmonograph | 64×28, 30 | braille pen line (as braille-lissajous) | ink fading in colour along the line | todo |
-| lorenz | 60×22, 30 | braille trajectory | coloured by age and by which wing it is on | todo |
-| newtons-cradle | 74×17, 30 · options | octant balls, braille strings | steel shading with a moving highlight | todo |
-| pendulum-wave | 67×19, 30 | octant bobs from above | colour by phase, so the waves show | todo |
-| plucked-string | 64×14, 30 | braille string at 4× vertical resolution | the first harmonics drawn as faint coloured ghosts | todo |
-| pond-ripples | 64×20, 20 | braille rings | water palette, raindrop splashes | todo |
-| smoke | 44×24, 30 | braille density dither | grey thinning to nothing; a glowing incense tip | todo |
-| wave-interference | 72×26, 24 · options | sextant field, braille nodal lines | crests and troughs in two colours | todo |
+| bouncing-balls | 64×22, 30 · options | the TS physics; lit rubber spheres per octant dot, squashed to keep their area | a colour per ball, dithered shading, shadows that pale as a ball rises | built |
+| chladni | 45×23, 12 | a grain per braille dot on dot-wide nodal lines; 2 600 grains, paired along a Hilbert curve | each figure's sand its own tint, grains in flight white | built |
+| double-pendulum | 48×25, 30 | the TS RK4; braille rods and a trail twice as long | the trail coloured by tip speed, blue to white, thinning with age | built |
+| falling-sand | 55×22, 20 | the TS automaton with a grain per octant dot: four times the grains | the heap pours in layers of three sand tones | built |
+| flag | 62×21, 30 · options | the TS cloth strips laid per octant dot row, folds dithered | crimson and cream stripes, each in four shades of its fold's light | built |
+| fountain | 57×22, 30 | the TS drops (same hash), each a braille dot; the surface ripples a dot at a time | water coloured by speed, deep blue to white | built |
+| harmonograph | 64×28, 30 | a true braille curve a dot wide | ink turning rose to blue as the figure winds in | built |
+| lorenz | 60×22, 30 | the TS RK4 and view; the path a joined braille curve | one wing ice blue, the other amber, by age and nearness | built |
+| newtons-cradle | 74×17, 30 · options | octant chrome discs, dot-wide strings and legs | chrome shaded by what it reflects, with a sliding highlight | built |
+| pendulum-wave | 67×19, 30 | octant discs moving a dot at a time | each bob coloured by its phase, so the waves show as bands of hue | built |
+| plucked-string | 64×14, 30 | the TS harmonics, the string per braille dot | its first three harmonics drawn faintly behind it, each its colour | built |
+| pond-ripples | 64×20, 20 | the TS rain (same hash); rings as true braille circles | water blue by strength; crossings of strong rings flash white | built |
+| smoke | 44×24, 30 | the TS puffs and flow; the thread a braille line, the haze dithered | grey haze thinning out, a flickering ember | built |
+| wave-interference | 72×26, 24 · options | the tank per octant dot, dithered by height | crests cyan to white, troughs deep blue, still lines dark lanes | built |
 
 ### nature (16)
 
 | piece | size, fps | Unicode | enhancement | status |
 |---|---|---|---|---|
-| aurora | 64×20, 20 | sextant curtains, vertical eighth blocks | green to magenta palette, twinkling stars | todo |
-| bonsai | 52×19, 10 | braille branches, octant leaves | leaves changing colour through the seasons before they fall | todo |
-| campfire | 52×22, 20 | quadrant fire (quadrant-fire's spread), wedge logs | fire palette, sparks as braille | todo |
-| cherry-blossom | 64×20, 15 | braille branch, petals as · • | pink petals tumbling on the wind | todo |
-| contour-map | 72×20, 8 | contours at sub-cell resolution (as sextant-plasma) | hypsometric colour bands, sea to snow | todo |
-| fern | 44×30, 20 | braille points, 8 a cell | greens by depth | todo |
-| fireflies | 60×18, 15 · options | braille glow halos | yellow-green flashes spreading | todo |
-| fractal-tree | 60×24, 15 · options | braille branches, octant trunk | leaf colour at the tips | todo |
-| landscape | 64×18, 8 · options, clock | octant ridges, half-block sky | a sky gradient set by the hour | todo |
-| lightning | 64×22, 20 | braille bolt and branches | the flash lighting the cloud in colour | todo |
-| rain | 64×20, 30 | braille streaks at three depths | depth colours, braille splash crowns | todo |
-| ruled-mountains | 64×20, 10 | braille lines at 4× vertical resolution | hidden lines removed per dot | todo |
-| sea-swell | 64×14, 20 | octant water, wedge-cut sails | sky and sea in colour | todo |
-| snowfall | 64×22, 20 | braille flakes, eighth-block drifts | flake size by depth | todo |
-| sunrise | 60×20, 15 | half-block sky gradient, braille glitter | the sky warming in colour | todo |
-| wind | 64×14, 15 | braille streamlines | leaves carried on the gusts | todo |
+| aurora | 64×20, 20 | sextant curtains, dithered, streaks as fine upright strokes; ascii.rest's quarter-block spruces | the hem green, shading up through teal and violet to a magenta crown; a green glow on the treetops; twinkling stars | built |
+| bonsai | 52×19, 10 | octants: every dot of a pad a leaf that turns and buds on its own; a trunk that tapers smoothly | leaves green to yellow, orange and red before they fall, pale buds deepening to summer green, lit bark, a blue glaze | built |
+| campfire | 52×22, 20 | ascii.rest's own tongues worked out per octant dot, only flame joined to the fire drawn; octant logs | fire deep red to white, charred bark with embers glowing in it, a ringed cut end, coals, sparks cooling gold to red | built |
+| cherry-blossom | 64×20, 15 | a braille branch that tapers and forks; blossoms as ● and • petals round a ◉ | somei-yoshino pinks, bark with a lit edge, petals tumbling • ° · | built |
+| contour-map | 72×20, 8 | contours traced at a braille dot's resolution, a dot thick at any angle | hypsometric: green coast through ochre and brown to grey and white summits, a blue dotted line offshore | built |
+| fern | 44×30, 20 | the chaos game's points plotted in braille, 8 a cell | depth: the front leaflets bright green, the back ones darker, the young tip paler, a woody rachis | built |
+| fireflies | 60×18, 15 · options | braille glow halos falling off dot by dot; a braille moon, treeline and grass | pale yellow hearts through yellow-green to a faint green edge behind the grass | built |
+| fractal-tree | 60×24, 15 · options | braille limbs thinning as they fork, an octant trunk flaring to its roots, a braille stipple of leaves | brown bark lit on the left, deep green leaves, yellow-green tips | built |
+| landscape | 64×18, 8 · options, clock | octant ridges, half-block sky | a sky gradient set by the hour | built |
+| lightning | 64×22, 20 | a braille bolt jagged at a dot's scale, doubled at its brightest; braille rain and cloud | a slate cloud lit violet-white over the bolt, a white bolt with violet forks, rain and slopes catching the flash | built |
+| rain | 64×20, 30 | braille streaks at three depths; true elliptical rings in the puddles; braille splash crowns | rain paling with nearness, slate water, rings catching the light | built |
+| ruled-mountains | 64×20, 10 | braille lines at 4× vertical resolution, hidden lines removed per dot | a cold haze: back lines blue-violet, front ones nearly white | built |
+| sea-swell | 64×14, 20 | the swell's line at octant resolution; the boat drawn dot by dot, its sail cut on the diagonal, pitching to any angle | blue water darkening with depth, white foam on the steep face, a red hull, a white sail, a low pale sun | built |
+| snowfall | 64×22, 20 | braille flakes, one, two or four dots by depth; eighth-block drifts, ridges and caps | white snow over a blue-shadowed body, far flakes grey, a brown fence | built |
+| sunrise | 60×20, 15 | half-block sky gradient, braille glitter | the sky warming in colour | built |
+| wind | 64×14, 15 | braille streamlines a dot thick, fading tail to head; heads curling in a spiral | pale cyan air, autumn leaves riding the gusts | built |
 
 ### creatures (10)
 
 | piece | size, fps | Unicode | enhancement | status |
 |---|---|---|---|---|
-| aquarium | 60×20, 15 | octant fish sprites, braille bubbles | a colour per fish, swaying weed | todo |
-| butterfly | 64×24, 30 | octant wings | patterned, coloured wings | todo |
-| cat | 56×15, 15 | the sprite redrawn in octants | tabby stripes in colour | todo |
-| fox | 47×16, 10 | the sprite redrawn in octants | orange coat with a white tail tip | todo |
-| jellyfish | 44×26, 24 | octant bell, braille tentacles | a translucent glow palette | todo |
-| owl | 41×24, 12 | the sprite redrawn in octants | eyes that catch the light as it blinks | todo |
-| snake | 64×15, 20 | octant body | patterned scales in colour | todo |
-| spider | 28×24, 15 | braille silk, octant body | a web drawn behind it | todo |
-| starlings | 64×16, 30 | one bird a braille dot (boids) | eight times the birds in the same cells | todo |
-| whale | 72×18, 15 | octant body, braille spout | sea colour and a spray that drifts | todo |
+| aquarium | 60×20, 15 | octant fish shaped dot by dot (body, fanned tail, eye; a tall-finned angel), mirrored and face on as they turn; octant bubbles swelling as they rise | a colour per fish (tetra blue, orange-red, yellow, silver angel, goldfish), swaying green weed, mixed gravel | built |
+| butterfly | 64×24, 30 | the wings sampled per octant dot through the perspective, narrowing smoothly as they rise | orange wings darkening at the root, black margins with cream spots, a cream band, a blue eyespot ringed gold | built |
+| cat | 56×15, 15 | redrawn in octants from round shapes, its back swelling smoothly; a gap where parts meet keeps their outlines in one ink | a tabby: orange-brown with dark stripes, a pale belly, pink ears and nose, closed eyes | built |
+| fox | 47×16, 10 | redrawn in octants from round shapes, curled on its brush; parts outlined by gaps | an orange coat darker on the back, white cheeks, chest and tail tip, black ear tips and nose, an amber eye | built |
+| jellyfish | 44×26, 24 | an octant bell dithered by the jelly's thickness; braille threads and frilled arms fading to their tips | a translucent blue bell deepening to violet, pink horseshoes, pink frills, pale violet threads | built |
+| owl | 41×24, 12 | redrawn in octants: tufts, a facial disc, folded wings, talons; the head turns smoothly | brown plumage, scalloped wings, a barred pale breast, a tawny disc, amber eyes whose catchlights brighten after a blink | built |
+| snake | 64×15, 20 | an octant body as wide as it is at every point, sliding a dot at a time, a thread of tail | a diamondback: tan with cream-edged dark diamonds, paler flanks, a red forked tongue, a pale rattle | built |
+| spider | 28×24, 15 | braille web and silk; an octant spider, eight jointed legs stepping | a black widow with a red hourglass in a pale web | built |
+| starlings | 64×16, 30 | one bird a braille dot: 2560 boids, their distances scaled so the cloud keeps its size | pale birds on a dusk sky, whitest where they crowd, an amber falcon | built |
+| whale | 72×18, 15 | redrawn in octants from smooth outlines sinking through the surface; a braille spout | slate blue, darker on the back, a pale fluke, a white spout thinning to mist, a blue sea | built |
 
 ### objects (14)
 
 | piece | size, fps | Unicode | enhancement | status |
 |---|---|---|---|---|
-| analog-clock | 47×23, 8 · options, clock | braille face and hands at any angle | a coloured second hand, finer ticks | todo |
-| candle | 40×30, 15 | octant wax, quadrant flame | flame palette and a soft glow | todo |
-| coffee | 52×24, 20 | braille steam, octant cup | colour for the cup and the coffee | todo |
-| ferris-wheel | 64×26, 10 | braille rim and spokes | coloured cabins, lights along the rim at night | todo |
-| hawa-mahal | 61×24, 10 | octant facade | lamps behind the jali in warm colours | todo |
-| hourglass | 43×21, 30 | the sand per braille dot | sand colour, a glass highlight | todo |
-| kite | 64×24, 15 | braille string, wedge-cut kite | coloured panels and a tail | todo |
-| lava-lamp | 30×27, 15 | metaballs at octant resolution | wax and glass in colour, a glow | todo |
-| lighthouse | 64×30, 20 | braille beam cone with dither | beam and lamp in colour | todo |
-| skyline | 64×23, 10 | octant buildings, quadrant windows | warm and cool windows in colour | todo |
-| sundial | 65×23, 10 · clock | octant instrument | the shadow in colour, a sunlit face | todo |
-| train | 76×26, 15 | octant engine, braille smoke | colour for the engine and carriages | todo |
-| vinyl | 64×25, 24 | braille grooves | a coloured label, a highlight sweeping the grooves | todo |
-| windmill | 64×28, 20 | braille lattice sails | colour for the mill and the clouds | todo |
+| analog-clock | 47×23, 8 · options, clock | a braille face: a dithered bezel, minute dots, hands as lines of dots at their true angles | a brass bezel, white hands, a red second hand with a ring, cream numerals | built |
+| candle | 40×30, 15 | ascii.rest's eight samples a cell, each an octant dot | brass lit gold by the flame, cream wax glowing near the top, a blue-rooted white-gold flame, a scatter of warm glow, grey smoke | built |
+| coffee | 52×24, 20 | octant cup and saucer, a sample a dot; braille steam crossing the coffee but not the porcelain | a cobalt cup, a cream saucer, dark coffee with tan crema and a glint, grey steam | built |
+| ferris-wheel | 64×26, 10 | a braille rim (a true circle), dotted spokes and frame; box-drawn cabins | pale steel, warm bulbs chasing round, eight coloured cabins | built |
+| hawa-mahal | 61×24, 10 | each of ascii.rest's strokes an octant dot pattern: solid walls, pointed hoods, rounded sides, lattice jali | pink sandstone with cream ledges and balcony, each screen dark until its lamp comes up amber | built |
+| hourglass | 43×21, 30 | the sand per braille dot; the glass as two fine curves | gold sand, pale blue glass with a white highlight, a dark wood stand | built |
+| kite | 64×24, 15 | octant sail riding and rolling smoothly, gold panels sparser than red; braille string and tail | a harlequin kite, red and gold on dark spars, bows of every colour | built |
+| lava-lamp | 30×27, 15 | metaballs at octant resolution, outlined where they meet the oil | wax magenta-red cooling up the glass, orange near the bulb, silver metal, a warm glow | built |
+| lighthouse | 64×30, 20 | a braille beam cone dithered in the haze, braille crests and spray; an octant tower and rocks | red and white bands (red sparser), a gold lantern and beam, a dark sea lit gold under it, white surf | built |
+| skyline | 64×23, 10 | octant tower outlines and haze, each pane four dots | warm tungsten and cool fluorescent windows, a red mast light, a pale moon, reflections in their own colours | built |
+| sundial | 65×23, 10 · clock | an octant face dithered by the sun, hour lines, a hard shadow edge with a fringe; an octant gnomon | sunlit cream marble, a slate-blue shadow, ochre stone, a gold sun or stars | built |
+| train | 76×26, 15 | redrawn in octants from its shapes, sliding a dot at a time; wheels as circles whose spokes turn; braille smoke | a green engine, black smokebox, brass dome, red wheels, a maroon coach with pale windows | built |
+| vinyl | 64×25, 24 | braille grooves a dot apart; the sheen fills between them; the label's print cut out of it | dark grooves, a silver sheen, a red label, walnut and a silver arm | built |
+| windmill | 64×28, 20 | braille lattice sails a dot thick, braille clouds; an octant mill | a green mill, a thatched cap, a white stage, cream laths on dark stocks, white clouds | built |
 
 ### generative (13)
 
 | piece | size, fps | Unicode | enhancement | status |
 |---|---|---|---|---|
-| epicycles | 60×24, 30 | braille circles and trace | a colour per circle | todo |
-| flow-field | 64×22, 20 | braille trails, 8 particles a cell | colour by direction (a hue wheel) | todo |
-| glider-gun | 56×20, 10 | one Life cell per octant dot | colour by cell age | todo |
-| hilbert-curve | 65×17, 20 | a curve one order finer, in braille | the lit runners leave coloured trails | todo |
-| julia-set | 66×24, 20 | octant dither on escape time | escape-time palette | todo |
-| langtons-ant | 72×25, 30 | one grid square per octant dot | a coloured turmite variant as an option | todo |
-| mandelbrot | 64×26, 15 | octant dither on escape time | smooth-coloured escape time | todo |
-| maze | 61×21, 20 | a maze carved per braille dot | the solving path in colour | todo |
-| plasma | 64×22, 24 | filled colour per cell | a full palette version; sextant-plasma is the contour one | todo |
-| reaction-diffusion | 60×24, 20 | the field simulated per octant dot | a colour ramp for the two chemicals | todo |
-| rule-30 | 64×20, 8 | one cell per braille dot | a colour per rule | todo |
-| sierpinski | 59×26, 20 | braille points | colour by the vertex chosen | todo |
-| voronoi | 64×22, 15 | octant region edges | a colour per region | todo |
+| epicycles | 60×24, 30 | braille trace a dot wide; the first five circles' rims and arms dotted | a colour per circle; the trail cools from gold to embers | built |
+| flow-field | 64×22, 20 | the TS field and particles (its own generator), trails laid per braille dot | each dot coloured by its heading, violet climbing to orange falling | built |
+| glider-gun | 56×20, 10 | one Life cell per octant dot: a 112×80 field, the lane twice as long | colour by age: births white, cooling to blue; period 30 tested | built |
+| hilbert-curve | 65×17, 20 | one order finer (32 by 16) in braille | two runners, amber and cyan, two dots wide, fading along their trails | built |
+| julia-set | 66×24, 20 | per octant dot, the glow dithered | violet through rose and gold to white at the edge | built |
+| langtons-ant | 72×25, 30 | one square per octant dot: four times the board; highway run to step 13 400 | squares coloured by when they last flipped, hot to cold; highway tested | built |
+| mandelbrot | 64×26, 15 | per octant dot, the boundary glow dithered | smooth escape time through a cycling palette; 2.2 ms avg, 6.7 worst over the full zoom | built |
+| maze | 61×21, 20 | a 30 by 20 maze in braille (four times the rooms); backtracker matches the TS | the stack a cyan thread, the way through in amber | built |
+| plasma | 64×22, 24 | per octant dot in twelve bands, a cell keeping its main band's dots | filled colour bands, ink-blue to gold; density follows the band for one ink | built |
+| reaction-diffusion | 60×24, 20 | ascii.rest's 60×48 reaction (matches the TS), read between grid points per octant dot | teal to cream by strength, with crisp edges | built |
+| rule-30 | 64×20, 8 | one cell per octant dot: 128 across, four generations a row | a colour per rule; rule 90 grows six levels | built |
+| sierpinski | 59×26, 20 | the chaos game per braille dot, truly equilateral | each dot coloured by the corner it jumped toward, so the three copies show | built |
+| voronoi | 64×22, 15 | nearest seed per octant dot, borders left dark | a colour per cell, brighter toward its seed | built |
 
 ### effects (8)
 
 | piece | size, fps | Unicode | enhancement | status |
 |---|---|---|---|---|
 | doom-fire | 60×18, 24 | quadrants, Doom palette | — | covered: quadrant-fire |
-| fireworks | 64×24, 30 | braille sparks | a palette per shell, trails cooling | todo |
+| fireworks | 64×24, 30 | braille sparks and trails along each spark's own path | a hue per shell (red, green, blue, gold, purple, white), heads bright, trails cooling; gold willows | built |
 | matrix-rain | 63×24, 20 | full-width katakana and kanji | — | covered: kanji-rain |
-| rotozoomer | 64×24, 30 | the texture sampled per octant dot | brick colours | todo |
-| sparks | 64×20, 30 | braille sparks | colour cooling from white to red | todo |
-| synthwave | 65×28, 20 | braille grid in perspective, octant sun stripes | a neon palette | todo |
-| tunnel | 64×24, 30 | the texture sampled per octant dot | colour with depth fog | todo |
-| tv-static | 58×26, 20 · options | octant noise, half the dots lit | a colour test card (SMPTE bars) | todo |
+| rotozoomer | 64×24, 30 | the texture sampled per octant dot; faces, lit and shadowed bevels at different densities | terracotta bricks, bevels lit from the upper left | built |
+| sparks | 64×20, 30 | braille sparks with streaks; an octant grinder and plate | sparks cooling from white through yellow and orange to red; a teal grinder, a dark disc with a yellow label, steel | built |
+| synthwave | 65×28, 20 | a braille grid in perspective, thinning into haze; an octant sun with sinking stripe gaps and a ridge | a neon palette: the sun gold to hot pink, a cyan ridge, a magenta grid glowing pink | built |
+| tunnel | 64×24, 30 | a ray per octant dot, the pattern averaged over each dot's footprint | ice-blue and deep-blue tiles sinking into violet fog | built |
+| tv-static | 58×26, 20 · options | octant snow, about half the dots lit; card bars dithered at their levels | SMPTE colour bars, strip and bottom strip; grey snow; a walnut set | built |
 
 ### ui (12)
 
 | piece | size, fps | Unicode | enhancement | status |
 |---|---|---|---|---|
-| boot-log | 64×16, 15 | eighth blocks (already) | coloured status words, a braille spinner | todo |
-| box-frames | 78×20, still | box drawing (already) | frames from Symbols for Legacy Computing (U+1FB00) | wip: ported and fixture-tested, not yet enhanced |
-| calendar | 32×13, 8 · options, clock | box-drawn grid | today in colour | todo |
-| digital-clock | 70×11, 10 · options, clock | octant segments with sloped ends | a lit and an unlit segment colour | todo |
-| dividers | 63×25, still · options | box drawing, geometric shapes | ornaments from Symbols for Legacy Computing | todo |
-| file-tree | 36×23, 15 · options | box drawing, ▸ ▾ markers | coloured folders and files | todo |
-| form-controls | 54×16, 15 · options | ☐ ☑ ○ ◉ controls | the focused field in colour | todo |
-| not-found | 60×21, 15 · options | octant block letters | an octant ghost, colour | todo |
-| progress-bar | 48×11, 30 · options | eighth blocks | braille and gradient-coloured styles | todo |
-| skeleton | 52×23, 24 · options | rounded box drawing, shade blocks | the shimmer as a colour gradient | todo |
-| spinners | 66×13, 12 · options | braille spinners (⠋⠙⠹…) and the rest | twice the styles | todo |
-| terminal | 62×18, 20 · options | box drawing | a coloured prompt and output | todo |
+| boot-log | 64×16, 15 | eighth-block memory bar; braille spinners for devices being probed | a console's colours: green ok, amber warn, dim timestamps | built |
+| box-frames | 78×20, still | box drawing, ascii.rest's sheet to the cell (fixture-tested) | each frame its own hue round the wheel, labels dim | built |
+| calendar | 32×13, 8 · options, clock | cal's layout; today in a half-block pill `▐ 8▌` | today in amber, weekends dim, the clock in its own colour | built |
+| digital-clock | 70×11, 10 · options, clock | octant seven-segment digits with pointed segment ends | lit segments LED red, unlit a faint dithered trace | built |
+| dividers | 63×25, still · options | ascii.rest's sheet to the cell (fixture-tested) | each rule shades teal to violet to rose along its length | built |
+| file-tree | 36×23, 15 · options | tree lines, `▸` on closed folders | folders blue, files by kind, the cursor amber | built |
+| form-controls | 54×16, 15 · options | `○ ◉` radios, `□ ▣` checkboxes, a `●` slider knob, `▾` select | focus amber, choices cyan, saved green | built |
+| not-found | 60×21, 15 · options | ascii.rest's digits and shadow; a smooth octant ghost with a rippling hem | the code rose to amber, a pale ghost whose eyes look where it goes | built |
+| progress-bar | 48×11, 30 · options | eighth blocks, and a braille bar filling half a cell at a time | each fill shades teal to amber along its length | built |
+| skeleton | 52×23, 24 · options | rounded box drawing, shade blocks | the shimmer a band of colour lifting grey to blue-white | built |
+| spinners | 66×25, 12 · options | ascii.rest's twelve plus twelve in braille and geometric shapes (rows 13 → 25) | each spinner its colour | built |
+| terminal | 62×18, 20 · options | box drawing | a shell's colours: green path, blue sign, grey output, green ticks | built |
 
 ### data (10)
 
 | piece | size, fps | Unicode | enhancement | status |
 |---|---|---|---|---|
-| bar-chart | 60×19, 24 · options | eighth blocks | a colour per series; horizontal bars as an option | todo |
-| candlesticks | 70×22, 15 · options | half-block bodies, braille wicks | green up, red down | todo |
-| cpu-meters | 66×16, 10 · options | eighth-block meters, a braille history graph | htop's colour segments | todo |
-| equalizer | 62×16, 30 · options | eighth blocks | a green-to-red gradient | todo |
-| gauge | 55×18, 30 · options | braille arc and needle | coloured zones | todo |
-| heartbeat | 72×15, 25 · options | braille trace at 4× vertical resolution | a green phosphor glow | todo |
-| heatmap | 66×12, 10 · options | ■ cells | GitHub's greens | todo |
-| radar | 53×25, 30 · options | braille sweep | a green afterglow | todo |
-| sparkline | 72×9, 12 · options | braille sparklines, two samples a cell | a colour per line | todo |
-| uptime-bar | 64×15, 8 · options | eighth blocks | green, amber and red days | todo |
+| bar-chart | 60×19, 24 · options | eighth blocks, dashed gridlines | each dataset its colour; the bars and tab take the live one's | built |
+| candlesticks | 70×22, 15 · options | ascii.rest's chart to the cell (fixture-tested) | green hollow up candles, red solid down, the live one brighter, the last price amber | built |
+| cpu-meters | 66×16, 10 · options | meters in block shades (`█ ▓ ▒ ░`) per part; the machine matches the TS | htop's colours: user green, kernel red, buffers blue, cache amber | built |
+| equalizer | 62×16, 30 · options | eighth blocks (fixture-tested) | lit by height, green to yellow to red, white caps | built |
+| gauge | 55×18, 30 · options | braille dial: rim, ticks and needle a dot wide | the band by zone, green, amber, red, solid to the reading | built |
+| heartbeat | 72×15, 25 · options | a smooth PQRST waveform per braille dot | green phosphor, brightest at the pen; a red heart | built |
+| heatmap | 66×12, 10 · options | days as squares that grow `· ▪ ◼ ■ █` | a code host's greens | built |
+| radar | 53×25, 30 · options | braille scope, dithered afterglow, dotted rings | fading greens, the coast flaring as the beam passes | built |
+| sparkline | 72×11, 12 · options | braille area charts two rows tall, two samples a cell (rows 9 → 11, three series) | a colour per series | built |
+| uptime-bar | 64×15, 8 · options | ascii.rest's bars to the cell (fixture-tested) | green, amber and red days; the headline coloured by today | built |
 
 ### type (9)
 
 | piece | size, fps | Unicode | enhancement | status |
 |---|---|---|---|---|
-| big-text | 66×8, 24 · options | octant letterforms | the glint as a colour gradient | todo |
-| dissolve | 64×13, 20 · options | braille dust | colour as the dust settles | todo |
-| glitch | 64×13, 15 · options | octant pixel word | RGB channel split in the palette | todo |
-| marquee | 61×10, 24 · options | a braille dot-matrix sign | coloured bulbs | todo |
-| morse | 64×19, 15 · options | braille tape marks | the lamp's glow in colour | todo |
-| scramble | 44×3, 20 · options | noise glyphs from the Extended ranges | letters settling into colour | todo |
-| split-flap | 61×18, 15 · options | half-block flaps mid-turn | board colours | todo |
-| typewriter | 44×3, 20 · options | text as it is, a choice of cursors | colour for the typed text | todo |
-| wave-text | 36×5, 15 · options | text with eighth-block shadows | the swell in colour | todo |
+| big-text | 66×8, 24 · options | octant letters, each outer corner taken off a dot; the double-line shadow as it is | rose to amber across the word, the glint passing in white | built |
+| dissolve | 64×13, 20 · options | braille, a dot a grain: strokes wear away dot by dot and grains fall or fly in | each word its colour, its grains dimming as they fade | built |
+| glitch | 64×13, 15 · options | ascii.rest's frames to the cell (fixture-tested) | the word white, the left-behind copy cyan, smears magenta, tears yellow, corrupt cells in any of the three | built |
+| marquee | 61×10, 24 · options | a braille dot-matrix sign, an LED a dot with a gap round it; `●`/`·` bulbs | amber LEDs, warm bulbs, a gold frame | built |
+| morse | 64×19, 15 · options | ascii.rest's frames to the cell (fixture-tested) | the lens glowing amber to white while keyed, yellow rays, amber marks, bright decoded letters | built |
+| scramble | 44×3, 20 · options | noise from braille, sextants, quadrants, arrows and geometric shapes | noise flickering cyan, green and violet; settled letters bright | built |
+| split-flap | 61×18, 15 · options | ascii.rest's frames to the cell (fixture-tested), half-block flaps mid-turn | cream cards on a dark board; remarks amber, red, green or cyan by what they ask | built |
+| typewriter | 44×3, 20 · options | ascii.rest's frames to the cell (fixture-tested) | an editor's colours: prefix dim, phrase bright, cursor in the accent | built |
+| wave-text | 36×5, 15 · options | ascii.rest's frames to the cell (fixture-tested) | each letter shaded by its height, deep blue in a trough to white on a crest | built |
 
 ### logos (28)
 
 | piece | size, fps | drawn from | status |
 |---|---|---|---|
-| c | 49×28, 30 · colour, options | devicon's c-original.svg (MIT) | todo |
-| clojure | 56×28, 30 · colour, options | devicon's clojure-original.svg (MIT) | todo |
-| cpp | 50×28, 30 · colour, options | devicon's cplusplus-original.svg (MIT) | todo |
-| csharp | 49×28, 30 · colour, options | devicon's csharp-original.svg (MIT) | todo |
-| css | 50×28, 30 · colour, options | devicon's css3-original.svg (MIT) | todo |
-| dart | 56×28, 30 · colour, options | devicon's dart-original.svg (MIT) | todo |
-| elixir | 38×28, 30 · colour, options | devicon's elixir-original.svg (MIT) | todo |
-| elm | 56×28, 30 · colour, options | devicon's elm-original.svg (MIT) | todo |
-| erlang | 70×23, 30 · colour, options | devicon's erlang-original.svg (MIT) | todo |
-| go | 79×16, 30 · colour, options | devicon's go-original-wordmark.svg (MIT) | todo |
-| haskell | 69×25, 30 · colour, options | devicon's haskell-original.svg (MIT) | todo |
-| html | 50×28, 30 · colour, options | devicon's html5-original.svg (MIT) | todo |
-| java | 42×28, 30 · colour, options | devicon's java-original.svg (MIT) | todo |
-| javascript | 56×28, 30 · colour, options | devicon's javascript-original.svg (MIT) | todo |
-| julia | 60×28, 30 · colour, options | devicon's julia-original.svg (MIT) | todo |
-| kotlin | 56×28, 30 · colour, options | devicon's kotlin-original.svg (MIT) | todo |
-| lua | 56×28, 30 · colour, options | devicon's lua-original.svg (MIT) | todo |
-| ocaml | 64×28, 30 · colour, options | devicon's ocaml-original.svg (MIT) | todo |
-| perl | 56×28, 30 · colour, options | devicon's perl-original.svg (MIT) | todo |
-| php | 69×19, 30 · colour, options | devicon's php-original.svg (MIT) | todo |
-| python | 51×28, 30 · colour, options | devicon's python-original.svg (MIT) | todo |
-| r | 69×27, 30 · colour, options | devicon's r-original.svg (MIT) | todo |
-| ruby | 56×28, 30 · colour, options | devicon's ruby-original.svg (MIT) | todo |
-| rust | 64×32, 30 · colour, options | devicon's rust-original.svg (MIT) | todo |
-| scala | 37×28, 30 · colour, options | devicon's scala-original.svg (MIT) | todo |
-| swift | 58×28, 30 · colour, options | devicon's swift-original.svg (MIT) | todo |
-| typescript | 56×28, 30 · colour, options | devicon's typescript-original.svg (MIT) | todo |
-| zig | 61×28, 30 · colour, options | devicon's zig-original.svg (MIT) | todo |
+| c | 49×28, 30 · colour, options | devicon's c-original.svg (MIT) | built |
+| clojure | 56×28, 30 · colour, options | devicon's clojure-original.svg (MIT) | built |
+| cpp | 50×28, 30 · colour, options | devicon's cplusplus-original.svg (MIT) | built |
+| csharp | 49×28, 30 · colour, options | devicon's csharp-original.svg (MIT) | built |
+| css | 50×28, 30 · colour, options | devicon's css3-original.svg (MIT) | built |
+| dart | 56×28, 30 · colour, options | devicon's dart-original.svg (MIT) | built |
+| elixir | 38×28, 30 · colour, options | devicon's elixir-original.svg (MIT) | built |
+| elm | 56×28, 30 · colour, options | devicon's elm-original.svg (MIT) | built |
+| erlang | 70×23, 30 · colour, options | devicon's erlang-original.svg (MIT) | built |
+| go | 79×16, 30 · colour, options | devicon's go-original-wordmark.svg (MIT) | built |
+| haskell | 69×25, 30 · colour, options | devicon's haskell-original.svg (MIT) | built |
+| html | 50×28, 30 · colour, options | devicon's html5-original.svg (MIT) | built |
+| java | 42×28, 30 · colour, options | devicon's java-original.svg (MIT) | built |
+| javascript | 56×28, 30 · colour, options | devicon's javascript-original.svg (MIT) | built |
+| julia | 60×28, 30 · colour, options | devicon's julia-original.svg (MIT) | built |
+| kotlin | 56×28, 30 · colour, options | devicon's kotlin-original.svg (MIT) | built |
+| lua | 56×28, 30 · colour, options | devicon's lua-original.svg (MIT) | built |
+| ocaml | 64×28, 30 · colour, options | devicon's ocaml-original.svg (MIT) | built |
+| perl | 56×28, 30 · colour, options | devicon's perl-original.svg (MIT) | built |
+| php | 69×19, 30 · colour, options | devicon's php-original.svg (MIT) | built |
+| python | 51×28, 30 · colour, options | devicon's python-original.svg (MIT) | built |
+| r | 69×27, 30 · colour, options | devicon's r-original.svg (MIT) | built |
+| ruby | 56×28, 30 · colour, options | devicon's ruby-original.svg (MIT) | built |
+| rust | 64×32, 30 · colour, options | devicon's rust-original.svg (MIT) | built |
+| scala | 37×28, 30 · colour, options | devicon's scala-original.svg (MIT) | built |
+| swift | 58×28, 30 · colour, options | devicon's swift-original.svg (MIT) | built |
+| typescript | 56×28, 30 · colour, options | devicon's typescript-original.svg (MIT) | built |
+| zig | 61×28, 30 · colour, options | devicon's zig-original.svg (MIT) | built |
 
 ### companies (14)
 
 | piece | size, fps | drawn from | status |
 |---|---|---|---|
-| apple | 46×28, 30 · colour, options | Simple Icons' apple.svg (CC0) | todo |
-| cloudflare | 79×19, 30 · colour, options | Simple Icons' cloudflare.svg (CC0) | todo |
-| coderabbit | 64×28, 30 · colour, options | Simple Icons' coderabbit.svg (CC0) | todo |
+| apple | 46×28, 30 · colour, options | Simple Icons' apple.svg (CC0) | built |
+| cloudflare | 79×19, 30 · colour, options | Simple Icons' cloudflare.svg (CC0) | built |
+| coderabbit | 64×28, 30 · colour, options | Simple Icons' coderabbit.svg (CC0) | built |
 | command-code | 64×32, 30 · colour, options | the company's own mark (licence to check) | todo |
 | databuddy | 56×28, 30 · colour, options | the company's own mark (licence to check) | todo |
 | greptile | 49×28, 30 · colour, options | the company's own mark (licence to check) | todo |
-| helium | 49×28, 30 · colour, options | Simple Icons' heliumbrowser.svg (CC0) | todo |
-| mintlify | 56×28, 30 · colour, options | Simple Icons' mintlify.svg (CC0) | todo |
+| helium | 49×28, 30 · colour, options | Simple Icons' heliumbrowser.svg (CC0) | built |
+| mintlify | 56×28, 30 · colour, options | Simple Icons' mintlify.svg (CC0) | built |
 | orchid | 57×28, 30 · colour, options | the company's own mark (licence to check) | todo |
-| planetscale | 56×28, 30 · colour, options | Simple Icons' planetscale.svg (CC0) | todo |
-| playstation | 70×28, 30 · colour, options | Simple Icons' playstation.svg (CC0) | todo |
+| planetscale | 56×28, 30 · colour, options | Simple Icons' planetscale.svg (CC0) | built |
+| playstation | 70×28, 30 · colour, options | Simple Icons' playstation.svg (CC0) | built |
 | polar | 51×28, 30 · colour, options | the company's own mark (licence to check) | todo |
-| supabase | 55×28, 30 · colour, options | Simple Icons' supabase.svg (CC0) | todo |
-| vercel | 64×28, 30 · colour, options | Simple Icons' vercel.svg (CC0) | todo |
+| supabase | 55×28, 30 · colour, options | Simple Icons' supabase.svg (CC0) | built |
+| vercel | 64×28, 30 · colour, options | Simple Icons' vercel.svg (CC0) | built |
 
 ### distros (23)
 
 | piece | size, fps | drawn from | status |
 |---|---|---|---|
-| almalinux | 56×28, 30 · colour, options | devicon's almalinux-original.svg (MIT) | todo |
-| alpine-linux | 64×28, 30 · colour, options | Simple Icons' alpinelinux.svg (CC0) | todo |
-| arch-linux | 59×28, 30 · colour, options | devicon's archlinux-original.svg (MIT) | todo |
-| centos | 56×28, 30 · colour, options | devicon's centos-original.svg (MIT) | todo |
-| debian | 46×28, 30 · colour, options | devicon's debian-original.svg (MIT) | todo |
-| deepin | 56×28, 30 · colour, options | Simple Icons' deepin.svg (CC0) | todo |
-| elementary-os | 56×28, 30 · colour, options | Simple Icons' elementary.svg (CC0) | todo |
-| endeavouros | 67×28, 30 · colour, options | Simple Icons' endeavouros.svg (CC0) | todo |
-| fedora | 56×28, 30 · colour, options | devicon's fedora-original.svg (MIT) | todo |
-| gentoo | 54×28, 30 · colour, options | devicon's gentoo-plain.svg (MIT) | todo |
-| kali-linux | 71×27, 30 · colour, options | devicon's kalilinux-original.svg (MIT) | todo |
-| linux-mint | 56×28, 30 · colour, options | devicon's linuxmint-original.svg (MIT) | todo |
-| manjaro | 56×28, 30 · colour, options | Simple Icons' manjaro.svg (CC0) | todo |
-| nixos | 64×28, 30 · colour, options | devicon's nixos-original.svg (MIT) | todo |
-| omarchy | 56×28, 30 · colour, options | Simple Icons' omarchy.svg (MIT, from omarchy.org) | todo |
-| opensuse | 69×18, 30 · colour, options | devicon's opensuse-original.svg (MIT) | todo |
-| pop-os | 56×28, 30 · colour, options | Simple Icons' popos.svg (CC0) | todo |
-| red-hat | 56×28, 30 · colour, options | devicon's redhat-original.svg (MIT) | todo |
-| rocky-linux | 56×28, 30 · colour, options | devicon's rockylinux-original.svg (MIT) | todo |
-| tux | 49×28, 30 · colour, options | devicon's linux-original.svg (MIT) | todo |
-| ubuntu | 58×28, 30 · colour, options | Simple Icons' ubuntu.svg (CC0) | todo |
-| void-linux | 56×28, 30 · colour, options | Simple Icons' voidlinux.svg (CC0) | todo |
-| zorin-os | 64×28, 30 · colour, options | Simple Icons' zorin.svg (CC0) | todo |
+| almalinux | 56×28, 30 · colour, options | devicon's almalinux-original.svg (MIT) | built |
+| alpine-linux | 64×28, 30 · colour, options | Simple Icons' alpinelinux.svg (CC0) | built |
+| arch-linux | 59×28, 30 · colour, options | devicon's archlinux-original.svg (MIT) | built |
+| centos | 56×28, 30 · colour, options | devicon's centos-original.svg (MIT) | built |
+| debian | 46×28, 30 · colour, options | devicon's debian-original.svg (MIT) | built |
+| deepin | 56×28, 30 · colour, options | Simple Icons' deepin.svg (CC0) | built |
+| elementary-os | 56×28, 30 · colour, options | Simple Icons' elementary.svg (CC0) | built |
+| endeavouros | 67×28, 30 · colour, options | Simple Icons' endeavouros.svg (CC0) | built |
+| fedora | 56×28, 30 · colour, options | devicon's fedora-original.svg (MIT) | built |
+| gentoo | 54×28, 30 · colour, options | devicon's gentoo-plain.svg (MIT) | built |
+| kali-linux | 71×27, 30 · colour, options | devicon's kalilinux-original.svg (MIT) | built |
+| linux-mint | 56×28, 30 · colour, options | devicon's linuxmint-original.svg (MIT) | built |
+| manjaro | 56×28, 30 · colour, options | Simple Icons' manjaro.svg (CC0) | built |
+| nixos | 64×28, 30 · colour, options | devicon's nixos-original.svg (MIT) | built |
+| omarchy | 56×28, 30 · colour, options | Simple Icons' omarchy.svg (MIT, from omarchy.org) | built |
+| opensuse | 69×18, 30 · colour, options | devicon's opensuse-original.svg (MIT) | built |
+| pop-os | 56×28, 30 · colour, options | Simple Icons' popos.svg (CC0) | built |
+| red-hat | 56×28, 30 · colour, options | devicon's redhat-original.svg (MIT) | built |
+| rocky-linux | 56×28, 30 · colour, options | devicon's rockylinux-original.svg (MIT) | built |
+| tux | 49×28, 30 · colour, options | devicon's linux-original.svg (MIT) | built |
+| ubuntu | 58×28, 30 · colour, options | Simple Icons' ubuntu.svg (CC0) | built |
+| void-linux | 56×28, 30 · colour, options | Simple Icons' voidlinux.svg (CC0) | built |
+| zorin-os | 64×28, 30 · colour, options | Simple Icons' zorin.svg (CC0) | built |

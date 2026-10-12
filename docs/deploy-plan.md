@@ -83,7 +83,7 @@ Still open:
    Caching: `jdx/mise-action` caches tools, `Swatinem/rust-cache` the
    target dir; `actions/setup-node` is unnecessary since mise provides node.
 5. **README.** Install, HTML usage, a pieces table generated from
-   `metas_json()` by a script (as `../ascii/scripts/readme.ts` does), and
+   `web/pkg/modules.js` (every piece's meta) by a script (as `../ascii/scripts/readme.ts` does), and
    contributing (a short CONTRIBUTING.md adapted from ascii.rest's).
 
 ## Acceptance
