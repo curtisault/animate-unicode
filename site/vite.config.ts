@@ -10,8 +10,8 @@ export default defineConfig({
   plugins: [elm()],
   resolve: {
     alias: [
-      { find: "animate-unicode/element", replacement: web("element.ts") },
-      { find: "animate-unicode", replacement: web("index.ts") },
+      { find: "unicel/element", replacement: web("element.ts") },
+      { find: "unicel", replacement: web("index.ts") },
     ],
   },
   server: {

@@ -1,15 +1,15 @@
 //! Times 60 frames of every piece and prints a table, for spotting a
 //! regression before it reaches the contract test's hard budgets.
 //!
-//!     cargo run --release -q -p animate-unicode --example bench
-//!     cargo run --release -q -p animate-unicode --example bench -- donut braille-wave
+//!     cargo run --release -q -p unicel --example bench
+//!     cargo run --release -q -p unicel --example bench -- donut braille-wave
 //!
 //! `mise run bench` is the same. The budgets are the contract's: 4 ms average
 //! and 30 ms worst a frame, or 10 and 40 for scenes. Native timings; wasm in a
 //! browser is typically slower.
 
-use animate_unicode::{registry, Env, Grid, Options};
 use std::time::Instant;
+use unicel::{registry, Env, Grid, Options};
 
 const FRAMES: u32 = 60;
 

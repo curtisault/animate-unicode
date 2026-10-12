@@ -2,15 +2,15 @@
 //! a quick look at a piece without a browser. A port of the `--show` printer
 //! in ascii.rest's scripts/check.ts (MIT, @bas3line).
 //!
-//!     cargo run --release -q -p animate-unicode --example show -- donut
-//!     cargo run --release -q -p animate-unicode --example show -- braille-wave --paper --options '{"speed": 2}'
+//!     cargo run --release -q -p unicel --example show -- donut
+//!     cargo run --release -q -p unicel --example show -- braille-wave --paper --options '{"speed": 2}'
 //!
 //! It shows what a `<pre>` shows, the piece in one ink; `--colour` shows what
 //! it draws on a canvas instead.
 //!
 //! With no slugs it shows every piece. `mise run show donut` is the same.
 
-use animate_unicode::{registry, Env, Grid};
+use unicel::{registry, Env, Grid};
 
 const SHOW_AT: [f64; 4] = [0.0, 1.0, 2.5, 5.0];
 

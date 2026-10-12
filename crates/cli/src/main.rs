@@ -1,5 +1,5 @@
-//! animate-unicode: plays a piece in the terminal until a key is pressed.
-//! `animate-unicode list` names every piece, by category.
+//! unicel: plays a piece in the terminal until a key is pressed.
+//! `unicel list` names every piece, by category.
 //!
 //! Behaviour after ascii.rest's cli.ts by @bas3line (MIT): the same flags,
 //! the same list, the same help for a mistyped name, and a still frame as text
@@ -8,14 +8,14 @@
 mod paint;
 mod play;
 
-use animate_unicode::{registry, Category, Env, Grid, Meta};
 use std::io::IsTerminal;
 use std::process::ExitCode;
+use unicel::{registry, Category, Env, Grid, Meta};
 
-const HELP: &str = "animate-unicode: animated unicode art, in your terminal.
+const HELP: &str = "unicel: animated unicode art, in your terminal.
 
-  animate-unicode <piece>     plays a piece until you press a key
-  animate-unicode list        every piece, by category
+  unicel <piece>     plays a piece until you press a key
+  unicel list        every piece, by category
 
   --mono            a coloured piece in the terminal's own colour
   --light           for a light terminal: shading flipped (a piece on its
@@ -26,9 +26,9 @@ const HELP: &str = "animate-unicode: animated unicode art, in your terminal.
   -h, --help        this help
   -V, --version     the version
 
-  animate-unicode braille-donut
-  animate-unicode quadrant-fire --seconds 10
-  animate-unicode donut --light
+  unicel braille-donut
+  unicel quadrant-fire --seconds 10
+  unicel donut --light
 
 Glyphs: braille, sextants and octants need a recent monospace font (or a
 Nerd Font); kanji-rain needs one with CJK, and a terminal that draws it two
@@ -118,7 +118,7 @@ fn find(wanted: &str) -> Result<&'static Meta, Usage> {
         [one] => format!(" Did you mean {one}?"),
         [rest @ .., last] => format!(" Did you mean {} or {last}?", rest.join(", ")),
     };
-    Err(Usage(format!("there is no piece called \"{wanted}\".{hint}\nanimate-unicode list shows every piece.")))
+    Err(Usage(format!("there is no piece called \"{wanted}\".{hint}\nunicel list shows every piece.")))
 }
 
 /// Every piece's slug by category, in the site's sidebar order, wrapped to `width`.
@@ -146,7 +146,7 @@ fn list(width: usize) -> String {
         s += &line;
         s.push('\n');
     }
-    format!("{s}\n{} pieces. animate-unicode <piece> plays one.\n", registry::all().count())
+    format!("{s}\n{} pieces. unicel <piece> plays one.\n", registry::all().count())
 }
 
 fn run() -> Result<ExitCode, Usage> {
@@ -191,7 +191,7 @@ fn main() -> ExitCode {
     match run() {
         Ok(code) => code,
         Err(Usage(message)) => {
-            eprintln!("animate-unicode: {message}");
+            eprintln!("unicel: {message}");
             ExitCode::from(2)
         }
     }

@@ -1,5 +1,5 @@
 [package]
-name = "animate-unicode-wasm"
+name = "unicel-wasm"
 description = "The pieces for the browser: a Player whose grid JS reads straight out of wasm memory"
 version.workspace = true
 edition.workspace = true
@@ -11,7 +11,7 @@ publish = false
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-animate-unicode = { path = "../animate-unicode", default-features = false }
+unicel = { path = "../unicel", default-features = false }
 wasm-bindgen = "0.2"
 console_error_panic_hook = { version = "0.1.7", optional = true }
 
@@ -20,25 +20,25 @@ console_error_panic_hook = { version = "0.1.7", optional = true }
 # build, and the CLI's and the tests' view), or one alone with
 # --no-default-features, as `mise run build:wasm` builds each module.
 default = ["all"]
-all = ["animate-unicode/all"]
-cities = ["animate-unicode/cities"]
-nights = ["animate-unicode/nights"]
-wilds = ["animate-unicode/wilds"]
-cyberpunk = ["animate-unicode/cyberpunk"]
-ui = ["animate-unicode/ui"]
-data = ["animate-unicode/data"]
-type = ["animate-unicode/type"]
-logos = ["animate-unicode/logos"]
-companies = ["animate-unicode/companies"]
-distros = ["animate-unicode/distros"]
-shapes = ["animate-unicode/shapes"]
-space = ["animate-unicode/space"]
-physics = ["animate-unicode/physics"]
-nature = ["animate-unicode/nature"]
-creatures = ["animate-unicode/creatures"]
-objects = ["animate-unicode/objects"]
-generative = ["animate-unicode/generative"]
-effects = ["animate-unicode/effects"]
+all = ["unicel/all"]
+cities = ["unicel/cities"]
+nights = ["unicel/nights"]
+wilds = ["unicel/wilds"]
+cyberpunk = ["unicel/cyberpunk"]
+ui = ["unicel/ui"]
+data = ["unicel/data"]
+type = ["unicel/type"]
+logos = ["unicel/logos"]
+companies = ["unicel/companies"]
+distros = ["unicel/distros"]
+shapes = ["unicel/shapes"]
+space = ["unicel/space"]
+physics = ["unicel/physics"]
+nature = ["unicel/nature"]
+creatures = ["unicel/creatures"]
+objects = ["unicel/objects"]
+generative = ["unicel/generative"]
+effects = ["unicel/effects"]
 
 # Dev builds only (`mise run dev`, and the panic test in `mise run test`): a
 # panic prints its message and location with console.error before the call

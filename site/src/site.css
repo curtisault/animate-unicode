@@ -206,12 +206,12 @@ header h1 {
   place-items: center;
 }
 
-.well unicode-art {
+.well unicel-art {
   max-width: 100%;
 }
 
 /* A canvas fills its tag's width: give coloured pieces the well's. */
-.well unicode-art:has(canvas) {
+.well unicel-art:has(canvas) {
   width: 100%;
 }
 

@@ -15,8 +15,8 @@ test("the npm tarball holds every export and the wasm", { skip: debugBuild && "c
   const files = new Set(pack.files.map((f) => f.path));
   const pkg = JSON.parse(readFileSync(new URL("package.json", web), "utf8"));
   const wanted = Object.values(pkg.exports).flatMap((e) => [e.types, e.default]).map((p) => p.replace(/^\.\//, ""));
-  wanted.push(...Object.keys(imports).flatMap((m) => [`pkg/${m}/animate_unicode.js`, `pkg/${m}/animate_unicode_bg.wasm`]));
-  wanted.push("fonts/animate-unicode-mono.woff2", "fonts/OFL.txt");
+  wanted.push(...Object.keys(imports).flatMap((m) => [`pkg/${m}/unicel.js`, `pkg/${m}/unicel_bg.wasm`]));
+  wanted.push("fonts/unicel-mono.woff2", "fonts/OFL.txt");
   for (const f of wanted) assert.ok(files.has(f), `${f} is missing from the tarball (${pack.files.length} files, root ${root})`);
   assert.ok(![...files].some((f) => f.endsWith(".gitignore")), "a .gitignore made it into the tarball");
 });

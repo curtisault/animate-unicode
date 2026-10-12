@@ -12,34 +12,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "animate-unicode"
-version = "0.1.0"
-dependencies = [
- "serde",
- "serde_json",
- "unicode-width",
-]
-
-[[package]]
-name = "animate-unicode-cli"
-version = "0.1.0"
-dependencies = [
- "animate-unicode",
- "chrono",
- "crossterm",
- "signal-hook 0.4.5",
-]
-
-[[package]]
-name = "animate-unicode-wasm"
-version = "0.1.0"
-dependencies = [
- "animate-unicode",
- "console_error_panic_hook",
- "wasm-bindgen",
-]
-
-[[package]]
 name = "autocfg"
 version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -532,6 +504,34 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "unicel"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "unicode-width",
+]
+
+[[package]]
+name = "unicel-cli"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "crossterm",
+ "signal-hook 0.4.5",
+ "unicel",
+]
+
+[[package]]
+name = "unicel-wasm"
+version = "0.1.0"
+dependencies = [
+ "console_error_panic_hook",
+ "unicel",
+ "wasm-bindgen",
 ]
 
 [[package]]

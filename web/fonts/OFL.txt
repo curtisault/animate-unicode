@@ -1,6 +1,6 @@
-animate-unicode-mono.woff2 is a Modified Version of Iosevka Fixed Extended
+unicel-mono.woff2 is a Modified Version of Iosevka Fixed Extended
 (version 34.9.0, https://github.com/be5invis/Iosevka): a subset of its glyphs,
-renamed "animate-unicode mono", built by scripts/font.py. It is distributed
+renamed "unicel mono", built by scripts/font.py. It is distributed
 under the same licence, which follows.
 
 --------------------------

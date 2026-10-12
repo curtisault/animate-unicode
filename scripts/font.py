@@ -1,4 +1,4 @@
-"""Builds web/fonts/animate-unicode-mono.woff2, the font the pieces draw in.
+"""Builds web/fonts/unicel-mono.woff2, the font the pieces draw in.
 
     mise run build:font
 
@@ -11,7 +11,7 @@ height a cell is exactly twice as tall as it is wide, as the pieces assume.
 The output is checked in; this only needs running to change the ranges or the
 Iosevka version. It downloads the release once (about 100 MB) into
 target/font/, checks its SHA-256, subsets, renames the family to
-"animate-unicode mono" (a modified version should not carry the original's
+"unicel mono" (a modified version should not carry the original's
 name), and checks that the font covers its ranges and that
 web/src/element.ts declares the same unicode-range.
 """
@@ -31,10 +31,10 @@ ASSET = f"PkgTTF-Unhinted-IosevkaFixed-{VERSION}.zip"
 URL = f"https://github.com/be5invis/Iosevka/releases/download/v{VERSION}/{ASSET}"
 SHA256 = "d89f5705b5be44572b83e3f482ac9575383effedd605e838f919ce91f031f56a"
 MEMBER = "IosevkaFixed-Extended.ttf"
-FAMILY = "animate-unicode mono"
+FAMILY = "unicel mono"
 
 # (first, last) code points. Keep in step with allowed() in
-# crates/animate-unicode/tests/contract.rs; octants are ahead of it.
+# crates/unicel/tests/contract.rs; octants are ahead of it.
 RANGES = [
     (0x0020, 0x007E),  # printable ASCII
     (0x00B0, 0x00B0),  # °
@@ -52,7 +52,7 @@ RANGES = [
 PARTIAL = {(0x1FB00, 0x1FBFF)}
 
 ROOT = Path(__file__).resolve().parent.parent
-OUT = ROOT / "web" / "fonts" / "animate-unicode-mono.woff2"
+OUT = ROOT / "web" / "fonts" / "unicel-mono.woff2"
 ELEMENT = ROOT / "web" / "src" / "element.ts"
 
 
@@ -87,7 +87,7 @@ def rename(font: TTFont) -> None:
         3: f"{FAMILY} {VERSION}",
         4: FAMILY,
         5: f"Version {VERSION}; subset of Iosevka Fixed Extended",
-        6: "animate-unicode-mono",
+        6: "unicel-mono",
     }.items():
         names.setName(value, name_id, 3, 1, 0x409)
 

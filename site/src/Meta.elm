@@ -1,7 +1,7 @@
 module Meta exposing (Group, Meta, decoder, groups, piecesDecoder)
 
 {-| What a piece says about itself, as `Meta::to_json` in
-crates/animate-unicode/src/meta.rs writes it, and the sidebar's grouping.
+crates/unicel/src/meta.rs writes it, and the sidebar's grouping.
 -}
 
 import Json.Decode as D

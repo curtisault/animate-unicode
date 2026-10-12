@@ -1,5 +1,5 @@
 {
-  "name": "animate-unicode-workspace",
+  "name": "unicel-workspace",
   "private": true,
   "workspaces": ["web", "site"]
 }

@@ -3,8 +3,8 @@
  * swap and removal buttons, the debug-only tags, and a Markdown record of the
  * manual pass. Plain DOM, no Elm.
  */
-import "animate-unicode/element";
-import { moduleOf, wasm } from "animate-unicode";
+import "unicel/element";
+import { moduleOf, wasm } from "unicel";
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const frame = () => new Promise<void>((r) => requestAnimationFrame(() => r()));
@@ -56,7 +56,7 @@ addEventListener("resize", showEnv); // zooming changes devicePixelRatio and fir
 // Debug-only tags: made here so a release build logs nothing for them.
 for (const spot of document.querySelectorAll<HTMLElement>(".debug-tag")) {
   if (debugBuild) {
-    const tag = document.createElement("unicode-art");
+    const tag = document.createElement("unicel-art");
     tag.setAttribute("piece", spot.dataset.piece!);
     if (spot.hasAttribute("data-mono")) tag.setAttribute("mono", "");
     spot.replaceWith(tag);
@@ -113,7 +113,7 @@ for (const suffix of ["", "-system"]) {
   $(`ranges-labels${suffix}`).textContent = RANGES.map(([label]) => label).join("\n");
 }
 $("ranges-font").textContent = $("ranges-system").textContent = RANGES.map(([, glyphs]) => glyphs).join("\n");
-const FONT = '15px "animate-unicode mono"';
+const FONT = '15px "unicel mono"';
 const measureRanges = () => {
   const loaded = document.fonts.check(FONT, "⠿🬀");
   const ours = spread(rowWidths($("ranges-font")));

@@ -1,4 +1,4 @@
-# animate-unicode: deploy plan
+# unicel: deploy plan
 
 Phase 8 of [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md), moved here on
 2026-10-08 to be done later: packaging, the site's hosting, npm, CI and the
@@ -29,16 +29,16 @@ Already in the repository:
 Still open:
 
 1. **A green CI run.** The repository is
-   [curtisault/animate-unicode](https://github.com/curtisault/animate-unicode)
+   [curtisault/unicel](https://github.com/curtisault/animate-unicode)
    (public), and `main` was pushed on 2026-10-08. The first run
    ([37878821812](https://github.com/curtisault/animate-unicode/actions/runs/37878821812))
    installed every tool, wasm32 target included (risk 7 answered), and
    built the wasm. It then failed at `cargo fmt`: mise's fresh rust install
    had no rustfmt or clippy. `mise.toml` now asks for both components. The
    test, build and size steps have not run on a runner yet.
-2. **The name** (plan, risk 8). `animate-unicode` is now the repository's
+2. **The name** (plan, risk 8). `unicel` is now the repository's
    name. It is still a placeholder for the crate, the npm package and the tag.
-   On 2026-10-08 `animate-unicode`, `unicode-art` and `unicode-art-element`
+   On 2026-10-08 `unicel`, `unicel-art` and `unicel-art-element`
    were all free on npm.
 3. **The rest of the first CI run**: the npm backend for elm-test (risk 6),
    uv for the font script (not run in CI), and Node's tests against both wasm
@@ -49,7 +49,7 @@ Still open:
 ## Decisions to make first
 
 - **The name**, before anything is published: npm package, crate names, the
-  `<unicode-art>` tag, the site's domain.
+  `<unicel-art>` tag, the site's domain.
 - **The host**: the plan assumed Cloudflare Workers static assets, as
   ascii.rest uses (`../ascii/site/wrangler.jsonc`). `_redirects` and `_headers`
   also suit Netlify.
@@ -70,7 +70,7 @@ Still open:
    build or a second esbuild step that emits `element.js` and the wasm at
    stable paths (not hashed). ascii.rest copies `dist/` into the site. Keep
    the font where the module looks for it: `element.ts` resolves
-   `../fonts/animate-unicode-mono.woff2` against its own URL, so a stable
+   `../fonts/unicel-mono.woff2` against its own URL, so a stable
    `element.js` at the root needs the font at `/fonts/…` relative to it, or
    the bundler's rewrite of that `new URL(…)`. The stable files get a short
    cache, not the year `_headers` gives `/assets/*`.

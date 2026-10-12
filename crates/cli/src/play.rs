@@ -7,13 +7,13 @@
 //! there; a panic hook puts the terminal back first instead.
 
 use crate::paint::{dark, Painter, Screen};
-use animate_unicode::{Env, Grid, Meta, Piece, Wall};
 use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
 use crossterm::terminal;
 use std::io::{self, Write};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
+use unicel::{Env, Grid, Meta, Piece, Wall};
 
 /// The alternate screen, the cursor hidden and no wrapping, so a glyph a
 /// terminal draws two cells wide can only clip its own row.

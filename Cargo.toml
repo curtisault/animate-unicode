@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/animate-unicode", "crates/wasm", "crates/cli"]
+members = ["crates/unicel", "crates/wasm", "crates/cli"]
 
 [workspace.package]
 version = "0.1.0"

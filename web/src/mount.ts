@@ -45,13 +45,13 @@ export interface MountOptions {
   motion?: boolean;
 }
 
-/** The right half of a double-width glyph, in the cells buffer. Must match animate_unicode::WIDE_TAIL. */
+/** The right half of a double-width glyph, in the cells buffer. Must match unicel::WIDE_TAIL. */
 export const WIDE_TAIL = 0;
-/** No colour behind a cell, in the backs buffer. Must match animate_unicode::NO_BACK. */
+/** No colour behind a cell, in the backs buffer. Must match unicel::NO_BACK. */
 export const NO_BACK = 255;
 
 // The bundled font first, as in element.ts's STYLE: one face, one width, for every glyph it has.
-const FONT = '"animate-unicode mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+const FONT = '"unicel mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
 
 export function mount(el: HTMLElement, wasm: InitOutput, player: Player, options: MountOptions = {}): () => void {
   const meta = JSON.parse(player.meta_json()) as Meta;
@@ -280,7 +280,7 @@ export function mount(el: HTMLElement, wasm: InitOutput, player: Player, options
       }
     };
     fonts?.addEventListener("loadingdone", refont);
-    fonts?.load(`${Math.max(8, Math.round(w / 0.6))}px "animate-unicode mono"`).catch(() => {});
+    fonts?.load(`${Math.max(8, Math.round(w / 0.6))}px "unicel mono"`).catch(() => {});
     unfont = () => fonts?.removeEventListener("loadingdone", refont);
     ro = new ResizeObserver(() => {
       if (canvas.clientWidth !== width) {

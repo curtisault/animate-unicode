@@ -1,4 +1,4 @@
-# animate-unicode: the ascii.rest pieces
+# unicel: the ascii.rest pieces
 
 Every piece on [ascii.rest](https://ascii.rest), translated to Unicode and made
 better. A row is not done when it matches the TypeScript. It is done when the

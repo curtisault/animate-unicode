@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Shell checks · animate-unicode</title>
+    <title>Shell checks · unicel</title>
     <meta name="color-scheme" content="light dark" />
     <style>
       :root {
@@ -73,7 +73,7 @@
         font-size: 15px;
       }
       #ranges-font {
-        font-family: "animate-unicode mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-family: "unicel mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       }
       #ranges-system {
         font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -137,7 +137,7 @@
       <h1>Shell checks</h1>
       <p>
         Every case Phase 3 of <code>docs/IMPLEMENTATION_PLAN.md</code> asks to see in a browser, one
-        <code>&lt;unicode-art&gt;</code> each, with no Elm. Tick what looks right, then copy the record into the pull request.
+        <code>&lt;unicel-art&gt;</code> each, with no Elm. Tick what looks right, then copy the record into the pull request.
         Run it with <code>mise run dev</code> for the debug pieces.
       </p>
       <p class="env" id="env"></p>
@@ -145,7 +145,7 @@
 
     <section data-case="pre">
       <h2>Text in a &lt;pre&gt; <span>donut</span></h2>
-      <div class="stage"><unicode-art piece="donut"></unicode-art></div>
+      <div class="stage"><unicel-art piece="donut"></unicel-art></div>
       <ul class="checks">
         <li><label><input type="checkbox" /> turns smoothly, in the page's text colour</label></li>
         <li><label><input type="checkbox" /> rows line up; no glyph drifts a column</label></li>
@@ -154,7 +154,7 @@
 
     <section data-case="braille">
       <h2>Braille in a &lt;pre&gt; <span>braille-wave</span></h2>
-      <div class="stage"><unicode-art piece="braille-wave" id="braille"></unicode-art></div>
+      <div class="stage"><unicel-art piece="braille-wave" id="braille"></unicel-art></div>
       <p class="readout" id="braille-rows"></p>
       <p class="note">Drawn in the bundled font (web/fonts), which leads the stack, so every row should measure the same.</p>
       <ul class="checks">
@@ -189,7 +189,7 @@
     <section data-case="canvas">
       <h2>Colour on a &lt;canvas&gt; <span>quadrant-fire</span></h2>
       <p class="note">Drag the box's bottom-right corner to resize it. Zoom the page to 125% and 150% to check fractional device pixel ratios.</p>
-      <div class="stage resizable"><unicode-art piece="quadrant-fire"></unicode-art></div>
+      <div class="stage resizable"><unicel-art piece="quadrant-fire"></unicel-art></div>
       <ul class="checks">
         <li><label><input type="checkbox" /> the near-black ground fills the whole canvas</label></li>
         <li><label><input type="checkbox" /> no hairline seams between cells at 100%, 125% and 150% zoom</label></li>
@@ -201,7 +201,7 @@
 
     <section data-case="mono">
       <h2>The same piece with <code>mono</code> <span>quadrant-fire mono</span></h2>
-      <div class="stage"><unicode-art piece="quadrant-fire" mono></unicode-art></div>
+      <div class="stage"><unicel-art piece="quadrant-fire" mono></unicel-art></div>
       <ul class="checks">
         <li><label><input type="checkbox" /> drawn as text in a &lt;pre&gt;, in one ink, on the page's background</label></li>
       </ul>
@@ -232,7 +232,7 @@
 
     <section data-case="swap">
       <h2>Changing <code>piece</code> at run time</h2>
-      <div class="stage"><unicode-art piece="donut" id="swap"></unicode-art></div>
+      <div class="stage"><unicel-art piece="donut" id="swap"></unicel-art></div>
       <p>
         <button data-piece="donut">donut</button><button data-piece="braille-wave">braille-wave</button
         ><button data-piece="quadrant-fire">quadrant-fire</button><button data-piece="no-such-piece">no-such-piece</button>
@@ -255,8 +255,8 @@
         first frame; the right one has <code>motion</code> and keeps playing.
       </p>
       <div class="stage" style="display: flex; gap: 16px; flex-wrap: wrap">
-        <unicode-art piece="braille-wave"></unicode-art>
-        <unicode-art piece="braille-wave" motion></unicode-art>
+        <unicel-art piece="braille-wave"></unicel-art>
+        <unicel-art piece="braille-wave" motion></unicel-art>
       </div>
       <ul class="checks">
         <li><label><input type="checkbox" /> with reduced motion on, the left one is still and the right one plays</label></li>
@@ -266,7 +266,7 @@
 
     <section data-case="first-frame">
       <h2>Server-rendered first frame</h2>
-      <div class="stage"><unicode-art piece="donut" id="first"><pre>a server-rendered still sits here until the piece is ready</pre></unicode-art></div>
+      <div class="stage"><unicel-art piece="donut" id="first"><pre>a server-rendered still sits here until the piece is ready</pre></unicel-art></div>
       <p class="readout" id="first-readout"></p>
       <ul class="checks">
         <li><label><input type="checkbox" /> the readout says the placeholder stayed until the player replaced it</label></li>
@@ -275,7 +275,7 @@
 
     <section data-case="fps-paper">
       <h2>The <code>fps</code> attribute, and paper</h2>
-      <div class="stage paper"><unicode-art piece="donut" fps="6"></unicode-art></div>
+      <div class="stage paper"><unicel-art piece="donut" fps="6"></unicel-art></div>
       <ul class="checks">
         <li><label><input type="checkbox" /> this donut steps at about 6 frames a second</label></li>
         <li><label><input type="checkbox" /> on the light box it is dark ink with its shading flipped (bright faces darkest)</label></li>
