@@ -1,7 +1,8 @@
 /*
  * A piece's downloads, made in the browser: a PNG of one frame, a video and a
- * GIF, and the frame as text: plain, for the clipboard or a .txt, or with
- * 24-bit colour escapes, an .ans a terminal shows in colour. After ascii.rest's (MIT, @bas3line), with one difference: a piece here
+ * GIF, the frame as an SVG of shapes, and the frame as text: plain, for the
+ * clipboard or a .txt, or with 24-bit colour escapes, an .ans a terminal
+ * shows in colour. After ascii.rest's (MIT, @bas3line), with one difference: a piece here
  * is deterministic in time, so every frame is drawn on demand off screen and
  * encoded as fast as it is drawn, rather than recorded in real time. Video is
  * an MP4 through the browser's VideoEncoder (WebCodecs) and mp4-muxer, or a
@@ -10,7 +11,7 @@
  * A scene fills its picture edge to edge, 1280 px wide; anything else sits on
  * the page's well with a margin round it, its cells up to 16 px wide.
  */
-import { NO_BACK, paint, player as make, WIDE_TAIL, type Meta } from "unicel";
+import { NO_BACK, paint, player as make, shapeOf, WIDE_TAIL, type Meta } from "unicel";
 
 /** What a download is of: the piece as the page shows it. */
 export interface Take {
@@ -250,6 +251,96 @@ export async function ansi(take: Take): Promise<string> {
       out += "\x1b[0m\n";
     }
     return out;
+  } finally {
+    player.free();
+  }
+}
+
+/**
+ * The frame shown as an SVG: a cell is 2 by 2 × `cell` units, back colours and
+ * block-like glyphs are rectangles (runs of one colour along a row merged into
+ * one) and wedges paths, so it stays sharp at any size; any other glyph is
+ * text in the bundled font, or the reader's monospace.
+ */
+export async function svg(take: Take): Promise<string> {
+  const { player, exports } = await make(take.slug, take.options);
+  try {
+    const meta = JSON.parse(player.meta_json()) as Meta;
+    const { cols, rows, palette, cell } = meta;
+    const colour = palette !== null && !take.mono;
+    player.set_mono(!colour);
+    if (meta.clock) player.set_clock(Date.now(), -new Date().getTimezoneOffset());
+    player.frame(take.time, colour && meta.ground ? !dark(meta.ground) : take.paper);
+    const n = cols * rows;
+    const cells = new Uint32Array(exports.memory.buffer, player.cells_ptr(), n);
+    const colors = new Uint8Array(exports.memory.buffer, player.colors_ptr(), n);
+    const backs = new Uint8Array(exports.memory.buffer, player.backs_ptr(), n);
+    const hex = (css: string) => {
+      if (css[0] === "#") return css;
+      const [r = 0, g = 0, b = 0] = (css.match(/[\d.]+/g) ?? []).map(Number);
+      return "#" + [r, g, b].map((v) => Math.round(v).toString(16).padStart(2, "0")).join("");
+    };
+    const ink = (k: number) => (colour ? (palette![k] ?? palette![0]!) : hex(take.ink));
+    const ground = hex((colour && meta.ground) || take.well);
+    const cw = 2, ch = 2 * cell;
+    type Rect = [number, number, number, number, string];
+    const backRects: Rect[] = [];
+    const rects: Rect[] = [];
+    const shapes: string[] = [];
+    const glyphs: string[] = [];
+    const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const f = (v: number) => +v.toFixed(3);
+    for (let i = 0; i < n; i++) {
+      const cp = cells[i]!;
+      if (cp === WIDE_TAIL) continue;
+      const c = i % cols, r = (i - c) / cols, x = c * cw, y = r * ch;
+      const wide = c + 1 < cols && cells[i + 1] === WIDE_TAIL;
+      if (colour && backs[i] !== NO_BACK) backRects.push([x, y, cw, ch, palette![backs[i]!]!]);
+      if (cp === 0x20) continue;
+      const fill = ink(colors[i]!);
+      const shape = wide ? undefined : shapeOf(cp);
+      if (!shape) {
+        glyphs.push(`<text x="${f(x + (wide ? cw : cw / 2))}" y="${f(y + ch / 2)}" fill="${fill}">${esc(String.fromCodePoint(cp))}</text>`);
+      } else if ("mask" in shape) {
+        for (let d = 0; d < shape.w * shape.h; d++) {
+          if (!((shape.mask >> d) & 1)) continue;
+          const dx = d % shape.w, dy = (d - dx) / shape.w;
+          rects.push([x + (dx * cw) / shape.w, y + (dy * ch) / shape.h, cw / shape.w, ch / shape.h, fill]);
+        }
+      } else {
+        const pts = [];
+        for (let k = 0; k < shape.poly.length; k += 2) pts.push(`${f(x + shape.poly[k]! * cw)},${f(y + shape.poly[k + 1]! * ch)}`);
+        shapes.push(`<polygon points="${pts.join(" ")}" fill="${fill}"/>`);
+      }
+    }
+    // A glyph covers its back, so the backs are one layer and the glyphs' dots
+    // another, drawn after. Nothing overlaps within a layer, so each is sorted
+    // by row and runs of one colour along a row merge into one rectangle.
+    const merged: string[] = [];
+    for (const layer of [backRects, rects]) {
+      layer.sort((a, b) => a[1] - b[1] || a[3] - b[3] || a[0] - b[0]);
+      let run: Rect | null = null;
+      for (const r of layer) {
+        if (run && r[1] === run[1] && r[3] === run[3] && r[4] === run[4] && Math.abs(run[0] + run[2] - r[0]) < 1e-9) run[2] += r[2];
+        else {
+          if (run) merged.push(`<rect x="${f(run[0])}" y="${f(run[1])}" width="${f(run[2])}" height="${f(run[3])}" fill="${run[4]}"/>`);
+          run = [...r];
+        }
+      }
+      if (run) merged.push(`<rect x="${f(run[0])}" y="${f(run[1])}" width="${f(run[2])}" height="${f(run[3])}" fill="${run[4]}"/>`);
+    }
+    const w = cols * cw, h = rows * ch;
+    return (
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w * 8}" height="${h * 8}" shape-rendering="crispEdges">\n` +
+      `<title>${esc(meta.name)}</title>\n<rect width="${w}" height="${h}" fill="${ground}"/>\n` +
+      merged.join("\n") +
+      "\n" +
+      shapes.join("\n") +
+      (glyphs.length
+        ? `\n<g font-family="'unicel mono', ui-monospace, Menlo, Consolas, monospace" font-size="${f(cw / 0.6)}" text-anchor="middle" dominant-baseline="central">\n${glyphs.join("\n")}\n</g>`
+        : "") +
+      "\n</svg>\n"
+    );
   } finally {
     player.free();
   }

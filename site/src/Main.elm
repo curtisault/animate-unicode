@@ -583,7 +583,7 @@ playback model m =
             )
 
 
-{-| A file of the piece: one frame as a PNG, as text (.txt) or as text in
+{-| A file of the piece: one frame as a PNG, as shapes (.svg), as text (.txt) or as text in
 colour for a terminal (.ans), or a loop as video or a GIF, of what the page
 shows (its options, one ink, paper), from the frame on screen. And the frame
 as text, copied.
@@ -612,7 +612,7 @@ downloads model =
                 ]
     in
     div []
-        [ div [ class "links" ] [ span [ class "label" ] [ text "download" ], kind "png", kind "video", kind "gif", kind "txt", kind "ansi" ]
+        [ div [ class "links" ] [ span [ class "label" ] [ text "download" ], kind "png", kind "svg", kind "video", kind "gif", kind "txt", kind "ansi" ]
         , div [ class "links" ]
             [ span [ class "label" ] [ text "copy" ]
             , button [ class "button", A.type_ "button", onClick (Download "text"), A.disabled (model.making /= Nothing) ]

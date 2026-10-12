@@ -8,4 +8,5 @@
  */
 export { mount, NO_BACK, WIDE_TAIL, type Meta, type MountOptions, type Playback } from "./mount.ts";
 export { paint, type Look } from "./frame.ts";
+export { shapeOf, type Shape } from "./blocks.ts";
 export { moduleOf, pieces, player, wasm, type Bindings, type InitOutput, type Module, type Player } from "./wasm.ts";

@@ -7,7 +7,7 @@
 import "unicel/element";
 import { pieces } from "unicel";
 import { Elm } from "./Main.elm";
-import { ansi, gif, png, save, text, video, type Take } from "./exports";
+import { ansi, gif, png, save, svg, text, video, type Take } from "./exports";
 
 const app = Elm.Main.init({
   node: document.getElementById("app"),
@@ -24,7 +24,7 @@ const big = () => document.querySelector<HTMLElement & { currentTime?: number }>
 
 interface Ask {
   ask: "time" | "download";
-  kind?: "png" | "video" | "gif" | "txt" | "ansi" | "text";
+  kind?: "png" | "svg" | "video" | "gif" | "txt" | "ansi" | "text";
   slug?: string;
   options?: string;
   mono?: boolean;
@@ -56,6 +56,7 @@ async function download(ask: Ask) {
   const part = (done: number) => app.ports.answer?.send({ making: kind, done });
   try {
     if (kind === "png") save(await png(take), `${take.slug}.png`);
+    if (kind === "svg") save(new Blob([await svg(take)], { type: "image/svg+xml" }), `${take.slug}.svg`);
     if (kind === "txt") save(new Blob([await text(take)], { type: "text/plain;charset=utf-8" }), `${take.slug}.txt`);
     if (kind === "ansi") save(new Blob([await ansi(take)], { type: "text/plain;charset=utf-8" }), `${take.slug}.ans`);
     // "copy text": the frame to the clipboard, not a file.
