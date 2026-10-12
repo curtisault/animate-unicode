@@ -45,6 +45,19 @@ page: every rendering case on one page, to tick through in each browser.
 
 `mise run` lists every task.
 
+## Pull requests and CI
+
+There is no CI on GitHub: the contract's per-frame time budgets assume a fast
+machine, and GitHub's runners are several times slower. CI runs locally
+instead, and `main` will not take a pull request without it:
+
+- `mise run signoff` copies each open pull request's head commit into
+  `target/ci/tree` and runs `npm ci`, `mise run lint`, `test`, `build` and
+  `size` on it, then posts a `signoff` status (pass or fail) to that commit.
+  `mise run signoff 18` or `mise run signoff <branch>` checks just one.
+- `main` requires the `signoff` status, so after every push to a pull request,
+  sign it off again before merging. Logs are in `target/ci/logs/`.
+
 In a terminal: `mise run play braille-donut` plays a piece until you press a
 key (`--seconds`, `--mono`, `--light`, `--fps`, `--options`; `list` names them
 all). Braille, sextants and octants need a recent monospace font, kanji-rain
