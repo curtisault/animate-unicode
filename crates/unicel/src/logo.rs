@@ -1,4 +1,4 @@
-//! Logos drawn from SVG: the code the logos, companies and distros share, so
+//! Logos drawn from SVG: the code the logos and distros share, so
 //! each of them is its data and its meta rather than a copy of this.
 //!
 //! `scripts/logo.py` reduces each logo's SVG to octants, with a wedge where an

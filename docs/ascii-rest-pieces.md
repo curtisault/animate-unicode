@@ -20,24 +20,24 @@ are not tracked here.
 
 ## Progress
 
-| category | pieces | todo | wip | built | done | covered |
-|---|---|---|---|---|---|---|
-| scenes | 15 | | | 15 | | |
-| shapes | 12 | | | 11 | | 1 |
-| space | 11 | | | 11 | | |
-| physics | 14 | | | 14 | | |
-| nature | 16 | | | 16 | | |
-| creatures | 10 | | | 10 | | |
-| objects | 14 | | | 14 | | |
-| generative | 13 | | | 13 | | |
-| effects | 8 | | | 6 | | 2 |
-| ui | 12 | | | 12 | | |
-| data | 10 | | | 10 | | |
-| type | 9 | | | 9 | | |
-| logos | 28 | | | 28 | | |
-| companies | 14 | 5 | | 9 | | |
-| distros | 23 | | | 23 | | |
-| **all** | **209** | **5** | | **201** | | **3** |
+| category | pieces | todo | wip | built | done | covered | dropped |
+|---|---|---|---|---|---|---|---|
+| scenes | 15 | | | 15 | | | |
+| shapes | 12 | | | 11 | | 1 | |
+| space | 11 | | | 11 | | | |
+| physics | 14 | | | 14 | | | |
+| nature | 16 | | | 16 | | | |
+| creatures | 10 | | | 10 | | | |
+| objects | 14 | | | 14 | | | |
+| generative | 13 | | | 13 | | | |
+| effects | 8 | | | 6 | | 2 | |
+| ui | 12 | | | 12 | | | |
+| data | 10 | | | 10 | | | |
+| type | 9 | | | 9 | | | |
+| logos | 28 | | | 28 | | | |
+| companies | 14 | | | | | | 14 |
+| distros | 23 | | | 23 | | | |
+| **all** | **209** | | | **192** | | **3** | **14** |
 
 Recount after changing rows:
 
@@ -53,6 +53,8 @@ Statuses, as the last cell of a row:
   is waiting for the owner's look in a real browser.
 - **done**: the owner has looked at it in a browser, at 1× and 2× DPR, dark
   and light, and in the CLI.
+- **dropped**: taken out by the owner's choice; the section says when, and
+  where to find what was built.
 - **covered: X**: an existing piece is already this one's Unicode version.
   ascii.rest's `donut` is also kept here as a byte-exact ASCII port; that one
   is the fixture for the core crate, not the translation.
@@ -391,22 +393,26 @@ carry only the source.
 
 ### companies (14)
 
+Dropped 2026-10-12: company logos are not wanted for now. The nine built (apple
+to vercel) are in git history (`git log -- crates/unicel/src/pieces/companies`),
+art and all; scripts/logo.py's table had their sources.
+
 | piece | size, fps | drawn from | status |
 |---|---|---|---|
-| apple | 46×28, 30 · colour, options | Simple Icons' apple.svg (CC0) | built |
-| cloudflare | 79×19, 30 · colour, options | Simple Icons' cloudflare.svg (CC0) | built |
-| coderabbit | 64×28, 30 · colour, options | Simple Icons' coderabbit.svg (CC0) | built |
-| command-code | 64×32, 30 · colour, options | the company's own mark (licence to check) | todo |
-| databuddy | 56×28, 30 · colour, options | the company's own mark (licence to check) | todo |
-| greptile | 49×28, 30 · colour, options | the company's own mark (licence to check) | todo |
-| helium | 49×28, 30 · colour, options | Simple Icons' heliumbrowser.svg (CC0) | built |
-| mintlify | 56×28, 30 · colour, options | Simple Icons' mintlify.svg (CC0) | built |
-| orchid | 57×28, 30 · colour, options | the company's own mark (licence to check) | todo |
-| planetscale | 56×28, 30 · colour, options | Simple Icons' planetscale.svg (CC0) | built |
-| playstation | 70×28, 30 · colour, options | Simple Icons' playstation.svg (CC0) | built |
-| polar | 51×28, 30 · colour, options | the company's own mark (licence to check) | todo |
-| supabase | 55×28, 30 · colour, options | Simple Icons' supabase.svg (CC0) | built |
-| vercel | 64×28, 30 · colour, options | Simple Icons' vercel.svg (CC0) | built |
+| apple | 46×28, 30 · colour, options | Simple Icons' apple.svg (CC0) | dropped |
+| cloudflare | 79×19, 30 · colour, options | Simple Icons' cloudflare.svg (CC0) | dropped |
+| coderabbit | 64×28, 30 · colour, options | Simple Icons' coderabbit.svg (CC0) | dropped |
+| command-code | 64×32, 30 · colour, options | the company's own mark (licence to check) | dropped |
+| databuddy | 56×28, 30 · colour, options | the company's own mark (licence to check) | dropped |
+| greptile | 49×28, 30 · colour, options | the company's own mark (licence to check) | dropped |
+| helium | 49×28, 30 · colour, options | Simple Icons' heliumbrowser.svg (CC0) | dropped |
+| mintlify | 56×28, 30 · colour, options | Simple Icons' mintlify.svg (CC0) | dropped |
+| orchid | 57×28, 30 · colour, options | the company's own mark (licence to check) | dropped |
+| planetscale | 56×28, 30 · colour, options | Simple Icons' planetscale.svg (CC0) | dropped |
+| playstation | 70×28, 30 · colour, options | Simple Icons' playstation.svg (CC0) | dropped |
+| polar | 51×28, 30 · colour, options | the company's own mark (licence to check) | dropped |
+| supabase | 55×28, 30 · colour, options | Simple Icons' supabase.svg (CC0) | dropped |
+| vercel | 64×28, 30 · colour, options | Simple Icons' vercel.svg (CC0) | dropped |
 
 ### distros (23)
 

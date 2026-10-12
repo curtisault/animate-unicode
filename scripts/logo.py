@@ -1,4 +1,4 @@
-"""Draws the logos, companies and distros as octant art.
+"""Draws the logos and distros as octant art.
 
     mise run build:logos            # every logo
     mise run build:logos c rust     # just these
@@ -77,15 +77,6 @@ LOGOS = {
     "swift": ("logos", "d:swift-original", "d:swift-plain"),
     "typescript": ("logos", "d:typescript-original", "d:typescript-plain"),
     "zig": ("logos", "d:zig-original", None),
-    "apple": ("companies", "s:apple", None),
-    "cloudflare": ("companies", "s:cloudflare", None),
-    "coderabbit": ("companies", "s:coderabbit", None),
-    "helium": ("companies", "s:heliumbrowser", None),
-    "mintlify": ("companies", "s:mintlify", None),
-    "planetscale": ("companies", "s:planetscale", None),
-    "playstation": ("companies", "s:playstation", None),
-    "supabase": ("companies", "s:supabase", None),
-    "vercel": ("companies", "s:vercel", None),
     "almalinux": ("distros", "d@2.17.0:almalinux-original", "d@2.17.0:almalinux-plain"),
     "alpine-linux": ("distros", "s:alpinelinux", None),
     "arch-linux": ("distros", "d:archlinux-original", None),
@@ -188,23 +179,14 @@ SHA256 = {
     "d@2.17.0:kalilinux-original": "ba8eb6ae69a478c8f9bb0d8e2f2a1e1edfe37d29c42f68b737e76d8417c27237",
     "d@2.17.0:linuxmint-original": "789960776b9a7b16e6af8cdbe3a2263a2c32d04a6227bd20c49bea9662a12459",
     "s:alpinelinux": "d37d0a7873c65174308d63929f09ab93c3aaa7f5c5df79cdec4be532e015fc98",
-    "s:apple": "2a1509dccd25e6d2bc7a11a8e52941077e1a48555e192ce638699b9f083c2a7c",
-    "s:cloudflare": "408096d99907fd99e0863cb5d73f77a72537c6a85fd8d5e2704178a83a891f08",
-    "s:coderabbit": "8132ef42750b608836a8b1de6a29a218cfe25251fdb4c3a58fb37929499ec042",
     "s:deepin": "dad2d66d0b1c74e6d80c597545a6c18bd84dbf384a23101d7d109c27cf0f9517",
     "s:elementary": "da092a1d0868b7c36132fb4da9f9657c1963660df8ce931ff9dab363aebf14a2",
     "s:endeavouros": "f3963917a83a19829333cecbc9b237a1e7b3950b5dfb92ec8d27e2faf218a8d2",
-    "s:heliumbrowser": "4775a09db70f1bd20caa897350195b33f669b8c8bbef432cc704c41b36f1c888",
     "s:linuxmint": "ab7e227a8e7b7d167d8bc4617c6323c205b4565ce1c206e6d1fd677669cd27d4",
     "s:manjaro": "b2d57d08c236453310773ca2f12163ce53e6757ba1698c10a8c0d39ac7cf0019",
-    "s:mintlify": "a710b348a80536c41fccdf1078f1acc2f6bdb6b5054a91d8102dec2e18b34d22",
     "s:omarchy": "37cd8cc02703153b802ab3f43da1ef7ed63882a7bc02bee2dd0a9dbbfc6dc6f2",
-    "s:planetscale": "ab0f55fdb46c4495ee5528752bf23333479bf200d4af2347215849155ee2c6b8",
-    "s:playstation": "b68b4d7b63443759b9c4d77a5501c5758eeae06a6d594d278d5eb6cb4d3dbbe4",
     "s:popos": "b74950a4c3b1dd2300dc1fad68cfaf45843826408dd328d06497b42379bade1e",
-    "s:supabase": "61bf16d93be418f723ae1e137e57afdad4f185352fbc6dea9482af1e0a89ccf7",
     "s:ubuntu": "b0aca674c881a07bb60b26afbcee07093ae419e29ee38e376f938817fa66ae03",
-    "s:vercel": "57f1e4135486c566e9878fddd259f7f6bf8ec43f31e7e6e38a36d9e814a1c0e0",
     "s:voidlinux": "33edc76feaa84a0a8fbe5f5bf56b2bd8a5d6a7b01a0917bb5e17096b86e49e69",
     "s:zorin": "2ae2329d284e84afbd7111b7a4ffd52fdc38b0d139c045f7439f2b3f687e3e43",
 }

@@ -70,6 +70,6 @@ page furniture, then the rest. Every `Category` in meta.rs is in exactly one.
 groups : List Group
 groups =
     [ { label = "art", categories = [ "cities", "nights", "wilds", "cyberpunk" ] }
-    , { label = "components", categories = [ "ui", "data", "type", "logos", "companies", "distros" ] }
+    , { label = "components", categories = [ "ui", "data", "type", "logos", "distros" ] }
     , { label = "more", categories = [ "shapes", "space", "physics", "nature", "creatures", "objects", "generative", "effects" ] }
     ]

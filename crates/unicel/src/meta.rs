@@ -41,8 +41,6 @@ pub enum Category {
     Type,
     /// Language marks and wordmarks.
     Logos,
-    /// Company marks.
-    Companies,
     /// Linux distributions' marks.
     Distros,
 }
@@ -58,7 +56,6 @@ impl Category {
         Category::Data,
         Category::Type,
         Category::Logos,
-        Category::Companies,
         Category::Distros,
         Category::Shapes,
         Category::Space,
@@ -96,7 +93,6 @@ impl Category {
             Category::Data => "data",
             Category::Type => "type",
             Category::Logos => "logos",
-            Category::Companies => "companies",
             Category::Distros => "distros",
         }
     }
