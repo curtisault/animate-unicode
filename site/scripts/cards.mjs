@@ -12,10 +12,11 @@
  * dark ground, as large as it fits.
  *
  * SITE_URL, the site's address ("https://unicel.example"), makes the card's
- * links absolute, as previewers expect, and adds each page's canonical link;
- * without it they are relative, and there is none.
+ * links absolute, as previewers expect, and adds each page's canonical link
+ * and a sitemap.xml of every page, named in robots.txt; without it the links
+ * are relative, and there is neither.
  */
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, appendFileSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { createCanvas, GlobalFonts } from "@napi-rs/canvas";
@@ -128,4 +129,13 @@ writeFileSync(
     url: `${site}/`,
   }),
 );
-console.log(`${made} share cards and pages in site/dist${site ? "" : " (SITE_URL unset: their links are relative)"}`);
+// A sitemap needs whole addresses, so only with SITE_URL.
+if (site) {
+  const urls = ["/", ...pieces.map((m) => `/${m.slug}`)].map((path) => `  <url><loc>${attr(site + path)}</loc></url>`);
+  writeFileSync(
+    resolve(dist, "sitemap.xml"),
+    `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>\n`,
+  );
+  appendFileSync(resolve(dist, "robots.txt"), `\nSitemap: ${site}/sitemap.xml\n`);
+}
+console.log(`${made} share cards and pages in site/dist${site ? ", and a sitemap" : " (SITE_URL unset: their links are relative, and there is no sitemap)"}`);
