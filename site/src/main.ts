@@ -43,6 +43,21 @@ app.ports.copy?.subscribe((text) => {
   navigator.clipboard?.writeText(String(text)).catch(() => {});
 });
 
+/** Whether a key press belongs to a field (or a modified key to the browser), not the page. */
+const typing = (event: KeyboardEvent) =>
+  event.ctrlKey || event.metaKey || event.altKey || (event.target instanceof HTMLElement && event.target.closest("input, textarea, select, [contenteditable]") !== null);
+
+// The page's keys: "/" to the index's filter. Here rather than in Elm, which
+// cannot keep the "/" from landing in the field it focuses.
+document.addEventListener("keydown", (event) => {
+  if (typing(event)) return;
+  const filter = document.getElementById("filter");
+  if (event.key === "/" && filter) {
+    event.preventDefault();
+    filter.focus();
+  }
+});
+
 /** The piece the page is about: the big one in its well. */
 const big = () => document.querySelector<HTMLElement & { currentTime?: number }>(".well.big unicel-art");
 

@@ -83,6 +83,9 @@ type alias Model =
 
     -- The piece list, open on a narrow screen (a wide one always shows it).
     , menu : Bool
+
+    -- What the index is filtered by: words each piece's name, note or category must hold.
+    , query : String
     }
 
 
@@ -103,6 +106,7 @@ init flags url key =
       , dark = D.decodeValue (D.field "dark" D.bool) flags |> Result.withDefault False
       , origin = D.decodeValue (D.field "origin" D.string) flags |> Result.withDefault ""
       , menu = False
+      , query = ""
       }
     , tidy key url
     )
@@ -168,6 +172,7 @@ type Msg
     | SetTab String
     | ToggleTheme
     | ToggleMenu
+    | Filter String
     | Answer D.Value
     | NoOp
 
@@ -272,6 +277,9 @@ update msg model =
 
         ToggleMenu ->
             ( { model | menu = not model.menu }, Cmd.none )
+
+        Filter query ->
+            ( { model | query = query }, Cmd.none )
 
         Answer value ->
             let
@@ -378,7 +386,7 @@ page : Model -> List Meta -> ( String, List (Html Msg) )
 page model pieces =
     case model.route of
         Route.Index ->
-            ( "unicel: animated unicode art for web pages", index pieces )
+            ( "unicel: animated unicode art for web pages", index model.query pieces )
 
         Route.Piece slug ->
             case find slug pieces of
@@ -488,23 +496,35 @@ sidebar menu route pieces =
         ]
 
 
-index : List Meta -> List (Html Msg)
-index pieces =
+{-| Every piece as a card, by category, or those the filter's words find.
+The filter hides cards rather than removing them: a <unicel-art> taken out
+of the page frees its player and makes a new one when it comes back, which
+on every key press was most of the page's pieces starting over.
+-}
+index : String -> List Meta -> List (Html Msg)
+index query pieces =
     let
+        shown =
+            List.filter (matches query) pieces
+
         category name =
             case inCategory name pieces of
                 [] ->
                     []
 
                 members ->
-                    [ section [ A.id name, class "category" ]
-                        [ div [ class "head" ] [ h2 [] [ text name ], span [ class "count" ] [ text (String.fromInt (List.length members)) ] ]
+                    let
+                        found =
+                            List.length (inCategory name shown)
+                    in
+                    [ section [ A.id name, class "category", A.hidden (found == 0) ]
+                        [ div [ class "head" ] [ h2 [] [ text name ], span [ class "count" ] [ text (String.fromInt found) ] ]
                         , div [ class "grid" ] (List.map card members)
                         ]
                     ]
 
         card m =
-            a [ class "card", href ("/" ++ m.slug) ]
+            a [ class "card", href ("/" ++ m.slug), A.hidden (not (matches query m)) ]
                 [ well m { big = False, mono = False, paper = False, options = Nothing, held = Nothing }
                 , span [ class "name" ] [ text m.name ]
                 , span [ class "note" ] [ text m.note ]
@@ -518,8 +538,43 @@ index pieces =
                     ++ " pieces drawn in braille, blocks, box drawing and other unicode, written in Rust and compiled to WebAssembly. Each is one HTML tag."
                 )
             ]
+        , div [ class "filter" ]
+            [ input
+                [ A.type_ "search"
+                , A.id "filter"
+                , A.value query
+                , onInput Filter
+                , A.placeholder "filter: a name, a word, a category"
+                , A.autocomplete False
+                , attribute "aria-label" "Filter the pieces"
+                , attribute "aria-keyshortcuts" "/"
+                ]
+                []
+            , span [ class "hint", attribute "aria-hidden" "true" ] [ text "[/]" ]
+            , span [ class "count", attribute "aria-live" "polite" ]
+                [ text
+                    (if String.isEmpty (String.trim query) then
+                        ""
+
+                     else
+                        String.fromInt (List.length shown) ++ " of " ++ String.fromInt (List.length pieces)
+                    )
+                ]
+            ]
         ]
+        :: p [ class "none", A.hidden (not (List.isEmpty shown)) ] [ text ("Nothing matches \"" ++ String.trim query ++ "\".") ]
         :: List.concatMap category (List.concatMap .categories Meta.groups)
+
+
+{-| Whether a piece holds every word of the filter, in its name, note or category.
+-}
+matches : String -> Meta -> Bool
+matches query m =
+    let
+        haystack =
+            String.toLower (m.name ++ " " ++ m.note ++ " " ++ m.category ++ " " ++ m.slug)
+    in
+    List.all (\word -> String.contains word haystack) (String.words (String.toLower query))
 
 
 type alias Look =
