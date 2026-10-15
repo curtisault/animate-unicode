@@ -649,7 +649,6 @@ piecePage model pieces m =
         , p [ class "lede" ] [ text m.note ]
         , p [ class "facts" ] (facts model m)
         ]
-    , div [ class "toggles" ] (toggles model m)
     , well m { big = True, mono = model.mono, paper = model.paper, options = overrides, held = model.held }
     , playback model m
     , downloads model
@@ -742,34 +741,47 @@ toggles model m =
 
 
 {-| Under the piece: pause it, and while paused, scrub through its first
-minute (any frame can be drawn at once: pieces are deterministic in time).
+minute (any frame can be drawn at once: pieces are deterministic in time);
+then how it looks, one ink or on paper.
 -}
 playback : Model -> Meta -> Html Msg
 playback model m =
+    let
+        looks =
+            case toggles model m of
+                [] ->
+                    []
+
+                some ->
+                    [ span [ class "toggles" ] some ]
+    in
+    div [ class "playback" ] (timeline model m ++ looks)
+
+
+timeline : Model -> Meta -> List (Html Msg)
+timeline model m =
     if m.fps == 0 then
-        text ""
+        []
 
     else
-        div [ class "playback" ]
-            (case model.held of
-                Nothing ->
-                    [ button [ class "button", A.type_ "button", onClick Pause ] [ text "[pause]" ] ]
+        case model.held of
+            Nothing ->
+                [ button [ class "button", A.type_ "button", onClick Pause ] [ text "[pause]" ] ]
 
-                Just t ->
-                    [ button [ class "button", A.type_ "button", onClick Play ] [ text "[play]" ]
-                    , input
-                        [ A.type_ "range"
-                        , A.min "0"
-                        , A.max (String.fromFloat (max 60 (toFloat (ceiling t))))
-                        , A.step (String.fromFloat (1 / toFloat m.fps))
-                        , A.value (String.fromFloat t)
-                        , onInput Scrub
-                        , attribute "aria-label" "time"
-                        ]
-                        []
-                    , span [ class "time" ] [ text (seconds t) ]
+            Just t ->
+                [ button [ class "button", A.type_ "button", onClick Play ] [ text "[play]" ]
+                , input
+                    [ A.type_ "range"
+                    , A.min "0"
+                    , A.max (String.fromFloat (max 60 (toFloat (ceiling t))))
+                    , A.step (String.fromFloat (1 / toFloat m.fps))
+                    , A.value (String.fromFloat t)
+                    , onInput Scrub
+                    , attribute "aria-label" "time"
                     ]
-            )
+                    []
+                , span [ class "time" ] [ text (seconds t) ]
+                ]
 
 
 {-| A file of the piece: one frame as a PNG, as shapes (.svg), as text (.txt) or as text in
