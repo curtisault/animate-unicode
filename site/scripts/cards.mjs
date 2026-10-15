@@ -12,7 +12,8 @@
  * dark ground, as large as it fits.
  *
  * SITE_URL, the site's address ("https://unicel.example"), makes the card's
- * links absolute, as previewers expect; without it they are relative.
+ * links absolute, as previewers expect, and adds each page's canonical link;
+ * without it they are relative, and there is none.
  */
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
@@ -99,6 +100,7 @@ function page(html, { title, description, image, url }) {
     `<meta property="og:image:height" content="${H}" />`,
     `<meta property="og:url" content="${attr(url)}" />`,
     `<meta name="twitter:card" content="summary_large_image" />`,
+    ...(site ? [`<link rel="canonical" href="${attr(url)}" />`] : []),
   ].join("\n    ");
   return html.replace(/<title>[^<]*<\/title>/, `<title>${attr(title)}</title>\n    ${tags}`);
 }
