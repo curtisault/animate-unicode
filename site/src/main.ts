@@ -47,14 +47,23 @@ app.ports.copy?.subscribe((text) => {
 const typing = (event: KeyboardEvent) =>
   event.ctrlKey || event.metaKey || event.altKey || (event.target instanceof HTMLElement && event.target.closest("input, textarea, select, [contenteditable]") !== null);
 
-// The page's keys: "/" to the index's filter. Here rather than in Elm, which
+// The page's keys: "/" to the index's filter, ← and → to the pieces either
+// side (the pager's links, so Elm routes them). Here rather than in Elm, which
 // cannot keep the "/" from landing in the field it focuses.
 document.addEventListener("keydown", (event) => {
-  if (typing(event)) return;
+  if (typing(event) || event.shiftKey) return;
   const filter = document.getElementById("filter");
   if (event.key === "/" && filter) {
     event.preventDefault();
     filter.focus();
+  }
+  // A tab list keeps its arrows for itself.
+  if (event.target instanceof HTMLElement && event.target.closest('[role="tablist"]')) return;
+  const rel = event.key === "ArrowLeft" ? "prev" : event.key === "ArrowRight" ? "next" : null;
+  const link = rel && document.querySelector<HTMLAnchorElement>(`.pager a[rel="${rel}"]`);
+  if (link) {
+    event.preventDefault();
+    link.click();
   }
 });
 

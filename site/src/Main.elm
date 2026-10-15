@@ -1153,6 +1153,8 @@ quoted s =
     E.encode 0 (E.string s)
 
 
+{-| The pieces either side, in sidebar order; main.ts follows them on ← and →.
+-}
 pager : List Meta -> Meta -> Html Msg
 pager pieces m =
     let
@@ -1162,17 +1164,17 @@ pager pieces m =
         after =
             List.drop 1 (dropUntil m pieces)
 
-        link label target =
+        link rel label target =
             case target of
                 Just t ->
-                    a [ href ("/" ++ t.slug) ] [ text label ]
+                    a [ href ("/" ++ t.slug), A.rel rel ] [ text label ]
 
                 Nothing ->
                     span [] []
     in
     nav [ class "pager", attribute "aria-label" "Neighbouring pieces" ]
-        [ link ("< " ++ (List.head before |> Maybe.map .name |> Maybe.withDefault "")) (List.head before)
-        , link ((List.head after |> Maybe.map .name |> Maybe.withDefault "") ++ " >") (List.head after)
+        [ link "prev" ("< " ++ (List.head before |> Maybe.map .name |> Maybe.withDefault "")) (List.head before)
+        , link "next" ((List.head after |> Maybe.map .name |> Maybe.withDefault "") ++ " >") (List.head after)
         ]
 
 
