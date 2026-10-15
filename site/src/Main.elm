@@ -80,6 +80,9 @@ type alias Model =
 
     -- Where the site is served from, for links to share: "https://unicel.example".
     , origin : String
+
+    -- The piece list, open on a narrow screen (a wide one always shows it).
+    , menu : Bool
     }
 
 
@@ -99,6 +102,7 @@ init flags url key =
       , sizes = D.decodeValue (D.field "sizes" (D.dict D.int)) flags |> Result.withDefault Dict.empty
       , dark = D.decodeValue (D.field "dark" D.bool) flags |> Result.withDefault False
       , origin = D.decodeValue (D.field "origin" D.string) flags |> Result.withDefault ""
+      , menu = False
       }
     , tidy key url
     )
@@ -163,6 +167,7 @@ type Msg
     | Download String
     | SetTab String
     | ToggleTheme
+    | ToggleMenu
     | Answer D.Value
     | NoOp
 
@@ -171,7 +176,12 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         LinkClicked (Browser.Internal url) ->
-            ( model, Nav.pushUrl model.key (Url.toString url) )
+            if url.fragment == Just "content" then
+                -- The skip link: the keyboard's focus to the page, leaving the URL be.
+                ( model, Dom.focus "content" |> Task.attempt (\_ -> NoOp) )
+
+            else
+                ( model, Nav.pushUrl model.key (Url.toString url) )
 
         LinkClicked (Browser.External link) ->
             ( model, Nav.load link )
@@ -188,7 +198,7 @@ update msg model =
                     else
                         { model | route = route, edits = Dict.empty, mono = False, paper = False, held = Nothing, failed = Nothing }
             in
-            ( fresh, Cmd.batch [ tidy model.key url, scrollTo url.fragment ] )
+            ( { fresh | menu = False }, Cmd.batch [ tidy model.key url, scrollTo url.fragment ] )
 
         Edit name value ->
             ( { model | edits = Dict.insert name value model.edits }, Cmd.none )
@@ -259,6 +269,9 @@ update msg model =
                     "dark"
                 )
             )
+
+        ToggleMenu ->
+            ( { model | menu = not model.menu }, Cmd.none )
 
         Answer value ->
             let
@@ -351,7 +364,13 @@ view model =
                     page model pieces
             in
             { title = title
-            , body = [ div [ class "layout" ] [ sidebar model.route pieces, main_ [ class "main" ] (topbar model :: content) ] ]
+            , body =
+                [ a [ class "skip", href "#content" ] [ text "[skip to the page]" ]
+                , div [ class "layout" ]
+                    [ sidebar model.menu model.route pieces
+                    , main_ [ class "main", A.id "content", A.tabindex -1 ] (topbar model :: content)
+                    ]
+                ]
             }
 
 
@@ -409,8 +428,11 @@ inCategory category =
     List.filter (\m -> m.category == category)
 
 
-sidebar : Route -> List Meta -> Html Msg
-sidebar route pieces =
+{-| Every piece, by group and category. On a narrow screen the list folds
+away behind a button, so a piece's page starts with the piece.
+-}
+sidebar : Bool -> Route -> List Meta -> Html Msg
+sidebar menu route pieces =
     let
         current slug =
             if route == Route.Piece slug then
@@ -438,7 +460,32 @@ sidebar route pieces =
                     [ section [] (h2 [] [ text g.label ] :: items) ]
     in
     nav [ class "sidebar", attribute "aria-label" "Pieces" ]
-        (p [ class "site" ] [ a [ href "/" ] [ text "unicel" ] ] :: List.concatMap group Meta.groups)
+        [ p [ class "site" ]
+            [ a [ href "/" ] [ text "unicel" ]
+            , button
+                [ class "button menu"
+                , A.type_ "button"
+                , onClick ToggleMenu
+                , attribute "aria-expanded"
+                    (if menu then
+                        "true"
+
+                     else
+                        "false"
+                    )
+                , attribute "aria-controls" "piece-list"
+                ]
+                [ text
+                    (if menu then
+                        "[close]"
+
+                     else
+                        "[pieces]"
+                    )
+                ]
+            ]
+        , div [ A.id "piece-list", classList [ ( "groups", True ), ( "open", menu ) ] ] (List.concatMap group Meta.groups)
+        ]
 
 
 index : List Meta -> List (Html Msg)

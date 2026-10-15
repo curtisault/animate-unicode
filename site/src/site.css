@@ -104,6 +104,26 @@ code {
   max-width: 64rem;
 }
 
+.main:focus {
+  outline: none;
+}
+
+/* Hidden until a keyboard reaches it: past the piece list, to the page. */
+.skip {
+  position: absolute;
+  left: 1rem;
+  top: -10rem;
+  z-index: 1;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+}
+
+.skip:focus {
+  top: 1rem;
+}
+
 @media (max-width: 48rem) {
   .layout {
     grid-template-columns: minmax(0, 1fr);
@@ -111,6 +131,7 @@ code {
   .sidebar {
     position: static;
     max-height: none;
+    padding: 1rem;
     border-right: 0;
     border-bottom: 1px solid var(--rule);
   }
@@ -128,6 +149,12 @@ code {
 
 .sidebar .site a {
   text-decoration: none;
+}
+
+/* The button that opens the piece list: only on a narrow screen. */
+.sidebar .menu {
+  display: none;
+  font-weight: 400;
 }
 
 .sidebar section {
@@ -163,6 +190,25 @@ code {
 .sidebar a[aria-current="page"] {
   color: var(--ink);
   text-decoration: underline;
+}
+
+/* A narrow screen: the list folds away behind its button. */
+@media (max-width: 48rem) {
+  .sidebar .site {
+    display: flex;
+    justify-content: space-between;
+    margin: 0;
+  }
+  .sidebar .menu {
+    display: inline;
+  }
+  .sidebar .groups {
+    display: none;
+    margin-top: 1.25rem;
+  }
+  .sidebar .groups.open {
+    display: block;
+  }
 }
 
 /* Page heads. */
