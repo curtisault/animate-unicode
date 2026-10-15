@@ -801,10 +801,10 @@ downloads model =
                 ]
     in
     div []
-        [ div [ class "links" ] [ span [ class "label" ] [ text "download" ], kind "png", kind "svg", kind "video", kind "gif", kind "txt", kind "ansi" ]
-        , div [ class "links" ]
-            [ span [ class "label" ] [ text "copy" ]
-            , button [ class "button", A.type_ "button", onClick (Download "text"), A.disabled (model.making /= Nothing) ]
+        [ links "download" [ kind "png", kind "svg", kind "video", kind "gif", kind "txt", kind "ansi" ]
+        , links "copy"
+            [ button
+                [ class "button", A.type_ "button", onClick (Download "text"), A.disabled (model.making /= Nothing) ]
                 [ text
                     (if model.making == Just ( "text", 0 ) then
                         "[copying]"
@@ -832,9 +832,8 @@ share model m =
         words =
             m.name ++ ": " ++ m.note
     in
-    div [ class "links" ]
-        [ span [ class "label" ] [ text "share" ]
-        , a [ href ("https://x.com/intent/post?text=" ++ Url.percentEncode words ++ "&url=" ++ Url.percentEncode link), A.target "_blank", A.rel "noopener" ] [ text "[post on x]" ]
+    links "share"
+        [ a [ href ("https://x.com/intent/post?text=" ++ Url.percentEncode words ++ "&url=" ++ Url.percentEncode link), A.target "_blank", A.rel "noopener" ] [ text "[post on x]" ]
         , a [ href ("https://www.linkedin.com/sharing/share-offsite/?url=" ++ Url.percentEncode link), A.target "_blank", A.rel "noopener" ] [ text "[post on linkedin]" ]
         , button [ class "button", A.type_ "button", onClick (Copy "link" link) ]
             [ text
@@ -846,6 +845,15 @@ share model m =
                 )
             ]
         ]
+
+
+{-| A row of links or buttons under the piece, named by its label, so each
+reads as "png, download" rather than "png" alone.
+-}
+links : String -> List (Html Msg) -> Html Msg
+links name items =
+    div [ class "links", attribute "role" "group", attribute "aria-labelledby" ("links-" ++ name) ]
+        (span [ class "label", A.id ("links-" ++ name) ] [ text name ] :: items)
 
 
 {-| Seconds to two places: "3.07 s".
@@ -1029,8 +1037,8 @@ usage model m overrides =
         snippet id caption content =
             div [ class "snippet" ]
                 [ div [ class "head" ]
-                    [ h3 [] [ text caption ]
-                    , button [ class "button", A.type_ "button", onClick (Copy id content) ]
+                    [ h3 [ A.id ("snippet-" ++ id) ] [ text caption ]
+                    , button [ class "button", A.type_ "button", onClick (Copy id content), attribute "aria-describedby" ("snippet-" ++ id) ]
                         [ text
                             (if model.copied == Just id then
                                 "[copied]"
