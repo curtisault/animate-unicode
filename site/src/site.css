@@ -182,8 +182,17 @@ code {
 }
 
 .sidebar a {
+  display: inline-block;
+  padding-block: 0.1rem;
   text-decoration: none;
   color: var(--text);
+}
+
+/* A finger needs more room between the pieces than a pointer does. */
+@media (pointer: coarse) {
+  .sidebar a {
+    padding-block: 0.35rem;
+  }
 }
 
 .sidebar a:hover,
