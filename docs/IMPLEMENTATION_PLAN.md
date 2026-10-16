@@ -411,7 +411,7 @@ Acceptance: a checklist page `site/public/test.html` (plain HTML, no Elm) with o
 `site/src/Main.elm` is a `Browser.application` with `/` and `/:slug`. It works but is bare.
 
 Tasks:
-1. **Layout** after ascii.rest: sidebar grouped (`art` = the scenes: cities, nights, wilds; `components` = ui, data, type, logos, companies, distros; `more` = the rest), piece page with name, note, size, fps, charset, the live piece, and copy-able snippets (HTML tag; later React/Astro). Keep one monospace face and `prefers-color-scheme`. `site/src/site.css` has the tokens.
+1. **Layout** after ascii.rest: sidebar grouped (`art` = the scenes: cities, nights, wilds; `components` = ui, data, type, logos, distros; `more` = the rest), piece page with name, note, size, fps, charset, the live piece, and copy-able snippets (HTML tag; later React/Astro). Keep one monospace face and `prefers-color-scheme`. `site/src/site.css` has the tokens.
 2. **Options UI**: for a piece with `Meta.options`, render inputs from the JSON defaults (number → range or number input, bool → checkbox, string → text) and pass the merged JSON as the `options` attribute. Elm owns the state; the element restarts the piece on attribute change. Use `Html.Keyed` around `<unicel-art>` keyed by slug so navigating between pieces replaces the node rather than mutating it (either works; keyed is cleaner for freeing).
 3. **Flags**: `main.ts` passes every `Meta` as JSON. Elm's decoder (`metaDecoder`) currently reads 9 fields; add `options`, `ground`, `cell`, `clock` as they become needed. Decoder failures currently fall back to an empty list silently: surface them (show the error) during development.
 4. **mono / paper toggles** on the piece page, like ascii.rest's "one ink" switch.

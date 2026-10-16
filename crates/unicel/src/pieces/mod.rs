@@ -17,8 +17,6 @@ use crate::Category;
 
 #[cfg(feature = "cities")]
 pub mod cities;
-#[cfg(feature = "companies")]
-pub mod companies;
 #[cfg(feature = "creatures")]
 pub mod creatures;
 #[cfg(feature = "cyberpunk")]
@@ -70,8 +68,6 @@ pub static CATEGORIES: &[(Category, &[Entry])] = &[
     (Category::Type, r#type::REGISTRY),
     #[cfg(feature = "logos")]
     (Category::Logos, logos::REGISTRY),
-    #[cfg(feature = "companies")]
-    (Category::Companies, companies::REGISTRY),
     #[cfg(feature = "distros")]
     (Category::Distros, distros::REGISTRY),
     #[cfg(feature = "shapes")]

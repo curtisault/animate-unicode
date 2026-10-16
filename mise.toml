@@ -97,7 +97,7 @@ description = "Check each open pull request's head commit locally and post a sig
 run = "scripts/signoff.sh"
 
 [tasks."build:logos"]
-description = "Draw the logos, companies and distros from their SVGs as octant art (scripts/logo.py)"
+description = "Draw the logos and distros from their SVGs as octant art (scripts/logo.py)"
 run = "uvx --python 3.14 --from 'resvg-py==0.5.0' --with 'pillow==12.3.0' --with 'numpy==2.5.3' python -I scripts/logo.py"
 
 [tasks."build:web"]

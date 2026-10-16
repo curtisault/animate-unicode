@@ -20,7 +20,7 @@
 pub mod clock;
 pub mod geom;
 pub mod grid;
-#[cfg(any(feature = "logos", feature = "companies", feature = "distros"))]
+#[cfg(any(feature = "logos", feature = "distros"))]
 pub mod logo;
 pub mod meta;
 pub mod noise;
