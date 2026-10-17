@@ -295,7 +295,9 @@ export function mount(el: HTMLElement, wasm: InitOutput, player: Player, options
     fonts?.load(`${Math.max(8, Math.round(w / 0.6))}px "unicel mono"`).catch(() => {});
     unfont = () => fonts?.removeEventListener("loadingdone", refont);
     ro = new ResizeObserver(() => {
-      if (canvas.clientWidth !== width) {
+      // Hidden (display: none) reads as no width: keep the size it had, so
+      // showing it again costs nothing rather than a resize and a full redraw.
+      if (canvas.clientWidth !== width && canvas.clientWidth > 0) {
         size();
         draw();
       }

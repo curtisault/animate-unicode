@@ -80,6 +80,12 @@ type alias Model =
 
     -- Where the site is served from, for links to share: "https://unicel.example".
     , origin : String
+
+    -- The piece list, open on a narrow screen (a wide one always shows it).
+    , menu : Bool
+
+    -- What the index is filtered by: words each piece's name, note or category must hold.
+    , query : String
     }
 
 
@@ -99,6 +105,8 @@ init flags url key =
       , sizes = D.decodeValue (D.field "sizes" (D.dict D.int)) flags |> Result.withDefault Dict.empty
       , dark = D.decodeValue (D.field "dark" D.bool) flags |> Result.withDefault False
       , origin = D.decodeValue (D.field "origin" D.string) flags |> Result.withDefault ""
+      , menu = False
+      , query = ""
       }
     , tidy key url
     )
@@ -163,6 +171,8 @@ type Msg
     | Download String
     | SetTab String
     | ToggleTheme
+    | ToggleMenu
+    | Filter String
     | Answer D.Value
     | NoOp
 
@@ -171,7 +181,12 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         LinkClicked (Browser.Internal url) ->
-            ( model, Nav.pushUrl model.key (Url.toString url) )
+            if url.fragment == Just "content" then
+                -- The skip link: the keyboard's focus to the page, leaving the URL be.
+                ( model, Dom.focus "content" |> Task.attempt (\_ -> NoOp) )
+
+            else
+                ( model, Nav.pushUrl model.key (Url.toString url) )
 
         LinkClicked (Browser.External link) ->
             ( model, Nav.load link )
@@ -188,7 +203,7 @@ update msg model =
                     else
                         { model | route = route, edits = Dict.empty, mono = False, paper = False, held = Nothing, failed = Nothing }
             in
-            ( fresh, Cmd.batch [ tidy model.key url, scrollTo url.fragment ] )
+            ( { fresh | menu = False }, Cmd.batch [ tidy model.key url, scrollTo url.fragment ] )
 
         Edit name value ->
             ( { model | edits = Dict.insert name value model.edits }, Cmd.none )
@@ -259,6 +274,12 @@ update msg model =
                     "dark"
                 )
             )
+
+        ToggleMenu ->
+            ( { model | menu = not model.menu }, Cmd.none )
+
+        Filter query ->
+            ( { model | query = query }, Cmd.none )
 
         Answer value ->
             let
@@ -351,7 +372,13 @@ view model =
                     page model pieces
             in
             { title = title
-            , body = [ div [ class "layout" ] [ sidebar model.route pieces, main_ [ class "main" ] (topbar model :: content) ] ]
+            , body =
+                [ a [ class "skip", href "#content" ] [ text "[skip to the page]" ]
+                , div [ class "layout" ]
+                    [ sidebar model.menu model.route pieces
+                    , main_ [ class "main", A.id "content", A.tabindex -1 ] (topbar model :: content)
+                    ]
+                ]
             }
 
 
@@ -359,7 +386,7 @@ page : Model -> List Meta -> ( String, List (Html Msg) )
 page model pieces =
     case model.route of
         Route.Index ->
-            ( "unicel: animated unicode art for web pages", index pieces )
+            ( "unicel: animated unicode art for web pages", index model.query pieces )
 
         Route.Piece slug ->
             case find slug pieces of
@@ -409,8 +436,11 @@ inCategory category =
     List.filter (\m -> m.category == category)
 
 
-sidebar : Route -> List Meta -> Html Msg
-sidebar route pieces =
+{-| Every piece, by group and category. On a narrow screen the list folds
+away behind a button, so a piece's page starts with the piece.
+-}
+sidebar : Bool -> Route -> List Meta -> Html Msg
+sidebar menu route pieces =
     let
         current slug =
             if route == Route.Piece slug then
@@ -438,26 +468,63 @@ sidebar route pieces =
                     [ section [] (h2 [] [ text g.label ] :: items) ]
     in
     nav [ class "sidebar", attribute "aria-label" "Pieces" ]
-        (p [ class "site" ] [ a [ href "/" ] [ text "unicel" ] ] :: List.concatMap group Meta.groups)
+        [ p [ class "site" ]
+            [ a [ href "/" ] [ text "unicel" ]
+            , button
+                [ class "button menu"
+                , A.type_ "button"
+                , onClick ToggleMenu
+                , attribute "aria-expanded"
+                    (if menu then
+                        "true"
+
+                     else
+                        "false"
+                    )
+                , attribute "aria-controls" "piece-list"
+                ]
+                [ text
+                    (if menu then
+                        "[close]"
+
+                     else
+                        "[pieces]"
+                    )
+                ]
+            ]
+        , div [ A.id "piece-list", classList [ ( "groups", True ), ( "open", menu ) ] ] (List.concatMap group Meta.groups)
+        ]
 
 
-index : List Meta -> List (Html Msg)
-index pieces =
+{-| Every piece as a card, by category, or those the filter's words find.
+The filter hides cards rather than removing them: a <unicel-art> taken out
+of the page frees its player and makes a new one when it comes back, which
+on every key press was most of the page's pieces starting over.
+-}
+index : String -> List Meta -> List (Html Msg)
+index query pieces =
     let
+        shown =
+            List.filter (matches query) pieces
+
         category name =
             case inCategory name pieces of
                 [] ->
                     []
 
                 members ->
-                    [ section [ A.id name, class "category" ]
-                        [ div [ class "head" ] [ h2 [] [ text name ], span [ class "count" ] [ text (String.fromInt (List.length members)) ] ]
+                    let
+                        found =
+                            List.length (inCategory name shown)
+                    in
+                    [ section [ A.id name, class "category", A.hidden (found == 0) ]
+                        [ div [ class "head" ] [ h2 [] [ text name ], span [ class "count" ] [ text (String.fromInt found) ] ]
                         , div [ class "grid" ] (List.map card members)
                         ]
                     ]
 
         card m =
-            a [ class "card", href ("/" ++ m.slug) ]
+            a [ class "card", href ("/" ++ m.slug), A.hidden (not (matches query m)) ]
                 [ well m { big = False, mono = False, paper = False, options = Nothing, held = Nothing }
                 , span [ class "name" ] [ text m.name ]
                 , span [ class "note" ] [ text m.note ]
@@ -471,8 +538,43 @@ index pieces =
                     ++ " pieces drawn in braille, blocks, box drawing and other unicode, written in Rust and compiled to WebAssembly. Each is one HTML tag."
                 )
             ]
+        , div [ class "filter" ]
+            [ input
+                [ A.type_ "search"
+                , A.id "filter"
+                , A.value query
+                , onInput Filter
+                , A.placeholder "filter: a name, a word, a category"
+                , A.autocomplete False
+                , attribute "aria-label" "Filter the pieces"
+                , attribute "aria-keyshortcuts" "/"
+                ]
+                []
+            , span [ class "hint", attribute "aria-hidden" "true" ] [ text "[/]" ]
+            , span [ class "count", attribute "aria-live" "polite" ]
+                [ text
+                    (if String.isEmpty (String.trim query) then
+                        ""
+
+                     else
+                        String.fromInt (List.length shown) ++ " of " ++ String.fromInt (List.length pieces)
+                    )
+                ]
+            ]
         ]
+        :: p [ class "none", A.hidden (not (List.isEmpty shown)) ] [ text ("Nothing matches \"" ++ String.trim query ++ "\".") ]
         :: List.concatMap category (List.concatMap .categories Meta.groups)
+
+
+{-| Whether a piece holds every word of the filter, in its name, note or category.
+-}
+matches : String -> Meta -> Bool
+matches query m =
+    let
+        haystack =
+            String.toLower (m.name ++ " " ++ m.note ++ " " ++ m.category ++ " " ++ m.slug)
+    in
+    List.all (\word -> String.contains word haystack) (String.words (String.toLower query))
 
 
 type alias Look =
@@ -547,7 +649,6 @@ piecePage model pieces m =
         , p [ class "lede" ] [ text m.note ]
         , p [ class "facts" ] (facts model m)
         ]
-    , div [ class "toggles" ] (toggles model m)
     , well m { big = True, mono = model.mono, paper = model.paper, options = overrides, held = model.held }
     , playback model m
     , downloads model
@@ -640,34 +741,47 @@ toggles model m =
 
 
 {-| Under the piece: pause it, and while paused, scrub through its first
-minute (any frame can be drawn at once: pieces are deterministic in time).
+minute (any frame can be drawn at once: pieces are deterministic in time);
+then how it looks, one ink or on paper.
 -}
 playback : Model -> Meta -> Html Msg
 playback model m =
+    let
+        looks =
+            case toggles model m of
+                [] ->
+                    []
+
+                some ->
+                    [ span [ class "toggles" ] some ]
+    in
+    div [ class "playback" ] (timeline model m ++ looks)
+
+
+timeline : Model -> Meta -> List (Html Msg)
+timeline model m =
     if m.fps == 0 then
-        text ""
+        []
 
     else
-        div [ class "playback" ]
-            (case model.held of
-                Nothing ->
-                    [ button [ class "button", A.type_ "button", onClick Pause ] [ text "[pause]" ] ]
+        case model.held of
+            Nothing ->
+                [ button [ class "button", A.type_ "button", onClick Pause ] [ text "[pause]" ] ]
 
-                Just t ->
-                    [ button [ class "button", A.type_ "button", onClick Play ] [ text "[play]" ]
-                    , input
-                        [ A.type_ "range"
-                        , A.min "0"
-                        , A.max (String.fromFloat (max 60 (toFloat (ceiling t))))
-                        , A.step (String.fromFloat (1 / toFloat m.fps))
-                        , A.value (String.fromFloat t)
-                        , onInput Scrub
-                        , attribute "aria-label" "time"
-                        ]
-                        []
-                    , span [ class "time" ] [ text (seconds t) ]
+            Just t ->
+                [ button [ class "button", A.type_ "button", onClick Play ] [ text "[play]" ]
+                , input
+                    [ A.type_ "range"
+                    , A.min "0"
+                    , A.max (String.fromFloat (max 60 (toFloat (ceiling t))))
+                    , A.step (String.fromFloat (1 / toFloat m.fps))
+                    , A.value (String.fromFloat t)
+                    , onInput Scrub
+                    , attribute "aria-label" "time"
                     ]
-            )
+                    []
+                , span [ class "time" ] [ text (seconds t) ]
+                ]
 
 
 {-| A file of the piece: one frame as a PNG, as shapes (.svg), as text (.txt) or as text in
@@ -699,10 +813,10 @@ downloads model =
                 ]
     in
     div []
-        [ div [ class "links" ] [ span [ class "label" ] [ text "download" ], kind "png", kind "svg", kind "video", kind "gif", kind "txt", kind "ansi" ]
-        , div [ class "links" ]
-            [ span [ class "label" ] [ text "copy" ]
-            , button [ class "button", A.type_ "button", onClick (Download "text"), A.disabled (model.making /= Nothing) ]
+        [ links "download" [ kind "png", kind "svg", kind "video", kind "gif", kind "txt", kind "ansi" ]
+        , links "copy"
+            [ button
+                [ class "button", A.type_ "button", onClick (Download "text"), A.disabled (model.making /= Nothing) ]
                 [ text
                     (if model.making == Just ( "text", 0 ) then
                         "[copying]"
@@ -730,9 +844,8 @@ share model m =
         words =
             m.name ++ ": " ++ m.note
     in
-    div [ class "links" ]
-        [ span [ class "label" ] [ text "share" ]
-        , a [ href ("https://x.com/intent/post?text=" ++ Url.percentEncode words ++ "&url=" ++ Url.percentEncode link), A.target "_blank", A.rel "noopener" ] [ text "[post on x]" ]
+    links "share"
+        [ a [ href ("https://x.com/intent/post?text=" ++ Url.percentEncode words ++ "&url=" ++ Url.percentEncode link), A.target "_blank", A.rel "noopener" ] [ text "[post on x]" ]
         , a [ href ("https://www.linkedin.com/sharing/share-offsite/?url=" ++ Url.percentEncode link), A.target "_blank", A.rel "noopener" ] [ text "[post on linkedin]" ]
         , button [ class "button", A.type_ "button", onClick (Copy "link" link) ]
             [ text
@@ -744,6 +857,15 @@ share model m =
                 )
             ]
         ]
+
+
+{-| A row of links or buttons under the piece, named by its label, so each
+reads as "png, download" rather than "png" alone.
+-}
+links : String -> List (Html Msg) -> Html Msg
+links name items =
+    div [ class "links", attribute "role" "group", attribute "aria-labelledby" ("links-" ++ name) ]
+        (span [ class "label", A.id ("links-" ++ name) ] [ text name ] :: items)
 
 
 {-| Seconds to two places: "3.07 s".
@@ -927,8 +1049,8 @@ usage model m overrides =
         snippet id caption content =
             div [ class "snippet" ]
                 [ div [ class "head" ]
-                    [ h3 [] [ text caption ]
-                    , button [ class "button", A.type_ "button", onClick (Copy id content) ]
+                    [ h3 [ A.id ("snippet-" ++ id) ] [ text caption ]
+                    , button [ class "button", A.type_ "button", onClick (Copy id content), attribute "aria-describedby" ("snippet-" ++ id) ]
                         [ text
                             (if model.copied == Just id then
                                 "[copied]"
@@ -1031,6 +1153,8 @@ quoted s =
     E.encode 0 (E.string s)
 
 
+{-| The pieces either side, in sidebar order; main.ts follows them on ← and →.
+-}
 pager : List Meta -> Meta -> Html Msg
 pager pieces m =
     let
@@ -1040,17 +1164,17 @@ pager pieces m =
         after =
             List.drop 1 (dropUntil m pieces)
 
-        link label target =
+        link rel label target =
             case target of
                 Just t ->
-                    a [ href ("/" ++ t.slug) ] [ text label ]
+                    a [ href ("/" ++ t.slug), A.rel rel ] [ text label ]
 
                 Nothing ->
                     span [] []
     in
     nav [ class "pager", attribute "aria-label" "Neighbouring pieces" ]
-        [ link ("< " ++ (List.head before |> Maybe.map .name |> Maybe.withDefault "")) (List.head before)
-        , link ((List.head after |> Maybe.map .name |> Maybe.withDefault "") ++ " >") (List.head after)
+        [ link "prev" ("< " ++ (List.head before |> Maybe.map .name |> Maybe.withDefault "")) (List.head before)
+        , link "next" ((List.head after |> Maybe.map .name |> Maybe.withDefault "") ++ " >") (List.head after)
         ]
 
 
